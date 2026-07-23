@@ -29,7 +29,10 @@ Open the URL Vite prints (usually http://localhost:5173).
 1. Filter the device library by category chips or search.
 2. Click a device to place it on the canvas. Devices use realistic relative sizes (watches smaller than phones, then tablets, computers, displays).
 3. Drag to position; use **Bring Forward** / **Push Backward** for layer order; **Delete** removes the selection.
-4. **Download Mockup** exports a high-resolution PNG that matches the visible canvas layout and stacking order. Export draws from native asset pixels (not the on-screen preview size), capped at an 8192px longest edge.
+4. Choose **Format** (PNG or JPG) and **Resolution** (Best / 1440p / 1080p / 720p), then **Download Mockup**.
+   - Export is cropped to the devices on the canvas (plus a little padding), not the full tall panel.
+   - **Best** uses native asset resolution (longest edge capped at 8192px). Lower presets fit the longest edge to 2560 / 1920 / 1280 and never upscale past Best.
+   - PNG keeps transparency; JPG uses a white background.
 
 ## Other scripts
 

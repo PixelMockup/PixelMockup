@@ -4,8 +4,10 @@ import {
   CATEGORY_ORDER,
   displayHeightFor,
   getDisplayWidth,
+  type ExportFormat,
+  type ExportResolution,
 } from './deviceScale';
-import { downloadBlob, exportMockupPng } from './exportMockup';
+import { downloadBlob, exportMockup } from './exportMockup';
 
 interface MockupStudioProps {
   groupedLibrary: Record<string, DeviceItem[]>;
@@ -52,6 +54,9 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isExporting, setIsExporting] = useState(false);
+  const [exportFormat, setExportFormat] = useState<ExportFormat>('png');
+  const [exportResolution, setExportResolution] =
+    useState<ExportResolution>('best');
 
   const canvasRef = useRef<HTMLDivElement>(null);
 
@@ -185,7 +190,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
 
     try {
       const { width, height } = canvasRef.current.getBoundingClientRect();
-      const blob = await exportMockupPng(
+      const { blob, filenameHint } = await exportMockup(
         canvasItems.map((item) => ({
           src: item.src,
           x: item.x,
@@ -197,12 +202,16 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
         })),
         width,
         height,
+        { format: exportFormat, resolution: exportResolution },
       );
       const stamp = new Date()
         .toISOString()
         .replace(/[:.]/g, '-')
         .slice(0, 19);
-      downloadBlob(blob, `mockup-${stamp}.png`);
+      const ext = filenameHint.includes('.')
+        ? filenameHint.slice(filenameHint.lastIndexOf('.'))
+        : '.png';
+      downloadBlob(blob, `mockup-${stamp}-${exportResolution}${ext}`);
     } catch (err) {
       console.error(err);
       alert(err instanceof Error ? err.message : 'Export failed');
@@ -362,6 +371,32 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
             Delete
           </button>
           <div style={{ flex: 1 }} />
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+            Format
+            <select
+              value={exportFormat}
+              onChange={(e) => setExportFormat(e.target.value as ExportFormat)}
+              style={{ padding: '6px 8px', borderRadius: '4px', border: '1px solid #ccc' }}
+            >
+              <option value="png">PNG</option>
+              <option value="jpg">JPG</option>
+            </select>
+          </label>
+          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+            Resolution
+            <select
+              value={exportResolution}
+              onChange={(e) =>
+                setExportResolution(e.target.value as ExportResolution)
+              }
+              style={{ padding: '6px 8px', borderRadius: '4px', border: '1px solid #ccc' }}
+            >
+              <option value="best">Best</option>
+              <option value="1440p">1440p</option>
+              <option value="1080p">1080p</option>
+              <option value="720p">720p</option>
+            </select>
+          </label>
           <button
             onClick={downloadCanvas}
             disabled={canvasItems.length === 0 || isExporting}
