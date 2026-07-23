@@ -1,32 +1,40 @@
-# React + TypeScript + Vite
+# Mockup Studio
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+React + TypeScript + Vite app for creating device mockups.
 
-Currently, two official plugins are available:
+## Requirements
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- Node.js (v18+)
+- npm
 
-## React Compiler
+## Setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+cd mockup_studio
+npm install
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+## Run
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Open the URL Vite prints (usually http://localhost:5173).
+
+## Usage
+
+1. Filter the device library by category chips or search.
+2. Click a device to place it on the canvas. Devices use realistic relative sizes (watches smaller than phones, then tablets, computers, displays).
+3. Drag to position; use **Bring Forward** / **Push Backward** for layer order; **Delete** removes the selection.
+4. **Download Mockup** exports a high-resolution PNG that matches the visible canvas layout and stacking order. Export draws from native asset pixels (not the on-screen preview size), capped at an 8192px longest edge.
+
+## Other scripts
+
+| Command | Description |
+| --- | --- |
+| `npm run build` | Typecheck and build for production |
+| `npm run preview` | Serve the production build locally |
+| `npm run lint` | Run Oxlint |
