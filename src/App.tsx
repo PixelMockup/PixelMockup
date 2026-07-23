@@ -1,5 +1,6 @@
 import MockupStudio from './MockupStudio';
 import deviceDimensions from './data/device_dimensions.json';
+import { parseBrand, parseProductFamily } from './deviceMeta';
 
 // Load the SVGs
 const device_library = import.meta.glob('./assets/device_library/**/*.svg', {
@@ -18,6 +19,8 @@ export interface DeviceItem {
   modelKey: string;
   widthMm: number | undefined;
   heightMm: number | undefined;
+  brand: string;
+  productFamily: string;
 }
 
 type DimEntry = {
@@ -51,6 +54,8 @@ const groupByCategory = Object.entries(device_library).reduce<
   const fileName = pathParts.pop()?.replace('.svg', '');
   const catalogFile = catalogKeyFromGlobPath(path);
   const dim = dimByFile.get(catalogFile);
+  const brand = parseBrand(fileName);
+  const productFamily = parseProductFamily(fileName, category);
 
   if (!acc[category]) {
     acc[category] = [];
@@ -65,6 +70,8 @@ const groupByCategory = Object.entries(device_library).reduce<
     modelKey: dim?.model_key ?? '',
     widthMm: dim?.width_mm ?? undefined,
     heightMm: dim?.height_mm ?? undefined,
+    brand,
+    productFamily,
   });
 
   return acc;

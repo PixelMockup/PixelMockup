@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { DeviceItem } from './App';
 import {
   ARTBOARD_HEIGHT,
@@ -9,6 +9,15 @@ import {
   type ExportResolution,
 } from './deviceScale';
 import { downloadBlob, exportMockup } from './exportMockup';
+import KeybindingsPanel from './KeybindingsPanel';
+import { matchesSearchQuery, sortBySearchRelevance } from './deviceMeta';
+import {
+  detectPlatform,
+  formatChordForDisplay,
+  loadBindingsForPlatform,
+  type BindingMap,
+} from './keybindings';
+import { useKeybindings } from './useKeybindings';
 
 const CHECKERBOARD_BG = `
   linear-gradient(45deg, #e8e8e8 25%, transparent 25%),
@@ -44,8 +53,6 @@ interface CanvasItem extends DeviceItem {
   nativeHeight: number;
 }
 
-type CategoryFilter = 'all' | string;
-
 function reindexZ(items: CanvasItem[]): CanvasItem[] {
   return [...items]
     .sort((a, b) => a.zIndex - b.zIndex)
@@ -65,6 +72,12 @@ function loadNativeSize(
 }
 
 export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
+  const platform = useMemo(() => detectPlatform(), []);
+  const [bindings, setBindings] = useState<BindingMap>(() =>
+    loadBindingsForPlatform(platform),
+  );
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+
   const [canvasItems, setCanvasItems] = useState<CanvasItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [dragInfo, setDragInfo] = useState({
@@ -72,7 +85,10 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     offsetX: 0,
     offsetY: 0,
   });
-  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('all');
+  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  /** null = Brand All */
+  const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [isExporting, setIsExporting] = useState(false);
   const [exportFormat, setExportFormat] = useState<ExportFormat>('png');
@@ -80,6 +96,11 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     useState<ExportResolution>('best');
 
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  const allDevices = useMemo(
+    () => Object.values(groupedLibrary).flat(),
+    [groupedLibrary],
+  );
 
   const categories = useMemo(() => {
     const present = new Set(Object.keys(groupedLibrary));
@@ -90,24 +111,111 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     return [...ordered, ...extras];
   }, [groupedLibrary]);
 
-  const filteredLibrary = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    const result: { category: string; items: DeviceItem[] }[] = [];
+  const brandAll = selectedBrand == null;
 
-    const cats =
-      categoryFilter === 'all' ? categories : categories.filter((c) => c === categoryFilter);
+  const availableBrands = useMemo(() => {
+    const set = new Set(allDevices.map((d) => d.brand));
+    return [...set].sort((a, b) => a.localeCompare(b));
+  }, [allDevices]);
 
-    for (const category of cats) {
-      const items = (groupedLibrary[category] ?? []).filter((item) => {
-        if (!q) return true;
-        return (item.name ?? '').toLowerCase().includes(q);
-      });
-      if (items.length > 0) {
-        result.push({ category, items });
-      }
+  const brandFilteredDevices = useMemo(() => {
+    if (brandAll) return allDevices;
+    return allDevices.filter((d) => d.brand === selectedBrand);
+  }, [allDevices, brandAll, selectedBrand]);
+
+  const availableProducts = useMemo(() => {
+    const set = new Set(brandFilteredDevices.map((d) => d.productFamily));
+    return [...set].sort((a, b) => a.localeCompare(b));
+  }, [brandFilteredDevices]);
+
+  const selectedProductValid =
+    selectedProduct != null && availableProducts.includes(selectedProduct)
+      ? selectedProduct
+      : null;
+
+  const scopedDevices = useMemo(() => {
+    if (selectedProductValid == null) return brandFilteredDevices;
+    return brandFilteredDevices.filter(
+      (d) => d.productFamily === selectedProductValid,
+    );
+  }, [brandFilteredDevices, selectedProductValid]);
+
+  const availableCategories = useMemo(() => {
+    const set = new Set(scopedDevices.map((d) => d.category));
+    return categories.filter((c) => set.has(c));
+  }, [scopedDevices, categories]);
+
+  const effectiveCategory =
+    categoryFilter && availableCategories.includes(categoryFilter)
+      ? categoryFilter
+      : (availableCategories[0] ?? null);
+
+  useEffect(() => {
+    if (availableCategories.length === 0) {
+      if (categoryFilter != null) setCategoryFilter(null);
+      return;
     }
-    return result;
-  }, [groupedLibrary, categories, categoryFilter, searchQuery]);
+    if (
+      categoryFilter == null ||
+      !availableCategories.includes(categoryFilter)
+    ) {
+      setCategoryFilter(availableCategories[0]);
+    }
+  }, [availableCategories, categoryFilter]);
+
+  useEffect(() => {
+    if (
+      selectedProduct != null &&
+      !availableProducts.includes(selectedProduct)
+    ) {
+      setSelectedProduct(null);
+    }
+  }, [availableProducts, selectedProduct]);
+
+  const filteredLibrary = useMemo(() => {
+    if (!effectiveCategory) {
+      return [] as { category: string; items: DeviceItem[] }[];
+    }
+
+    let items = (groupedLibrary[effectiveCategory] ?? []).filter((item) => {
+      if (!brandAll && item.brand !== selectedBrand) return false;
+      if (
+        selectedProductValid != null &&
+        item.productFamily !== selectedProductValid
+      ) {
+        return false;
+      }
+      return matchesSearchQuery(item, searchQuery);
+    });
+    items = sortBySearchRelevance(items, searchQuery);
+    if (items.length === 0) return [];
+    return [{ category: effectiveCategory, items }];
+  }, [
+    effectiveCategory,
+    groupedLibrary,
+    brandAll,
+    selectedBrand,
+    selectedProductValid,
+    searchQuery,
+  ]);
+
+  const handleBrandAll = () => {
+    setSelectedBrand(null);
+    setSelectedProduct(null);
+  };
+
+  const handleSelectBrand = (brand: string) => {
+    setSelectedBrand(brand);
+    setSelectedProduct(null);
+  };
+
+  const handleSelectProduct = (product: string) => {
+    setSelectedProduct((prev) => (prev === product ? null : product));
+  };
+
+  const handleCategoryChange = (next: string) => {
+    setCategoryFilter(next);
+  };
 
   const handleAddAndSelect = async (item: DeviceItem) => {
     let nativeWidth = 100;
@@ -216,6 +324,60 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     setSelectedId(null);
   };
 
+  const bringToFront = () => {
+    if (!selectedId) return;
+    setCanvasItems((prev) => {
+      const sorted = [...prev].sort((a, b) => a.zIndex - b.zIndex);
+      const index = sorted.findIndex((i) => i.instanceId === selectedId);
+      if (index < 0 || index === sorted.length - 1) return prev;
+      const [item] = sorted.splice(index, 1);
+      sorted.push(item);
+      return reindexZ(sorted);
+    });
+  };
+
+  const sendToBack = () => {
+    if (!selectedId) return;
+    setCanvasItems((prev) => {
+      const sorted = [...prev].sort((a, b) => a.zIndex - b.zIndex);
+      const index = sorted.findIndex((i) => i.instanceId === selectedId);
+      if (index <= 0) return prev;
+      const [item] = sorted.splice(index, 1);
+      sorted.unshift(item);
+      return reindexZ(sorted);
+    });
+  };
+
+  const nudgeSelected = (dx: number, dy: number) => {
+    if (!selectedId) return;
+    setCanvasItems((prev) =>
+      prev.map((item) =>
+        item.instanceId === selectedId
+          ? { ...item, x: item.x + dx, y: item.y + dy }
+          : item,
+      ),
+    );
+  };
+
+  const duplicateSelected = () => {
+    if (!selectedId) return;
+    setCanvasItems((prev) => {
+      const source = prev.find((i) => i.instanceId === selectedId);
+      if (!source) return prev;
+      const instanceId = crypto.randomUUID();
+      const clone: CanvasItem = {
+        ...source,
+        instanceId,
+        x: source.x + 16,
+        y: source.y + 16,
+        zIndex: prev.length,
+      };
+      // Select after state update
+      queueMicrotask(() => setSelectedId(instanceId));
+      return reindexZ([...prev, clone]);
+    });
+  };
+
   const downloadCanvas = async () => {
     if (canvasItems.length === 0 || isExporting) return;
 
@@ -254,6 +416,34 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     }
   };
 
+  useKeybindings(
+    bindings,
+    {
+      deleteSelected,
+      deselect: () => setSelectedId(null),
+      bringForward,
+      pushBackward,
+      bringToFront,
+      sendToBack,
+      nudgeLeft: () => nudgeSelected(-1, 0),
+      nudgeRight: () => nudgeSelected(1, 0),
+      nudgeUp: () => nudgeSelected(0, -1),
+      nudgeDown: () => nudgeSelected(0, 1),
+      nudgeLeftLarge: () => nudgeSelected(-10, 0),
+      nudgeRightLarge: () => nudgeSelected(10, 0),
+      nudgeUpLarge: () => nudgeSelected(0, -10),
+      nudgeDownLarge: () => nudgeSelected(0, 10),
+      duplicate: duplicateSelected,
+      download: () => {
+        void downloadCanvas();
+      },
+      openShortcuts: () => setShortcutsOpen(true),
+    },
+    { platform, enabled: !shortcutsOpen },
+  );
+
+  const modHint = formatChordForDisplay('mod+s', platform);
+
   return (
     <div
       style={{
@@ -282,26 +472,73 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
       >
         <h2 style={{ padding: '12px 20px 8px', margin: 0 }}>Device Library</h2>
 
-        <div style={{ padding: '0 12px 8px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-          <FilterChip
-            label="All"
-            active={categoryFilter === 'all'}
-            onClick={() => setCategoryFilter('all')}
-          />
-          {categories.map((category) => (
+        <div style={{ padding: '0 12px 8px' }}>
+          <div style={{ fontSize: 11, color: '#666', marginBottom: 4, fontWeight: 600 }}>
+            Brand
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
             <FilterChip
-              key={category}
-              label={category}
-              active={categoryFilter === category}
-              onClick={() => setCategoryFilter(category)}
+              label="All"
+              active={brandAll}
+              onClick={handleBrandAll}
             />
-          ))}
+            {availableBrands.map((brand) => (
+              <FilterChip
+                key={brand}
+                label={brand}
+                active={selectedBrand === brand}
+                onClick={() => handleSelectBrand(brand)}
+              />
+            ))}
+          </div>
         </div>
+
+        <div style={{ padding: '0 12px 8px' }}>
+          <div style={{ fontSize: 11, color: '#666', marginBottom: 4, fontWeight: 600 }}>
+            Product
+          </div>
+          <div
+            style={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '6px',
+              maxHeight: 120,
+              overflowY: 'auto',
+            }}
+          >
+            {availableProducts.map((product) => (
+              <FilterChip
+                key={product}
+                label={product}
+                active={selectedProductValid === product}
+                onClick={() => handleSelectProduct(product)}
+              />
+            ))}
+          </div>
+        </div>
+
+        {availableCategories.length > 0 && (
+          <div style={{ padding: '0 12px 8px' }}>
+            <div style={{ fontSize: 11, color: '#666', marginBottom: 4, fontWeight: 600 }}>
+              Category
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {availableCategories.map((category) => (
+                <FilterChip
+                  key={category}
+                  label={category}
+                  active={effectiveCategory === category}
+                  onClick={() => handleCategoryChange(category)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         <div style={{ padding: '0 12px 12px' }}>
           <input
             type="search"
-            placeholder="Search devices…"
+            placeholder="Search (e.g. iphone 11 pro, macbook air)…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             style={{
@@ -396,16 +633,38 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
             gap: '15px',
           }}
         >
-          <button onClick={bringForward} disabled={!selectedId}>
+          <button
+            onClick={bringForward}
+            disabled={!selectedId}
+            title={formatChordForDisplay(']', platform)}
+          >
             Bring Forward
           </button>
-          <button onClick={pushBackward} disabled={!selectedId}>
+          <button
+            onClick={pushBackward}
+            disabled={!selectedId}
+            title={formatChordForDisplay('[', platform)}
+          >
             Push Backward
           </button>
-          <button onClick={deleteSelected} disabled={!selectedId}>
+          <button
+            onClick={deleteSelected}
+            disabled={!selectedId}
+            title={`${formatChordForDisplay('delete', platform)} / ${formatChordForDisplay('backspace', platform)}`}
+          >
             Delete
           </button>
+          <button
+            onClick={duplicateSelected}
+            disabled={!selectedId}
+            title={formatChordForDisplay('mod+d', platform)}
+          >
+            Duplicate
+          </button>
           <div style={{ flex: 1 }} />
+          <button type="button" onClick={() => setShortcutsOpen(true)} title={formatChordForDisplay('mod+/', platform)}>
+            Shortcuts
+          </button>
           <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
             Format
             <select
@@ -435,6 +694,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
           <button
             onClick={downloadCanvas}
             disabled={canvasItems.length === 0 || isExporting}
+            title={modHint}
             style={{
               backgroundColor:
                 canvasItems.length === 0 || isExporting ? '#6c757d' : '#007bff',
@@ -515,6 +775,14 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
           </div>
         </div>
       </div>
+
+      <KeybindingsPanel
+        open={shortcutsOpen}
+        onClose={() => setShortcutsOpen(false)}
+        bindings={bindings}
+        onBindingsChange={setBindings}
+        platform={platform}
+      />
     </div>
   );
 }
