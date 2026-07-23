@@ -51,7 +51,6 @@ export default function KeybindingsPanel({
         return;
       }
 
-      // Ignore bare modifier presses
       if (
         e.key === 'Shift' ||
         e.key === 'Control' ||
@@ -92,102 +91,73 @@ export default function KeybindingsPanel({
 
   return (
     <div
+      className="ms-modal-backdrop"
       role="dialog"
       aria-modal="true"
       aria-label="Keyboard shortcuts"
-      style={{
-        position: 'fixed',
-        inset: 0,
-        backgroundColor: 'rgba(0,0,0,0.45)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 10000,
-        padding: 16,
-      }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
-      <div
-        style={{
-          backgroundColor: '#fff',
-          borderRadius: 8,
-          width: 'min(560px, 100%)',
-          maxHeight: '85vh',
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: '0 12px 40px rgba(0,0,0,0.25)',
-        }}
-      >
-        <div
-          style={{
-            padding: '16px 20px',
-            borderBottom: '1px solid #e5e5e5',
-            display: 'flex',
-            alignItems: 'center',
-            gap: 12,
-          }}
-        >
+      <div className="ms-modal">
+        <div className="ms-modal-header">
           <div style={{ flex: 1 }}>
-            <h2 style={{ margin: 0, fontSize: 18 }}>Keyboard shortcuts</h2>
-            <p style={{ margin: '4px 0 0', fontSize: 13, color: '#666' }}>
+            <h2>Keyboard shortcuts</h2>
+            <p className="ms-modal-sub">
               Shortcuts for {platformDisplayName(platform)}. Remaps apply only
               on this OS.
             </p>
           </div>
-          <button type="button" onClick={handleReset}>
-            Reset to defaults
+          <button type="button" className="ms-btn" onClick={handleReset}>
+            Reset
           </button>
-          <button type="button" onClick={onClose}>
+          <button type="button" className="ms-btn ms-btn--ghost" onClick={onClose}>
             Close
           </button>
         </div>
 
-        <div style={{ overflowY: 'auto', padding: '8px 12px 16px' }}>
+        <div className="ms-modal-body">
           {listeningAction && (
-            <p
-              style={{
-                margin: '8px 8px 12px',
-                padding: '10px 12px',
-                backgroundColor: '#e7f1ff',
-                borderRadius: 4,
-                fontSize: 13,
-              }}
-            >
+            <p className="ms-listen-hint">
               Press a new key combination for{' '}
               <strong>{ACTION_LABELS[listeningAction]}</strong>… (Esc to cancel)
             </p>
           )}
 
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 14 }}>
+          <table className="ms-keys-table">
             <thead>
-              <tr style={{ textAlign: 'left', color: '#666' }}>
-                <th style={{ padding: '8px', fontWeight: 500 }}>Action</th>
-                <th style={{ padding: '8px', fontWeight: 500 }}>Keys</th>
-                <th style={{ padding: '8px', fontWeight: 500 }} />
+              <tr>
+                <th>Action</th>
+                <th>Keys</th>
+                <th />
               </tr>
             </thead>
             <tbody>
               {ACTION_ORDER.map((id) => (
-                <tr key={id} style={{ borderTop: '1px solid #eee' }}>
-                  <td style={{ padding: '10px 8px' }}>{ACTION_LABELS[id]}</td>
-                  <td style={{ padding: '10px 8px', fontFamily: 'ui-monospace, monospace' }}>
-                    {listeningAction === id
-                      ? '…'
-                      : formatBindingsForDisplay(bindings[id] ?? [], platform) ||
-                        '—'}
+                <tr key={id}>
+                  <td>{ACTION_LABELS[id]}</td>
+                  <td>
+                    <code>
+                      {listeningAction === id
+                        ? '…'
+                        : formatBindingsForDisplay(bindings[id] ?? [], platform) ||
+                          '—'}
+                    </code>
                   </td>
-                  <td style={{ padding: '10px 8px', whiteSpace: 'nowrap' }}>
+                  <td style={{ whiteSpace: 'nowrap' }}>
                     <button
                       type="button"
+                      className="ms-btn"
                       onClick={() => setListeningAction(id)}
-                      disabled={listeningAction !== null && listeningAction !== id}
+                      disabled={
+                        listeningAction !== null && listeningAction !== id
+                      }
                     >
                       Rebind
                     </button>{' '}
                     <button
                       type="button"
+                      className="ms-btn ms-btn--ghost"
                       onClick={() => handleClear(id)}
                       disabled={(bindings[id] ?? []).length === 0}
                     >
@@ -199,7 +169,7 @@ export default function KeybindingsPanel({
             </tbody>
           </table>
 
-          <p style={{ margin: '12px 8px 0', fontSize: 12, color: '#888' }}>
+          <p className="ms-modal-foot">
             Defaults use Mod = {isMacHint(platform)}. Example:{' '}
             {formatChordForDisplay('mod+s', platform)}.
           </p>

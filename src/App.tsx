@@ -98,11 +98,7 @@ if (missing.length > 0) {
 }
 
 function App() {
-  return (
-    <div style={{ height: '100%', width: '100%', minHeight: 0 }}>
-      <MockupStudio groupedLibrary={groupByCategory} />
-    </div>
-  );
+  return <MockupStudio groupedLibrary={groupByCategory} />;
 }
 
 export default App;

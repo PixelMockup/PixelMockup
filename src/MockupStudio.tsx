@@ -18,13 +18,7 @@ import {
   type BindingMap,
 } from './keybindings';
 import { useKeybindings } from './useKeybindings';
-
-const CHECKERBOARD_BG = `
-  linear-gradient(45deg, #e8e8e8 25%, transparent 25%),
-  linear-gradient(-45deg, #e8e8e8 25%, transparent 25%),
-  linear-gradient(45deg, transparent 75%, #e8e8e8 75%),
-  linear-gradient(-45deg, transparent 75%, #e8e8e8 75%)
-`.replace(/\s+/g, ' ');
+import { useTheme } from './useTheme';
 
 function clientToLogical(
   clientX: number,
@@ -73,10 +67,12 @@ function loadNativeSize(
 
 export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
   const platform = useMemo(() => detectPlatform(), []);
+  const { theme, toggleTheme } = useTheme();
   const [bindings, setBindings] = useState<BindingMap>(() =>
     loadBindingsForPlatform(platform),
   );
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [libraryOpen, setLibraryOpen] = useState(false);
 
   const [canvasItems, setCanvasItems] = useState<CanvasItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -254,6 +250,9 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
       },
     ]);
     setSelectedId(instanceId);
+    if (window.matchMedia('(max-width: 1024px)').matches) {
+      setLibraryOpen(false);
+    }
   };
 
   const handlePointerDown = (e: React.PointerEvent, item: CanvasItem) => {
@@ -444,332 +443,290 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
 
   return (
     <div
-      style={{
-        display: 'flex',
-        height: '100%',
-        minHeight: 0,
-        width: '100%',
-        fontFamily: 'sans-serif',
-        overflow: 'hidden',
-        margin: 0,
-      }}
+      className="ms-app"
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
     >
-      {/* LEFT PANEL: Library */}
-      <div
-        style={{
-          width: '320px',
-          borderRight: '1px solid #ccc',
-          display: 'flex',
-          flexDirection: 'column',
-          backgroundColor: '#f8f9fa',
-          minHeight: 0,
-        }}
-      >
-        <h2 style={{ padding: '12px 20px 8px', margin: 0 }}>Device Library</h2>
+      <header className="ms-topbar">
+        <button type="button" className="ms-brand">
+          Mockup Studio
+        </button>
+        <div className="ms-topbar-spacer" />
+        <div className="ms-topbar-actions">
+          <button
+            type="button"
+            className="ms-btn ms-btn--icon ms-library-toggle"
+            onClick={() => setLibraryOpen(true)}
+            aria-expanded={libraryOpen}
+            aria-controls="ms-device-library"
+            aria-label="Open device library"
+          >
+            <span className="ms-burger" aria-hidden="true">
+              <span />
+              <span />
+              <span />
+            </span>
+          </button>
+          <button
+            type="button"
+            className="ms-btn ms-btn--icon"
+            onClick={toggleTheme}
+            aria-pressed={theme === 'dark'}
+            aria-label={
+              theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'
+            }
+            title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+          >
+            {theme === 'dark' ? 'Light' : 'Dark'}
+          </button>
+          <button
+            type="button"
+            className="ms-btn"
+            onClick={() => setShortcutsOpen(true)}
+            title={formatChordForDisplay('mod+/', platform)}
+          >
+            Shortcuts
+          </button>
+        </div>
+      </header>
 
-        {availableCategories.length > 0 && (
-          <div style={{ padding: '0 12px 8px' }}>
-            <div style={{ fontSize: 11, color: '#666', marginBottom: 4, fontWeight: 600 }}>
-              Category
+      <div className="ms-body">
+        <div
+          className={`ms-library-backdrop${libraryOpen ? ' is-open' : ''}`}
+          onClick={() => setLibraryOpen(false)}
+          aria-hidden={!libraryOpen}
+        />
+
+        <aside
+          id="ms-device-library"
+          className={`ms-library${libraryOpen ? ' is-open' : ''}`}
+          aria-label="Device library"
+        >
+          <div className="ms-library-header">
+            <h2 className="ms-library-title">Device Library</h2>
+            <button
+              type="button"
+              className="ms-btn ms-btn--ghost ms-library-close"
+              onClick={() => setLibraryOpen(false)}
+              aria-label="Close library"
+            >
+              Close
+            </button>
+          </div>
+
+          {availableCategories.length > 0 && (
+            <div className="ms-filter-block">
+              <div className="ms-filter-label">Category</div>
+              <div className="ms-chip-row">
+                {availableCategories.map((category) => (
+                  <FilterChip
+                    key={category}
+                    label={category}
+                    active={effectiveCategory === category}
+                    onClick={() => handleCategoryChange(category)}
+                  />
+                ))}
+              </div>
             </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {availableCategories.map((category) => (
+          )}
+
+          <div className="ms-filter-block">
+            <div className="ms-filter-label">Brand</div>
+            <div className="ms-chip-row">
+              <FilterChip
+                label="All"
+                active={brandAll}
+                onClick={handleBrandAll}
+              />
+              {availableBrands.map((brand) => (
                 <FilterChip
-                  key={category}
-                  label={category}
-                  active={effectiveCategory === category}
-                  onClick={() => handleCategoryChange(category)}
+                  key={brand}
+                  label={brand}
+                  active={!brandAll && selectedBrand === brand}
+                  onClick={() => handleSelectBrand(brand)}
                 />
               ))}
             </div>
           </div>
-        )}
 
-        <div style={{ padding: '0 12px 8px' }}>
-          <div style={{ fontSize: 11, color: '#666', marginBottom: 4, fontWeight: 600 }}>
-            Brand
+          <div className="ms-filter-block">
+            <div className="ms-filter-label">Product</div>
+            <div className="ms-chip-row">
+              {availableProducts.map((product) => (
+                <FilterChip
+                  key={product}
+                  label={product}
+                  active={selectedProductValid === product}
+                  onClick={() => handleSelectProduct(product)}
+                />
+              ))}
+            </div>
           </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-            <FilterChip
-              label="All"
-              active={brandAll}
-              onClick={handleBrandAll}
+
+          <div className="ms-filter-block">
+            <input
+              className="ms-search"
+              type="search"
+              placeholder="Search (e.g. iphone 11 pro, macbook air)…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label="Search devices"
             />
-            {availableBrands.map((brand) => (
-              <FilterChip
-                key={brand}
-                label={brand}
-                active={!brandAll && selectedBrand === brand}
-                onClick={() => handleSelectBrand(brand)}
-              />
-            ))}
           </div>
-        </div>
 
-        <div style={{ padding: '0 12px 8px' }}>
-          <div style={{ fontSize: 11, color: '#666', marginBottom: 4, fontWeight: 600 }}>
-            Product
-          </div>
-          <div
-            style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '6px',
-              maxHeight: 120,
-              overflowY: 'auto',
-            }}
-          >
-            {availableProducts.map((product) => (
-              <FilterChip
-                key={product}
-                label={product}
-                active={selectedProductValid === product}
-                onClick={() => handleSelectProduct(product)}
-              />
-            ))}
-          </div>
-        </div>
-
-        <div style={{ padding: '0 12px 12px' }}>
-          <input
-            type="search"
-            placeholder="Search (e.g. iphone 11 pro, macbook air)…"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            style={{
-              width: '100%',
-              boxSizing: 'border-box',
-              padding: '8px 10px',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-              fontSize: '14px',
-            }}
-          />
-        </div>
-
-        <div style={{ flex: 1, overflowY: 'auto', minHeight: 0 }}>
-          {filteredLibrary.length === 0 ? (
-            <p style={{ padding: '0 20px', color: '#666', fontSize: '14px' }}>
-              No devices match.
-            </p>
-          ) : (
-            filteredLibrary.map(({ category, items }) => (
-              <div key={category} style={{ marginBottom: '20px' }}>
-                <h3
-                  style={{
-                    backgroundColor: '#e9ecef',
-                    padding: '10px 20px',
-                    margin: 0,
-                    textTransform: 'capitalize',
-                  }}
-                >
-                  {category}
-                </h3>
-                <div
-                  style={{
-                    display: 'flex',
-                    flexWrap: 'wrap',
-                    gap: '15px',
-                    padding: '15px',
-                  }}
-                >
-                  {items.map((item) => (
-                    <div
-                      key={item.path}
-                      onClick={() => handleAddAndSelect(item)}
-                      style={{ cursor: 'pointer', textAlign: 'center' }}
-                    >
-                      <img
-                        src={item.src}
-                        alt={item.name}
-                        style={{
-                          width: '80px',
-                          height: '80px',
-                          objectFit: 'contain',
-                        }}
-                      />
-                      <p
-                        style={{
-                          fontSize: '12px',
-                          margin: '5px 0',
-                          maxWidth: '80px',
-                          wordWrap: 'break-word',
-                        }}
+          <div className="ms-library-results">
+            {filteredLibrary.length === 0 ? (
+              <p className="ms-empty">No devices match.</p>
+            ) : (
+              filteredLibrary.map(({ category, items }) => (
+                <div key={category} className="ms-device-section">
+                  <h3 className="ms-device-section-title">{category}</h3>
+                  <div className="ms-device-grid">
+                    {items.map((item) => (
+                      <button
+                        key={item.path}
+                        type="button"
+                        className="ms-device-tile"
+                        onClick={() => void handleAddAndSelect(item)}
                       >
-                        {item.name}
-                      </p>
-                    </div>
-                  ))}
+                        <img src={item.src} alt="" />
+                        <span>{item.name}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))
-          )}
-        </div>
-      </div>
+              ))
+            )}
+          </div>
+        </aside>
 
-      {/* RIGHT PANEL: Canvas & Controls */}
-      <div
-        style={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-          backgroundColor: '#e0e0e0',
-          minWidth: 0,
-        }}
-      >
-        <div
-          style={{
-            height: '60px',
-            backgroundColor: '#fff',
-            borderBottom: '1px solid #ccc',
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0 20px',
-            gap: '15px',
-          }}
-        >
-          <button
-            onClick={bringForward}
-            disabled={!selectedId}
-            title={formatChordForDisplay(']', platform)}
-          >
-            Bring Forward
-          </button>
-          <button
-            onClick={pushBackward}
-            disabled={!selectedId}
-            title={formatChordForDisplay('[', platform)}
-          >
-            Push Backward
-          </button>
-          <button
-            onClick={deleteSelected}
-            disabled={!selectedId}
-            title={`${formatChordForDisplay('delete', platform)} / ${formatChordForDisplay('backspace', platform)}`}
-          >
-            Delete
-          </button>
-          <button
-            onClick={duplicateSelected}
-            disabled={!selectedId}
-            title={formatChordForDisplay('mod+d', platform)}
-          >
-            Duplicate
-          </button>
-          <div style={{ flex: 1 }} />
-          <button type="button" onClick={() => setShortcutsOpen(true)} title={formatChordForDisplay('mod+/', platform)}>
-            Shortcuts
-          </button>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
-            Format
-            <select
-              value={exportFormat}
-              onChange={(e) => setExportFormat(e.target.value as ExportFormat)}
-              style={{ padding: '6px 8px', borderRadius: '4px', border: '1px solid #ccc' }}
-            >
-              <option value="png">PNG</option>
-              <option value="jpg">JPG</option>
-            </select>
-          </label>
-          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
-            Resolution
-            <select
-              value={exportResolution}
-              onChange={(e) =>
-                setExportResolution(e.target.value as ExportResolution)
-              }
-              style={{ padding: '6px 8px', borderRadius: '4px', border: '1px solid #ccc' }}
-            >
-              <option value="best">Best</option>
-              <option value="1440p">1440p</option>
-              <option value="1080p">1080p</option>
-              <option value="720p">720p</option>
-            </select>
-          </label>
-          <button
-            onClick={downloadCanvas}
-            disabled={canvasItems.length === 0 || isExporting}
-            title={modHint}
-            style={{
-              backgroundColor:
-                canvasItems.length === 0 || isExporting ? '#6c757d' : '#007bff',
-              color: 'white',
-              padding: '8px 16px',
-              border: 'none',
-              borderRadius: '4px',
-              cursor:
-                canvasItems.length === 0 || isExporting
-                  ? 'not-allowed'
-                  : 'pointer',
-            }}
-          >
-            {isExporting ? 'Exporting…' : 'Download Mockup'}
-          </button>
-        </div>
+        <div className="ms-workspace">
+          <div className="ms-toolbar">
+            <div className="ms-toolbar-group">
+              <span className="ms-toolbar-label">Arrange</span>
+              <button
+                type="button"
+                className="ms-btn"
+                onClick={bringForward}
+                disabled={!selectedId}
+                title={formatChordForDisplay(']', platform)}
+              >
+                Forward
+              </button>
+              <button
+                type="button"
+                className="ms-btn"
+                onClick={pushBackward}
+                disabled={!selectedId}
+                title={formatChordForDisplay('[', platform)}
+              >
+                Back
+              </button>
+              <button
+                type="button"
+                className="ms-btn"
+                onClick={duplicateSelected}
+                disabled={!selectedId}
+                title={formatChordForDisplay('mod+d', platform)}
+              >
+                Duplicate
+              </button>
+              <button
+                type="button"
+                className="ms-btn ms-btn--danger"
+                onClick={deleteSelected}
+                disabled={!selectedId}
+                title={`${formatChordForDisplay('delete', platform)} / ${formatChordForDisplay('backspace', platform)}`}
+              >
+                Delete
+              </button>
+            </div>
 
-        <div
-          style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '24px',
-            backgroundColor: '#d0d0d0',
-            minHeight: 0,
-            boxSizing: 'border-box',
-            // Enable size queries so the artboard fits width and height
-            containerType: 'size',
-          }}
-        >
-          <div
-            ref={canvasRef}
-            style={{
-              width: `min(100cqw, ${ARTBOARD_WIDTH}px, calc(100cqh * ${ARTBOARD_WIDTH} / ${ARTBOARD_HEIGHT}))`,
-              aspectRatio: `${ARTBOARD_WIDTH} / ${ARTBOARD_HEIGHT}`,
-              position: 'relative',
-              overflow: 'hidden',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
-              border: '1px solid #bbb',
-              backgroundColor: '#f5f5f5',
-              backgroundImage: CHECKERBOARD_BG,
-              backgroundSize: '20px 20px',
-              backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0',
-              flexShrink: 0,
-            }}
-            onClick={(e) => {
-              if (e.target === canvasRef.current) setSelectedId(null);
-            }}
-          >
-            {canvasItems.map((item) => {
-              return (
+            <div className="ms-toolbar-spacer" />
+
+            <div className="ms-toolbar-group">
+              <span className="ms-toolbar-label">Export</span>
+              <label className="ms-field">
+                Format
+                <select
+                  className="ms-select"
+                  value={exportFormat}
+                  onChange={(e) =>
+                    setExportFormat(e.target.value as ExportFormat)
+                  }
+                >
+                  <option value="png">PNG</option>
+                  <option value="jpg">JPG</option>
+                </select>
+              </label>
+              <label className="ms-field">
+                Resolution
+                <select
+                  className="ms-select"
+                  value={exportResolution}
+                  onChange={(e) =>
+                    setExportResolution(e.target.value as ExportResolution)
+                  }
+                >
+                  <option value="best">Best</option>
+                  <option value="1440p">1440p</option>
+                  <option value="1080p">1080p</option>
+                  <option value="720p">720p</option>
+                </select>
+              </label>
+              <button
+                type="button"
+                className="ms-btn ms-btn--primary"
+                onClick={() => void downloadCanvas()}
+                disabled={canvasItems.length === 0 || isExporting}
+                title={modHint}
+              >
+                {isExporting ? 'Exporting…' : 'Download'}
+              </button>
+            </div>
+          </div>
+
+          <div className="ms-stage">
+            <div
+              ref={canvasRef}
+              className="ms-artboard"
+              style={{
+                width: `min(100cqw, ${ARTBOARD_WIDTH}px, calc(100cqh * ${ARTBOARD_WIDTH} / ${ARTBOARD_HEIGHT}))`,
+                aspectRatio: `${ARTBOARD_WIDTH} / ${ARTBOARD_HEIGHT}`,
+              }}
+              onClick={(e) => {
+                if (e.target === canvasRef.current) setSelectedId(null);
+              }}
+            >
+              {canvasItems.map((item) => (
                 <img
                   key={item.instanceId}
                   src={item.src}
                   alt={item.name}
                   draggable={false}
                   onPointerDown={(e) => handlePointerDown(e, item)}
+                  className={[
+                    'ms-canvas-item',
+                    selectedId === item.instanceId
+                      ? 'ms-canvas-item--selected'
+                      : '',
+                    dragInfo.id === item.instanceId
+                      ? 'ms-canvas-item--grabbing'
+                      : 'ms-canvas-item--grab',
+                  ]
+                    .filter(Boolean)
+                    .join(' ')}
                   style={{
-                    position: 'absolute',
                     left: `${(item.x / ARTBOARD_WIDTH) * 100}%`,
                     top: `${(item.y / ARTBOARD_HEIGHT) * 100}%`,
                     width: `${(item.displayWidth / ARTBOARD_WIDTH) * 100}%`,
                     height: `${(item.displayHeight / ARTBOARD_HEIGHT) * 100}%`,
-                    objectFit: 'contain',
                     zIndex: item.zIndex,
-                    cursor:
-                      dragInfo.id === item.instanceId ? 'grabbing' : 'grab',
-                    outline:
-                      selectedId === item.instanceId
-                        ? '2px solid #007bff'
-                        : 'none',
-                    userSelect: 'none',
                   }}
                 />
-              );
-            })}
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -797,17 +754,9 @@ function FilterChip({
   return (
     <button
       type="button"
+      className="ms-chip"
       onClick={onClick}
-      style={{
-        padding: '4px 10px',
-        borderRadius: '999px',
-        border: active ? '1px solid #007bff' : '1px solid #ccc',
-        backgroundColor: active ? '#007bff' : '#fff',
-        color: active ? '#fff' : '#333',
-        cursor: 'pointer',
-        fontSize: '12px',
-        textTransform: 'capitalize',
-      }}
+      aria-pressed={active}
     >
       {label}
     </button>
