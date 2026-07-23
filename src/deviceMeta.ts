@@ -87,7 +87,6 @@ export function parseBrand(name: string | undefined): string {
   ) {
     return 'Google';
   }
-  if (lower.startsWith('nokia')) return 'Nokia';
   if (lower.startsWith('motorola') || lower.startsWith('moto ')) return 'Motorola';
   if (lower.startsWith('htc')) return 'HTC';
   if (lower.startsWith('huawei')) return 'Huawei';
@@ -153,7 +152,6 @@ export function parseProductFamily(
   s = s.replace(/^Sony\s+/i, '');
   s = s.replace(/^HTC\s+/i, '');
   s = s.replace(/^Huawei\s+/i, '');
-  s = s.replace(/^Nokia\s+/i, '');
   s = s.replace(/^Motorola\s+/i, '');
 
   // Collapse Sport / Aluminum leftover noise on watches after band strip

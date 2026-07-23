@@ -60,10 +60,6 @@ DIMENSIONS: dict[str, dict] = {
     "nexus-4": {"width_mm": 68.7, "height_mm": 133.9, "source": "Google / LG specs"},
     "nexus-5x": {"width_mm": 72.6, "height_mm": 147.0, "source": "Google / LG specs"},
     "nexus-6p": {"width_mm": 77.8, "height_mm": 159.3, "source": "Google / Huawei specs"},
-    "nokia-220": {"width_mm": 56.0, "height_mm": 116.4, "source": "Nokia / GSMArena"},
-    "nokia-230": {"width_mm": 53.7, "height_mm": 124.6, "source": "Nokia / GSMArena"},
-    "nokia-asha-230": {"width_mm": 53.7, "height_mm": 124.6, "source": "Nokia / GSMArena"},
-    "nokia-c3-00": {"width_mm": 58.1, "height_mm": 115.5, "source": "Nokia / GSMArena"},
     "samsung-galaxy-grand-prime": {
         "width_mm": 72.1,
         "height_mm": 144.8,
@@ -81,7 +77,6 @@ DIMENSIONS: dict[str, dict] = {
     "samsung-galaxy-s7": {"width_mm": 69.6, "height_mm": 142.4, "source": "Samsung specs"},
     "samsung-galaxy-s8": {"width_mm": 68.1, "height_mm": 148.9, "source": "Samsung specs"},
     "samsung-galaxy-s9": {"width_mm": 68.7, "height_mm": 147.7, "source": "Samsung specs"},
-    "samsung-galaxy-y": {"width_mm": 58.0, "height_mm": 104.0, "source": "Samsung / GSMArena"},
     # --- Tablets ---
     "apple-ipad": {
         "width_mm": 185.7,
@@ -287,13 +282,6 @@ def normalize_stem(stem: str) -> str:
         name = "Sony W850C"
         if not variant:
             variant = "-1"
-    elif name == "Nokia Asha 230 230 White":
-        # Duplicate "230" typo; White.svg already exists → use White-1
-        name = "Nokia Asha 230 White"
-        if not variant:
-            variant = "-1"
-    else:
-        name = name.replace("Nokia Asha 230 230 ", "Nokia Asha 230 ")
 
     # Hyphenated MacBook → spaces
     if name.startswith("Apple-Macbook") or name.startswith("Apple-MacBook"):

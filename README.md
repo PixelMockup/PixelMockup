@@ -26,7 +26,7 @@ Open the URL Vite prints (usually http://localhost:5173).
 
 ## Usage
 
-1. Filter the device library by **Brand** (All or one brand), then optional **Product** (one at a time), then **Category** (phones, laptops, …); or use search (token match, e.g. `iphone 11 pro`).
+1. Filter the device library by **Category** (phones, laptops, …), then **Brand** (All or one brand), then optional **Product** (one at a time); or use search (token match, e.g. `iphone 11 pro`).
 2. Click a device to place it on the **16:9 artboard** (1280×720 logical). Devices are sized from real-world **width × height in mm** (shared `PX_PER_MM` scale), so a MacBook Air next to an iPhone matches real proportions.
 3. Drag to position; use **Bring Forward** / **Push Backward** for layer order; **Delete** removes the selection.
 4. Choose **Format** (PNG or JPG) and **Resolution** (Best / 1440p / 1080p / 720p), then **Download Mockup**.

@@ -3,12 +3,12 @@
 Real-world body **width × height** in **millimeters** for every asset in `src/assets/device_library/`.
 
 - Unit: `mm` only
-- Devices: **554**
+- Devices: **522**
 - Machine-readable: [`src/data/device_dimensions.json`](src/data/device_dimensions.json)
 
 Color / `-1` / Open-Closed variants share a `model_key` and the same chassis size.
 
-## Phones (256)
+## Phones (224)
 
 | File name | Device name | Width (mm) | Height (mm) | Notes |
 | --- | --- | ---: | ---: | --- |
@@ -182,34 +182,6 @@ Color / `-1` / Open-Closed variants share a `model_key` and the same chassis siz
 | `Nexus 5x.svg` | Nexus 5x | 72.6 | 147.0 |  |
 | `Nexus 6P-1.svg` | Nexus 6P-1 | 77.8 | 159.3 |  |
 | `Nexus 6P.svg` | Nexus 6P | 77.8 | 159.3 |  |
-| `Nokia 220 Black-1.svg` | Nokia 220 Black-1 | 56.0 | 116.4 |  |
-| `Nokia 220 Black.svg` | Nokia 220 Black | 56.0 | 116.4 |  |
-| `Nokia 220 Blue-1.svg` | Nokia 220 Blue-1 | 56.0 | 116.4 |  |
-| `Nokia 220 Blue.svg` | Nokia 220 Blue | 56.0 | 116.4 |  |
-| `Nokia 220 Red-1.svg` | Nokia 220 Red-1 | 56.0 | 116.4 |  |
-| `Nokia 220 Red.svg` | Nokia 220 Red | 56.0 | 116.4 |  |
-| `Nokia 220 White-1.svg` | Nokia 220 White-1 | 56.0 | 116.4 |  |
-| `Nokia 220 White.svg` | Nokia 220 White | 56.0 | 116.4 |  |
-| `Nokia 220 Yellow-1.svg` | Nokia 220 Yellow-1 | 56.0 | 116.4 |  |
-| `Nokia 220 Yellow.svg` | Nokia 220 Yellow | 56.0 | 116.4 |  |
-| `Nokia 230 Black-1.svg` | Nokia 230 Black-1 | 53.7 | 124.6 |  |
-| `Nokia 230 Black.svg` | Nokia 230 Black | 53.7 | 124.6 |  |
-| `Nokia 230 White-1.svg` | Nokia 230 White-1 | 53.7 | 124.6 |  |
-| `Nokia 230 White.svg` | Nokia 230 White | 53.7 | 124.6 |  |
-| `Nokia Asha 230 Black-1.svg` | Nokia Asha 230 Black-1 | 53.7 | 124.6 |  |
-| `Nokia Asha 230 Black.svg` | Nokia Asha 230 Black | 53.7 | 124.6 |  |
-| `Nokia Asha 230 Blue-1.svg` | Nokia Asha 230 Blue-1 | 53.7 | 124.6 |  |
-| `Nokia Asha 230 Blue.svg` | Nokia Asha 230 Blue | 53.7 | 124.6 |  |
-| `Nokia Asha 230 Green-1.svg` | Nokia Asha 230 Green-1 | 53.7 | 124.6 |  |
-| `Nokia Asha 230 Green.svg` | Nokia Asha 230 Green | 53.7 | 124.6 |  |
-| `Nokia Asha 230 Red-1.svg` | Nokia Asha 230 Red-1 | 53.7 | 124.6 |  |
-| `Nokia Asha 230 Red.svg` | Nokia Asha 230 Red | 53.7 | 124.6 |  |
-| `Nokia Asha 230 White-1.svg` | Nokia Asha 230 White-1 | 53.7 | 124.6 |  |
-| `Nokia Asha 230 White.svg` | Nokia Asha 230 White | 53.7 | 124.6 |  |
-| `Nokia Asha 230 Yellow-1.svg` | Nokia Asha 230 Yellow-1 | 53.7 | 124.6 |  |
-| `Nokia Asha 230 Yellow.svg` | Nokia Asha 230 Yellow | 53.7 | 124.6 |  |
-| `Nokia C3-00-1.svg` | Nokia C3-00-1 | 58.1 | 115.5 |  |
-| `Nokia C3-00.svg` | Nokia C3-00 | 58.1 | 115.5 |  |
 | `Samsung Galaxy Grand Prime Black-1.svg` | Samsung Galaxy Grand Prime Black-1 | 72.1 | 144.8 |  |
 | `Samsung Galaxy Grand Prime Black.svg` | Samsung Galaxy Grand Prime Black | 72.1 | 144.8 |  |
 | `Samsung Galaxy Grand Prime Gold-1.svg` | Samsung Galaxy Grand Prime Gold-1 | 72.1 | 144.8 |  |
@@ -264,10 +236,6 @@ Color / `-1` / Open-Closed variants share a `model_key` and the same chassis siz
 | `Samsung Galaxy S9 Sunrise Gold.svg` | Samsung Galaxy S9 Sunrise Gold | 68.7 | 147.7 |  |
 | `Samsung Galaxy S9 Titanium Gray-1.svg` | Samsung Galaxy S9 Titanium Gray-1 | 68.7 | 147.7 |  |
 | `Samsung Galaxy S9 Titanium Gray.svg` | Samsung Galaxy S9 Titanium Gray | 68.7 | 147.7 |  |
-| `Samsung Galaxy Y Black-1.svg` | Samsung Galaxy Y Black-1 | 58.0 | 104.0 |  |
-| `Samsung Galaxy Y Black.svg` | Samsung Galaxy Y Black | 58.0 | 104.0 |  |
-| `Samsung Galaxy Y White-1.svg` | Samsung Galaxy Y White-1 | 58.0 | 104.0 |  |
-| `Samsung Galaxy Y White.svg` | Samsung Galaxy Y White | 58.0 | 104.0 |  |
 
 ## Tablets (56)
 

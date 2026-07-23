@@ -97,11 +97,6 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
 
   const canvasRef = useRef<HTMLDivElement>(null);
 
-  const allDevices = useMemo(
-    () => Object.values(groupedLibrary).flat(),
-    [groupedLibrary],
-  );
-
   const categories = useMemo(() => {
     const present = new Set(Object.keys(groupedLibrary));
     const ordered = CATEGORY_ORDER.filter((c) => present.has(c));
@@ -111,39 +106,8 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     return [...ordered, ...extras];
   }, [groupedLibrary]);
 
-  const brandAll = selectedBrand == null;
-
-  const availableBrands = useMemo(() => {
-    const set = new Set(allDevices.map((d) => d.brand));
-    return [...set].sort((a, b) => a.localeCompare(b));
-  }, [allDevices]);
-
-  const brandFilteredDevices = useMemo(() => {
-    if (brandAll) return allDevices;
-    return allDevices.filter((d) => d.brand === selectedBrand);
-  }, [allDevices, brandAll, selectedBrand]);
-
-  const availableProducts = useMemo(() => {
-    const set = new Set(brandFilteredDevices.map((d) => d.productFamily));
-    return [...set].sort((a, b) => a.localeCompare(b));
-  }, [brandFilteredDevices]);
-
-  const selectedProductValid =
-    selectedProduct != null && availableProducts.includes(selectedProduct)
-      ? selectedProduct
-      : null;
-
-  const scopedDevices = useMemo(() => {
-    if (selectedProductValid == null) return brandFilteredDevices;
-    return brandFilteredDevices.filter(
-      (d) => d.productFamily === selectedProductValid,
-    );
-  }, [brandFilteredDevices, selectedProductValid]);
-
-  const availableCategories = useMemo(() => {
-    const set = new Set(scopedDevices.map((d) => d.category));
-    return categories.filter((c) => set.has(c));
-  }, [scopedDevices, categories]);
+  /** Category list is always the full library set (Category-first). */
+  const availableCategories = categories;
 
   const effectiveCategory =
     categoryFilter && availableCategories.includes(categoryFilter)
@@ -163,6 +127,41 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     }
   }, [availableCategories, categoryFilter]);
 
+  const categoryDevices = useMemo(() => {
+    if (!effectiveCategory) return [] as DeviceItem[];
+    return groupedLibrary[effectiveCategory] ?? [];
+  }, [groupedLibrary, effectiveCategory]);
+
+  const availableBrands = useMemo(() => {
+    const set = new Set(categoryDevices.map((d) => d.brand));
+    return [...set].sort((a, b) => a.localeCompare(b));
+  }, [categoryDevices]);
+
+  const brandAll =
+    selectedBrand == null || !availableBrands.includes(selectedBrand);
+
+  const brandFilteredDevices = useMemo(() => {
+    if (brandAll) return categoryDevices;
+    return categoryDevices.filter((d) => d.brand === selectedBrand);
+  }, [categoryDevices, brandAll, selectedBrand]);
+
+  const availableProducts = useMemo(() => {
+    const set = new Set(brandFilteredDevices.map((d) => d.productFamily));
+    return [...set].sort((a, b) => a.localeCompare(b));
+  }, [brandFilteredDevices]);
+
+  const selectedProductValid =
+    selectedProduct != null && availableProducts.includes(selectedProduct)
+      ? selectedProduct
+      : null;
+
+  useEffect(() => {
+    if (selectedBrand != null && !availableBrands.includes(selectedBrand)) {
+      setSelectedBrand(null);
+      setSelectedProduct(null);
+    }
+  }, [availableBrands, selectedBrand]);
+
   useEffect(() => {
     if (
       selectedProduct != null &&
@@ -177,8 +176,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
       return [] as { category: string; items: DeviceItem[] }[];
     }
 
-    let items = (groupedLibrary[effectiveCategory] ?? []).filter((item) => {
-      if (!brandAll && item.brand !== selectedBrand) return false;
+    let items = brandFilteredDevices.filter((item) => {
       if (
         selectedProductValid != null &&
         item.productFamily !== selectedProductValid
@@ -192,9 +190,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     return [{ category: effectiveCategory, items }];
   }, [
     effectiveCategory,
-    groupedLibrary,
-    brandAll,
-    selectedBrand,
+    brandFilteredDevices,
     selectedProductValid,
     searchQuery,
   ]);
@@ -215,6 +211,8 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
 
   const handleCategoryChange = (next: string) => {
     setCategoryFilter(next);
+    setSelectedProduct(null);
+    // Brand reset happens via effect if invalid for the new category
   };
 
   const handleAddAndSelect = async (item: DeviceItem) => {
@@ -472,6 +470,24 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
       >
         <h2 style={{ padding: '12px 20px 8px', margin: 0 }}>Device Library</h2>
 
+        {availableCategories.length > 0 && (
+          <div style={{ padding: '0 12px 8px' }}>
+            <div style={{ fontSize: 11, color: '#666', marginBottom: 4, fontWeight: 600 }}>
+              Category
+            </div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+              {availableCategories.map((category) => (
+                <FilterChip
+                  key={category}
+                  label={category}
+                  active={effectiveCategory === category}
+                  onClick={() => handleCategoryChange(category)}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
         <div style={{ padding: '0 12px 8px' }}>
           <div style={{ fontSize: 11, color: '#666', marginBottom: 4, fontWeight: 600 }}>
             Brand
@@ -486,7 +502,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
               <FilterChip
                 key={brand}
                 label={brand}
-                active={selectedBrand === brand}
+                active={!brandAll && selectedBrand === brand}
                 onClick={() => handleSelectBrand(brand)}
               />
             ))}
@@ -516,24 +532,6 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
             ))}
           </div>
         </div>
-
-        {availableCategories.length > 0 && (
-          <div style={{ padding: '0 12px 8px' }}>
-            <div style={{ fontSize: 11, color: '#666', marginBottom: 4, fontWeight: 600 }}>
-              Category
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-              {availableCategories.map((category) => (
-                <FilterChip
-                  key={category}
-                  label={category}
-                  active={effectiveCategory === category}
-                  onClick={() => handleCategoryChange(category)}
-                />
-              ))}
-            </div>
-          </div>
-        )}
 
         <div style={{ padding: '0 12px 12px' }}>
           <input
