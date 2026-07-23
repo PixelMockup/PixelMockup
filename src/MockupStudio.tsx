@@ -4,8 +4,7 @@ import {
   ARTBOARD_HEIGHT,
   ARTBOARD_WIDTH,
   CATEGORY_ORDER,
-  displayHeightFor,
-  getDisplayWidth,
+  displaySizeFromMm,
   type ExportFormat,
   type ExportResolution,
 } from './deviceScale';
@@ -40,6 +39,7 @@ interface CanvasItem extends DeviceItem {
   y: number;
   zIndex: number;
   displayWidth: number;
+  displayHeight: number;
   nativeWidth: number;
   nativeHeight: number;
 }
@@ -110,17 +110,27 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
   }, [groupedLibrary, categories, categoryFilter, searchQuery]);
 
   const handleAddAndSelect = async (item: DeviceItem) => {
-    const displayWidth = getDisplayWidth(item.category);
-    let nativeWidth = displayWidth;
-    let nativeHeight = displayWidth * 2;
+    let nativeWidth = 100;
+    let nativeHeight = 200;
 
     try {
       const size = await loadNativeSize(item.src);
       nativeWidth = size.width;
       nativeHeight = size.height;
     } catch {
-      // fallback
+      // fallback aspect until export loads the image
     }
+
+    const { displayWidth, displayHeight } = displaySizeFromMm(
+      item.widthMm,
+      item.heightMm,
+      {
+        name: item.name,
+        category: item.category,
+        nativeWidth,
+        nativeHeight,
+      },
+    );
 
     const instanceId = crypto.randomUUID();
     setCanvasItems((prev) => [
@@ -132,6 +142,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
         y: 50,
         zIndex: prev.length,
         displayWidth,
+        displayHeight,
         nativeWidth,
         nativeHeight,
       },
@@ -219,6 +230,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
           y: item.y,
           zIndex: item.zIndex,
           displayWidth: item.displayWidth,
+          displayHeight: item.displayHeight,
           nativeWidth: item.nativeWidth,
           nativeHeight: item.nativeHeight,
         })),
@@ -474,11 +486,6 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
             }}
           >
             {canvasItems.map((item) => {
-              const height = displayHeightFor(
-                item.displayWidth,
-                item.nativeWidth,
-                item.nativeHeight,
-              );
               return (
                 <img
                   key={item.instanceId}
@@ -491,7 +498,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
                     left: `${(item.x / ARTBOARD_WIDTH) * 100}%`,
                     top: `${(item.y / ARTBOARD_HEIGHT) * 100}%`,
                     width: `${(item.displayWidth / ARTBOARD_WIDTH) * 100}%`,
-                    height: `${(height / ARTBOARD_HEIGHT) * 100}%`,
+                    height: `${(item.displayHeight / ARTBOARD_HEIGHT) * 100}%`,
                     objectFit: 'contain',
                     zIndex: item.zIndex,
                     cursor:

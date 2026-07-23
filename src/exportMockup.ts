@@ -15,6 +15,8 @@ export interface ExportableItem {
   y: number;
   zIndex: number;
   displayWidth: number;
+  /** Explicit artboard height (mm-derived). Falls back to image aspect if omitted. */
+  displayHeight?: number;
   nativeWidth: number;
   nativeHeight: number;
 }
@@ -78,11 +80,9 @@ export async function exportMockup(
       const img = await loadImage(item.src);
       const nativeWidth = item.nativeWidth || img.naturalWidth;
       const nativeHeight = item.nativeHeight || img.naturalHeight;
-      const displayHeight = displayHeightFor(
-        item.displayWidth,
-        nativeWidth,
-        nativeHeight,
-      );
+      const displayHeight =
+        item.displayHeight ??
+        displayHeightFor(item.displayWidth, nativeWidth, nativeHeight);
       return { ...item, img, nativeWidth, nativeHeight, displayHeight };
     }),
   );

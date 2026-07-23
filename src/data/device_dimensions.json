@@ -1,0 +1,5550 @@
+{
+  "unit": "mm",
+  "fields": [
+    "width_mm",
+    "height_mm"
+  ],
+  "device_count": 554,
+  "devices": [
+    {
+      "file": "computers/Apple MacBook Air 13-inch Gold-1.svg",
+      "category": "computers",
+      "name": "Apple MacBook Air 13-inch Gold-1",
+      "model_key": "apple-macbook-air-13-inch",
+      "width_mm": 304.1,
+      "height_mm": 212.4,
+      "source": "Apple specs",
+      "notes": "13-inch MacBook Air closed footprint W\u00d7D as W\u00d7H"
+    },
+    {
+      "file": "computers/Apple MacBook Air 13-inch Gold.svg",
+      "category": "computers",
+      "name": "Apple MacBook Air 13-inch Gold",
+      "model_key": "apple-macbook-air-13-inch",
+      "width_mm": 304.1,
+      "height_mm": 212.4,
+      "source": "Apple specs",
+      "notes": "13-inch MacBook Air closed footprint W\u00d7D as W\u00d7H"
+    },
+    {
+      "file": "computers/Apple MacBook Air 13-inch Silver-1.svg",
+      "category": "computers",
+      "name": "Apple MacBook Air 13-inch Silver-1",
+      "model_key": "apple-macbook-air-13-inch",
+      "width_mm": 304.1,
+      "height_mm": 212.4,
+      "source": "Apple specs",
+      "notes": "13-inch MacBook Air closed footprint W\u00d7D as W\u00d7H"
+    },
+    {
+      "file": "computers/Apple MacBook Air 13-inch Silver.svg",
+      "category": "computers",
+      "name": "Apple MacBook Air 13-inch Silver",
+      "model_key": "apple-macbook-air-13-inch",
+      "width_mm": 304.1,
+      "height_mm": 212.4,
+      "source": "Apple specs",
+      "notes": "13-inch MacBook Air closed footprint W\u00d7D as W\u00d7H"
+    },
+    {
+      "file": "computers/Apple MacBook Air 13-inch Space Grey-1.svg",
+      "category": "computers",
+      "name": "Apple MacBook Air 13-inch Space Grey-1",
+      "model_key": "apple-macbook-air-13-inch",
+      "width_mm": 304.1,
+      "height_mm": 212.4,
+      "source": "Apple specs",
+      "notes": "13-inch MacBook Air closed footprint W\u00d7D as W\u00d7H"
+    },
+    {
+      "file": "computers/Apple MacBook Air 13-inch Space Grey.svg",
+      "category": "computers",
+      "name": "Apple MacBook Air 13-inch Space Grey",
+      "model_key": "apple-macbook-air-13-inch",
+      "width_mm": 304.1,
+      "height_mm": 212.4,
+      "source": "Apple specs",
+      "notes": "13-inch MacBook Air closed footprint W\u00d7D as W\u00d7H"
+    },
+    {
+      "file": "computers/Apple MacBook Gold-1.svg",
+      "category": "computers",
+      "name": "Apple MacBook Gold-1",
+      "model_key": "apple-macbook",
+      "width_mm": 280.5,
+      "height_mm": 196.5,
+      "source": "Apple specs",
+      "notes": "12-inch MacBook (Early 2015+) closed footprint W\u00d7D as W\u00d7H"
+    },
+    {
+      "file": "computers/Apple MacBook Gold.svg",
+      "category": "computers",
+      "name": "Apple MacBook Gold",
+      "model_key": "apple-macbook",
+      "width_mm": 280.5,
+      "height_mm": 196.5,
+      "source": "Apple specs",
+      "notes": "12-inch MacBook (Early 2015+) closed footprint W\u00d7D as W\u00d7H"
+    },
+    {
+      "file": "computers/Apple MacBook Pro 13-inch Silver-1.svg",
+      "category": "computers",
+      "name": "Apple MacBook Pro 13-inch Silver-1",
+      "model_key": "apple-macbook-pro-13-inch",
+      "width_mm": 304.1,
+      "height_mm": 212.4,
+      "source": "Apple specs",
+      "notes": "13-inch MacBook Pro closed footprint W\u00d7D as W\u00d7H"
+    },
+    {
+      "file": "computers/Apple MacBook Pro 13-inch Silver.svg",
+      "category": "computers",
+      "name": "Apple MacBook Pro 13-inch Silver",
+      "model_key": "apple-macbook-pro-13-inch",
+      "width_mm": 304.1,
+      "height_mm": 212.4,
+      "source": "Apple specs",
+      "notes": "13-inch MacBook Pro closed footprint W\u00d7D as W\u00d7H"
+    },
+    {
+      "file": "computers/Apple MacBook Pro 13-inch Space Grey-1.svg",
+      "category": "computers",
+      "name": "Apple MacBook Pro 13-inch Space Grey-1",
+      "model_key": "apple-macbook-pro-13-inch",
+      "width_mm": 304.1,
+      "height_mm": 212.4,
+      "source": "Apple specs",
+      "notes": "13-inch MacBook Pro closed footprint W\u00d7D as W\u00d7H"
+    },
+    {
+      "file": "computers/Apple MacBook Pro 13-inch Space Grey.svg",
+      "category": "computers",
+      "name": "Apple MacBook Pro 13-inch Space Grey",
+      "model_key": "apple-macbook-pro-13-inch",
+      "width_mm": 304.1,
+      "height_mm": 212.4,
+      "source": "Apple specs",
+      "notes": "13-inch MacBook Pro closed footprint W\u00d7D as W\u00d7H"
+    },
+    {
+      "file": "computers/Apple MacBook Pro 15-inch Silver-1.svg",
+      "category": "computers",
+      "name": "Apple MacBook Pro 15-inch Silver-1",
+      "model_key": "apple-macbook-pro-15-inch",
+      "width_mm": 349.3,
+      "height_mm": 240.7,
+      "source": "Apple specs",
+      "notes": "15-inch MacBook Pro closed footprint W\u00d7D as W\u00d7H"
+    },
+    {
+      "file": "computers/Apple MacBook Pro 15-inch Silver.svg",
+      "category": "computers",
+      "name": "Apple MacBook Pro 15-inch Silver",
+      "model_key": "apple-macbook-pro-15-inch",
+      "width_mm": 349.3,
+      "height_mm": 240.7,
+      "source": "Apple specs",
+      "notes": "15-inch MacBook Pro closed footprint W\u00d7D as W\u00d7H"
+    },
+    {
+      "file": "computers/Apple MacBook Pro 15-inch Space Grey-1.svg",
+      "category": "computers",
+      "name": "Apple MacBook Pro 15-inch Space Grey-1",
+      "model_key": "apple-macbook-pro-15-inch",
+      "width_mm": 349.3,
+      "height_mm": 240.7,
+      "source": "Apple specs",
+      "notes": "15-inch MacBook Pro closed footprint W\u00d7D as W\u00d7H"
+    },
+    {
+      "file": "computers/Apple MacBook Pro 15-inch Space Grey.svg",
+      "category": "computers",
+      "name": "Apple MacBook Pro 15-inch Space Grey",
+      "model_key": "apple-macbook-pro-15-inch",
+      "width_mm": 349.3,
+      "height_mm": 240.7,
+      "source": "Apple specs",
+      "notes": "15-inch MacBook Pro closed footprint W\u00d7D as W\u00d7H"
+    },
+    {
+      "file": "computers/Apple MacBook Space Grey-1.svg",
+      "category": "computers",
+      "name": "Apple MacBook Space Grey-1",
+      "model_key": "apple-macbook",
+      "width_mm": 280.5,
+      "height_mm": 196.5,
+      "source": "Apple specs",
+      "notes": "12-inch MacBook (Early 2015+) closed footprint W\u00d7D as W\u00d7H"
+    },
+    {
+      "file": "computers/Apple MacBook Space Grey.svg",
+      "category": "computers",
+      "name": "Apple MacBook Space Grey",
+      "model_key": "apple-macbook",
+      "width_mm": 280.5,
+      "height_mm": 196.5,
+      "source": "Apple specs",
+      "notes": "12-inch MacBook (Early 2015+) closed footprint W\u00d7D as W\u00d7H"
+    },
+    {
+      "file": "computers/Apple iMac Pro-1.svg",
+      "category": "computers",
+      "name": "Apple iMac Pro-1",
+      "model_key": "apple-imac-pro",
+      "width_mm": 650.0,
+      "height_mm": 516.0,
+      "source": "Apple specs",
+      "notes": "27-inch iMac Pro overall"
+    },
+    {
+      "file": "computers/Apple iMac Pro.svg",
+      "category": "computers",
+      "name": "Apple iMac Pro",
+      "model_key": "apple-imac-pro",
+      "width_mm": 650.0,
+      "height_mm": 516.0,
+      "source": "Apple specs",
+      "notes": "27-inch iMac Pro overall"
+    },
+    {
+      "file": "computers/Apple iMac Retina-1.svg",
+      "category": "computers",
+      "name": "Apple iMac Retina-1",
+      "model_key": "apple-imac-retina",
+      "width_mm": 650.0,
+      "height_mm": 516.0,
+      "source": "assumed Apple iMac 27-inch Retina",
+      "notes": "Assumed 27-inch Retina iMac overall"
+    },
+    {
+      "file": "computers/Apple iMac Retina.svg",
+      "category": "computers",
+      "name": "Apple iMac Retina",
+      "model_key": "apple-imac-retina",
+      "width_mm": 650.0,
+      "height_mm": 516.0,
+      "source": "assumed Apple iMac 27-inch Retina",
+      "notes": "Assumed 27-inch Retina iMac overall"
+    },
+    {
+      "file": "computers/Apple iMac-1.svg",
+      "category": "computers",
+      "name": "Apple iMac-1",
+      "model_key": "apple-imac",
+      "width_mm": 528.0,
+      "height_mm": 450.0,
+      "source": "assumed Apple iMac 21.5-inch",
+      "notes": "Generic iMac asset; assumed 21.5-inch overall W\u00d7H"
+    },
+    {
+      "file": "computers/Apple iMac.svg",
+      "category": "computers",
+      "name": "Apple iMac",
+      "model_key": "apple-imac",
+      "width_mm": 528.0,
+      "height_mm": 450.0,
+      "source": "assumed Apple iMac 21.5-inch",
+      "notes": "Generic iMac asset; assumed 21.5-inch overall W\u00d7H"
+    },
+    {
+      "file": "computers/Dell XPS 13-inch-1.svg",
+      "category": "computers",
+      "name": "Dell XPS 13-inch-1",
+      "model_key": "dell-xps-13-inch",
+      "width_mm": 302.0,
+      "height_mm": 199.0,
+      "source": "Dell specs",
+      "notes": "XPS 13 closed footprint (approx)"
+    },
+    {
+      "file": "computers/Dell XPS 13-inch.svg",
+      "category": "computers",
+      "name": "Dell XPS 13-inch",
+      "model_key": "dell-xps-13-inch",
+      "width_mm": 302.0,
+      "height_mm": 199.0,
+      "source": "Dell specs",
+      "notes": "XPS 13 closed footprint (approx)"
+    },
+    {
+      "file": "computers/Dell XPS 15-inch-1.svg",
+      "category": "computers",
+      "name": "Dell XPS 15-inch-1",
+      "model_key": "dell-xps-15-inch",
+      "width_mm": 357.0,
+      "height_mm": 235.0,
+      "source": "Dell specs",
+      "notes": "XPS 15 closed footprint (approx)"
+    },
+    {
+      "file": "computers/Dell XPS 15-inch.svg",
+      "category": "computers",
+      "name": "Dell XPS 15-inch",
+      "model_key": "dell-xps-15-inch",
+      "width_mm": 357.0,
+      "height_mm": 235.0,
+      "source": "Dell specs",
+      "notes": "XPS 15 closed footprint (approx)"
+    },
+    {
+      "file": "computers/Microsoft Surface Book-1.svg",
+      "category": "computers",
+      "name": "Microsoft Surface Book-1",
+      "model_key": "microsoft-surface-book",
+      "width_mm": 312.3,
+      "height_mm": 232.1,
+      "source": "Microsoft specs",
+      "notes": "Surface Book closed footprint"
+    },
+    {
+      "file": "computers/Microsoft Surface Book.svg",
+      "category": "computers",
+      "name": "Microsoft Surface Book",
+      "model_key": "microsoft-surface-book",
+      "width_mm": 312.3,
+      "height_mm": 232.1,
+      "source": "Microsoft specs",
+      "notes": "Surface Book closed footprint"
+    },
+    {
+      "file": "displays/Apple Pro Display XDR-1.svg",
+      "category": "displays",
+      "name": "Apple Pro Display XDR-1",
+      "model_key": "apple-pro-display-xdr",
+      "width_mm": 718.0,
+      "height_mm": 411.0,
+      "source": "Apple specs",
+      "notes": "Display only (without Pro Stand)"
+    },
+    {
+      "file": "displays/Apple Pro Display XDR.svg",
+      "category": "displays",
+      "name": "Apple Pro Display XDR",
+      "model_key": "apple-pro-display-xdr",
+      "width_mm": 718.0,
+      "height_mm": 411.0,
+      "source": "Apple specs",
+      "notes": "Display only (without Pro Stand)"
+    },
+    {
+      "file": "displays/Apple Thunderbolt Display-1.svg",
+      "category": "displays",
+      "name": "Apple Thunderbolt Display-1",
+      "model_key": "apple-thunderbolt-display",
+      "width_mm": 650.0,
+      "height_mm": 490.0,
+      "source": "Apple specs",
+      "notes": "27-inch Thunderbolt Display overall"
+    },
+    {
+      "file": "displays/Apple Thunderbolt Display.svg",
+      "category": "displays",
+      "name": "Apple Thunderbolt Display",
+      "model_key": "apple-thunderbolt-display",
+      "width_mm": 650.0,
+      "height_mm": 490.0,
+      "source": "Apple specs",
+      "notes": "27-inch Thunderbolt Display overall"
+    },
+    {
+      "file": "displays/Dell UltraSharp 24-inch 90deg-1.svg",
+      "category": "displays",
+      "name": "Dell UltraSharp 24-inch 90deg-1",
+      "model_key": "dell-ultrasharp-24-inch",
+      "width_mm": 539.0,
+      "height_mm": 360.0,
+      "source": "Dell specs",
+      "notes": "Approx 24-inch UltraSharp overall; 90deg uses same body mm; Rotated 90deg asset; same body mm"
+    },
+    {
+      "file": "displays/Dell UltraSharp 24-inch 90deg.svg",
+      "category": "displays",
+      "name": "Dell UltraSharp 24-inch 90deg",
+      "model_key": "dell-ultrasharp-24-inch",
+      "width_mm": 539.0,
+      "height_mm": 360.0,
+      "source": "Dell specs",
+      "notes": "Approx 24-inch UltraSharp overall; 90deg uses same body mm; Rotated 90deg asset; same body mm"
+    },
+    {
+      "file": "displays/Dell UltraSharp 24-inch-1.svg",
+      "category": "displays",
+      "name": "Dell UltraSharp 24-inch-1",
+      "model_key": "dell-ultrasharp-24-inch",
+      "width_mm": 539.0,
+      "height_mm": 360.0,
+      "source": "Dell specs",
+      "notes": "Approx 24-inch UltraSharp overall; 90deg uses same body mm"
+    },
+    {
+      "file": "displays/Dell UltraSharp 24-inch.svg",
+      "category": "displays",
+      "name": "Dell UltraSharp 24-inch",
+      "model_key": "dell-ultrasharp-24-inch",
+      "width_mm": 539.0,
+      "height_mm": 360.0,
+      "source": "Dell specs",
+      "notes": "Approx 24-inch UltraSharp overall; 90deg uses same body mm"
+    },
+    {
+      "file": "displays/Dell UltraSharp 27-inch 90deg-1.svg",
+      "category": "displays",
+      "name": "Dell UltraSharp 27-inch 90deg-1",
+      "model_key": "dell-ultrasharp-27-inch",
+      "width_mm": 611.0,
+      "height_mm": 406.0,
+      "source": "Dell specs",
+      "notes": "Approx 27-inch UltraSharp overall; 90deg uses same body mm; Rotated 90deg asset; same body mm"
+    },
+    {
+      "file": "displays/Dell UltraSharp 27-inch 90deg.svg",
+      "category": "displays",
+      "name": "Dell UltraSharp 27-inch 90deg",
+      "model_key": "dell-ultrasharp-27-inch",
+      "width_mm": 611.0,
+      "height_mm": 406.0,
+      "source": "Dell specs",
+      "notes": "Approx 27-inch UltraSharp overall; 90deg uses same body mm; Rotated 90deg asset; same body mm"
+    },
+    {
+      "file": "displays/Dell UltraSharp 27-inch-1.svg",
+      "category": "displays",
+      "name": "Dell UltraSharp 27-inch-1",
+      "model_key": "dell-ultrasharp-27-inch",
+      "width_mm": 611.0,
+      "height_mm": 406.0,
+      "source": "Dell specs",
+      "notes": "Approx 27-inch UltraSharp overall; 90deg uses same body mm"
+    },
+    {
+      "file": "displays/Dell UltraSharp 27-inch.svg",
+      "category": "displays",
+      "name": "Dell UltraSharp 27-inch",
+      "model_key": "dell-ultrasharp-27-inch",
+      "width_mm": 611.0,
+      "height_mm": 406.0,
+      "source": "Dell specs",
+      "notes": "Approx 27-inch UltraSharp overall; 90deg uses same body mm"
+    },
+    {
+      "file": "displays/Dell UltraSharp 5K Monitor 27-inch 90deg-1.svg",
+      "category": "displays",
+      "name": "Dell UltraSharp 5K Monitor 27-inch 90deg-1",
+      "model_key": "dell-ultrasharp-5k-monitor-27-inch",
+      "width_mm": 611.0,
+      "height_mm": 444.0,
+      "source": "Dell specs",
+      "notes": "UP2715K / 5K class overall (approx); Rotated 90deg asset; same body mm"
+    },
+    {
+      "file": "displays/Dell UltraSharp 5K Monitor 27-inch 90deg.svg",
+      "category": "displays",
+      "name": "Dell UltraSharp 5K Monitor 27-inch 90deg",
+      "model_key": "dell-ultrasharp-5k-monitor-27-inch",
+      "width_mm": 611.0,
+      "height_mm": 444.0,
+      "source": "Dell specs",
+      "notes": "UP2715K / 5K class overall (approx); Rotated 90deg asset; same body mm"
+    },
+    {
+      "file": "displays/Dell UltraSharp 5K Monitor 27-inch-1.svg",
+      "category": "displays",
+      "name": "Dell UltraSharp 5K Monitor 27-inch-1",
+      "model_key": "dell-ultrasharp-5k-monitor-27-inch",
+      "width_mm": 611.0,
+      "height_mm": 444.0,
+      "source": "Dell specs",
+      "notes": "UP2715K / 5K class overall (approx)"
+    },
+    {
+      "file": "displays/Dell UltraSharp 5K Monitor 27-inch.svg",
+      "category": "displays",
+      "name": "Dell UltraSharp 5K Monitor 27-inch",
+      "model_key": "dell-ultrasharp-5k-monitor-27-inch",
+      "width_mm": 611.0,
+      "height_mm": 444.0,
+      "source": "Dell specs",
+      "notes": "UP2715K / 5K class overall (approx)"
+    },
+    {
+      "file": "displays/Sony W850C-1.svg",
+      "category": "displays",
+      "name": "Sony W850C-1",
+      "model_key": "sony-w850c",
+      "width_mm": 1235.0,
+      "height_mm": 718.0,
+      "source": "Sony specs",
+      "notes": "55-inch Bravia W850C class overall (approx without stand)"
+    },
+    {
+      "file": "displays/Sony W850C.svg",
+      "category": "displays",
+      "name": "Sony W850C",
+      "model_key": "sony-w850c",
+      "width_mm": 1235.0,
+      "height_mm": 718.0,
+      "source": "Sony specs",
+      "notes": "55-inch Bravia W850C class overall (approx without stand)"
+    },
+    {
+      "file": "phones/Apple iPhone 11 Black-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Black-1",
+      "model_key": "apple-iphone-11",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Black.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Black",
+      "model_key": "apple-iphone-11",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Green-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Green-1",
+      "model_key": "apple-iphone-11",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Green.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Green",
+      "model_key": "apple-iphone-11",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Pro Gold-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Pro Gold-1",
+      "model_key": "apple-iphone-11-pro",
+      "width_mm": 71.4,
+      "height_mm": 144.0,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Pro Gold.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Pro Gold",
+      "model_key": "apple-iphone-11-pro",
+      "width_mm": 71.4,
+      "height_mm": 144.0,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Pro Max Gold-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Pro Max Gold-1",
+      "model_key": "apple-iphone-11-pro-max",
+      "width_mm": 77.8,
+      "height_mm": 158.0,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Pro Max Gold.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Pro Max Gold",
+      "model_key": "apple-iphone-11-pro-max",
+      "width_mm": 77.8,
+      "height_mm": 158.0,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Pro Max Midnight Green-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Pro Max Midnight Green-1",
+      "model_key": "apple-iphone-11-pro-max",
+      "width_mm": 77.8,
+      "height_mm": 158.0,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Pro Max Midnight Green.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Pro Max Midnight Green",
+      "model_key": "apple-iphone-11-pro-max",
+      "width_mm": 77.8,
+      "height_mm": 158.0,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Pro Max Silver-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Pro Max Silver-1",
+      "model_key": "apple-iphone-11-pro-max",
+      "width_mm": 77.8,
+      "height_mm": 158.0,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Pro Max Silver.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Pro Max Silver",
+      "model_key": "apple-iphone-11-pro-max",
+      "width_mm": 77.8,
+      "height_mm": 158.0,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Pro Max Space Grey-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Pro Max Space Grey-1",
+      "model_key": "apple-iphone-11-pro-max",
+      "width_mm": 77.8,
+      "height_mm": 158.0,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Pro Max Space Grey.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Pro Max Space Grey",
+      "model_key": "apple-iphone-11-pro-max",
+      "width_mm": 77.8,
+      "height_mm": 158.0,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Pro Midnight Green-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Pro Midnight Green-1",
+      "model_key": "apple-iphone-11-pro",
+      "width_mm": 71.4,
+      "height_mm": 144.0,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Pro Midnight Green.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Pro Midnight Green",
+      "model_key": "apple-iphone-11-pro",
+      "width_mm": 71.4,
+      "height_mm": 144.0,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Pro Silver-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Pro Silver-1",
+      "model_key": "apple-iphone-11-pro",
+      "width_mm": 71.4,
+      "height_mm": 144.0,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Pro Silver.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Pro Silver",
+      "model_key": "apple-iphone-11-pro",
+      "width_mm": 71.4,
+      "height_mm": 144.0,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Pro Space Grey-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Pro Space Grey-1",
+      "model_key": "apple-iphone-11-pro",
+      "width_mm": 71.4,
+      "height_mm": 144.0,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Pro Space Grey.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Pro Space Grey",
+      "model_key": "apple-iphone-11-pro",
+      "width_mm": 71.4,
+      "height_mm": 144.0,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Purple-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Purple-1",
+      "model_key": "apple-iphone-11",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Purple.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Purple",
+      "model_key": "apple-iphone-11",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Red-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Red-1",
+      "model_key": "apple-iphone-11",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Red.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Red",
+      "model_key": "apple-iphone-11",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 White-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 White-1",
+      "model_key": "apple-iphone-11",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 White.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 White",
+      "model_key": "apple-iphone-11",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Yellow-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Yellow-1",
+      "model_key": "apple-iphone-11",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 11 Yellow.svg",
+      "category": "phones",
+      "name": "Apple iPhone 11 Yellow",
+      "model_key": "apple-iphone-11",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 5c Blue-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 5c Blue-1",
+      "model_key": "apple-iphone-5c",
+      "width_mm": 59.2,
+      "height_mm": 124.4,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 5c Blue.svg",
+      "category": "phones",
+      "name": "Apple iPhone 5c Blue",
+      "model_key": "apple-iphone-5c",
+      "width_mm": 59.2,
+      "height_mm": 124.4,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 5c Green-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 5c Green-1",
+      "model_key": "apple-iphone-5c",
+      "width_mm": 59.2,
+      "height_mm": 124.4,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 5c Green.svg",
+      "category": "phones",
+      "name": "Apple iPhone 5c Green",
+      "model_key": "apple-iphone-5c",
+      "width_mm": 59.2,
+      "height_mm": 124.4,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 5c Red-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 5c Red-1",
+      "model_key": "apple-iphone-5c",
+      "width_mm": 59.2,
+      "height_mm": 124.4,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 5c Red.svg",
+      "category": "phones",
+      "name": "Apple iPhone 5c Red",
+      "model_key": "apple-iphone-5c",
+      "width_mm": 59.2,
+      "height_mm": 124.4,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 5c White-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 5c White-1",
+      "model_key": "apple-iphone-5c",
+      "width_mm": 59.2,
+      "height_mm": 124.4,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 5c White.svg",
+      "category": "phones",
+      "name": "Apple iPhone 5c White",
+      "model_key": "apple-iphone-5c",
+      "width_mm": 59.2,
+      "height_mm": 124.4,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 5c Yellow-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 5c Yellow-1",
+      "model_key": "apple-iphone-5c",
+      "width_mm": 59.2,
+      "height_mm": 124.4,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 5c Yellow.svg",
+      "category": "phones",
+      "name": "Apple iPhone 5c Yellow",
+      "model_key": "apple-iphone-5c",
+      "width_mm": 59.2,
+      "height_mm": 124.4,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 5s Gold-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 5s Gold-1",
+      "model_key": "apple-iphone-5s",
+      "width_mm": 58.6,
+      "height_mm": 123.8,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 5s Gold.svg",
+      "category": "phones",
+      "name": "Apple iPhone 5s Gold",
+      "model_key": "apple-iphone-5s",
+      "width_mm": 58.6,
+      "height_mm": 123.8,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 5s Silver-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 5s Silver-1",
+      "model_key": "apple-iphone-5s",
+      "width_mm": 58.6,
+      "height_mm": 123.8,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 5s Silver.svg",
+      "category": "phones",
+      "name": "Apple iPhone 5s Silver",
+      "model_key": "apple-iphone-5s",
+      "width_mm": 58.6,
+      "height_mm": 123.8,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 5s Space Gray-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 5s Space Gray-1",
+      "model_key": "apple-iphone-5s",
+      "width_mm": 58.6,
+      "height_mm": 123.8,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 5s Space Gray.svg",
+      "category": "phones",
+      "name": "Apple iPhone 5s Space Gray",
+      "model_key": "apple-iphone-5s",
+      "width_mm": 58.6,
+      "height_mm": 123.8,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 6s Gold-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 6s Gold-1",
+      "model_key": "apple-iphone-6s",
+      "width_mm": 67.1,
+      "height_mm": 138.3,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 6s Gold.svg",
+      "category": "phones",
+      "name": "Apple iPhone 6s Gold",
+      "model_key": "apple-iphone-6s",
+      "width_mm": 67.1,
+      "height_mm": 138.3,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 6s Plus Gold-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 6s Plus Gold-1",
+      "model_key": "apple-iphone-6s-plus",
+      "width_mm": 77.9,
+      "height_mm": 158.2,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 6s Plus Gold.svg",
+      "category": "phones",
+      "name": "Apple iPhone 6s Plus Gold",
+      "model_key": "apple-iphone-6s-plus",
+      "width_mm": 77.9,
+      "height_mm": 158.2,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 6s Plus Rose Gold-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 6s Plus Rose Gold-1",
+      "model_key": "apple-iphone-6s-plus",
+      "width_mm": 77.9,
+      "height_mm": 158.2,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 6s Plus Rose Gold.svg",
+      "category": "phones",
+      "name": "Apple iPhone 6s Plus Rose Gold",
+      "model_key": "apple-iphone-6s-plus",
+      "width_mm": 77.9,
+      "height_mm": 158.2,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 6s Plus Silver-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 6s Plus Silver-1",
+      "model_key": "apple-iphone-6s-plus",
+      "width_mm": 77.9,
+      "height_mm": 158.2,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 6s Plus Silver.svg",
+      "category": "phones",
+      "name": "Apple iPhone 6s Plus Silver",
+      "model_key": "apple-iphone-6s-plus",
+      "width_mm": 77.9,
+      "height_mm": 158.2,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 6s Plus Space Gray-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 6s Plus Space Gray-1",
+      "model_key": "apple-iphone-6s-plus",
+      "width_mm": 77.9,
+      "height_mm": 158.2,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 6s Plus Space Gray.svg",
+      "category": "phones",
+      "name": "Apple iPhone 6s Plus Space Gray",
+      "model_key": "apple-iphone-6s-plus",
+      "width_mm": 77.9,
+      "height_mm": 158.2,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 6s Rose Gold-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 6s Rose Gold-1",
+      "model_key": "apple-iphone-6s",
+      "width_mm": 67.1,
+      "height_mm": 138.3,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 6s Rose Gold.svg",
+      "category": "phones",
+      "name": "Apple iPhone 6s Rose Gold",
+      "model_key": "apple-iphone-6s",
+      "width_mm": 67.1,
+      "height_mm": 138.3,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 6s Silver-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 6s Silver-1",
+      "model_key": "apple-iphone-6s",
+      "width_mm": 67.1,
+      "height_mm": 138.3,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 6s Silver.svg",
+      "category": "phones",
+      "name": "Apple iPhone 6s Silver",
+      "model_key": "apple-iphone-6s",
+      "width_mm": 67.1,
+      "height_mm": 138.3,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 6s Space Gray-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 6s Space Gray-1",
+      "model_key": "apple-iphone-6s",
+      "width_mm": 67.1,
+      "height_mm": 138.3,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 6s Space Gray.svg",
+      "category": "phones",
+      "name": "Apple iPhone 6s Space Gray",
+      "model_key": "apple-iphone-6s",
+      "width_mm": 67.1,
+      "height_mm": 138.3,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 7 Gold-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 7 Gold-1",
+      "model_key": "apple-iphone-7",
+      "width_mm": 67.1,
+      "height_mm": 138.3,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 7 Gold.svg",
+      "category": "phones",
+      "name": "Apple iPhone 7 Gold",
+      "model_key": "apple-iphone-7",
+      "width_mm": 67.1,
+      "height_mm": 138.3,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 7 Jet Black-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 7 Jet Black-1",
+      "model_key": "apple-iphone-7",
+      "width_mm": 67.1,
+      "height_mm": 138.3,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 7 Jet Black.svg",
+      "category": "phones",
+      "name": "Apple iPhone 7 Jet Black",
+      "model_key": "apple-iphone-7",
+      "width_mm": 67.1,
+      "height_mm": 138.3,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 7 Matte Black-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 7 Matte Black-1",
+      "model_key": "apple-iphone-7",
+      "width_mm": 67.1,
+      "height_mm": 138.3,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 7 Matte Black.svg",
+      "category": "phones",
+      "name": "Apple iPhone 7 Matte Black",
+      "model_key": "apple-iphone-7",
+      "width_mm": 67.1,
+      "height_mm": 138.3,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 7 Plus Gold-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 7 Plus Gold-1",
+      "model_key": "apple-iphone-7-plus",
+      "width_mm": 77.9,
+      "height_mm": 158.2,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 7 Plus Gold.svg",
+      "category": "phones",
+      "name": "Apple iPhone 7 Plus Gold",
+      "model_key": "apple-iphone-7-plus",
+      "width_mm": 77.9,
+      "height_mm": 158.2,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 7 Plus Jet Black-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 7 Plus Jet Black-1",
+      "model_key": "apple-iphone-7-plus",
+      "width_mm": 77.9,
+      "height_mm": 158.2,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 7 Plus Jet Black.svg",
+      "category": "phones",
+      "name": "Apple iPhone 7 Plus Jet Black",
+      "model_key": "apple-iphone-7-plus",
+      "width_mm": 77.9,
+      "height_mm": 158.2,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 7 Plus Matte Black-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 7 Plus Matte Black-1",
+      "model_key": "apple-iphone-7-plus",
+      "width_mm": 77.9,
+      "height_mm": 158.2,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 7 Plus Matte Black.svg",
+      "category": "phones",
+      "name": "Apple iPhone 7 Plus Matte Black",
+      "model_key": "apple-iphone-7-plus",
+      "width_mm": 77.9,
+      "height_mm": 158.2,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 7 Plus Rose Gold-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 7 Plus Rose Gold-1",
+      "model_key": "apple-iphone-7-plus",
+      "width_mm": 77.9,
+      "height_mm": 158.2,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 7 Plus Rose Gold.svg",
+      "category": "phones",
+      "name": "Apple iPhone 7 Plus Rose Gold",
+      "model_key": "apple-iphone-7-plus",
+      "width_mm": 77.9,
+      "height_mm": 158.2,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 7 Plus Silver-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 7 Plus Silver-1",
+      "model_key": "apple-iphone-7-plus",
+      "width_mm": 77.9,
+      "height_mm": 158.2,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 7 Plus Silver.svg",
+      "category": "phones",
+      "name": "Apple iPhone 7 Plus Silver",
+      "model_key": "apple-iphone-7-plus",
+      "width_mm": 77.9,
+      "height_mm": 158.2,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 7 Rose Gold-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 7 Rose Gold-1",
+      "model_key": "apple-iphone-7",
+      "width_mm": 67.1,
+      "height_mm": 138.3,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 7 Rose Gold.svg",
+      "category": "phones",
+      "name": "Apple iPhone 7 Rose Gold",
+      "model_key": "apple-iphone-7",
+      "width_mm": 67.1,
+      "height_mm": 138.3,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 7 Silver-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 7 Silver-1",
+      "model_key": "apple-iphone-7",
+      "width_mm": 67.1,
+      "height_mm": 138.3,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 7 Silver.svg",
+      "category": "phones",
+      "name": "Apple iPhone 7 Silver",
+      "model_key": "apple-iphone-7",
+      "width_mm": 67.1,
+      "height_mm": 138.3,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 8 Gold-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 8 Gold-1",
+      "model_key": "apple-iphone-8",
+      "width_mm": 67.3,
+      "height_mm": 138.4,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 8 Gold.svg",
+      "category": "phones",
+      "name": "Apple iPhone 8 Gold",
+      "model_key": "apple-iphone-8",
+      "width_mm": 67.3,
+      "height_mm": 138.4,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 8 Plus Gold-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 8 Plus Gold-1",
+      "model_key": "apple-iphone-8-plus",
+      "width_mm": 78.1,
+      "height_mm": 158.4,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 8 Plus Gold.svg",
+      "category": "phones",
+      "name": "Apple iPhone 8 Plus Gold",
+      "model_key": "apple-iphone-8-plus",
+      "width_mm": 78.1,
+      "height_mm": 158.4,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 8 Plus Silver-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 8 Plus Silver-1",
+      "model_key": "apple-iphone-8-plus",
+      "width_mm": 78.1,
+      "height_mm": 158.4,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 8 Plus Silver.svg",
+      "category": "phones",
+      "name": "Apple iPhone 8 Plus Silver",
+      "model_key": "apple-iphone-8-plus",
+      "width_mm": 78.1,
+      "height_mm": 158.4,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 8 Plus Space Grey-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 8 Plus Space Grey-1",
+      "model_key": "apple-iphone-8-plus",
+      "width_mm": 78.1,
+      "height_mm": 158.4,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 8 Plus Space Grey.svg",
+      "category": "phones",
+      "name": "Apple iPhone 8 Plus Space Grey",
+      "model_key": "apple-iphone-8-plus",
+      "width_mm": 78.1,
+      "height_mm": 158.4,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 8 Silver-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 8 Silver-1",
+      "model_key": "apple-iphone-8",
+      "width_mm": 67.3,
+      "height_mm": 138.4,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 8 Silver.svg",
+      "category": "phones",
+      "name": "Apple iPhone 8 Silver",
+      "model_key": "apple-iphone-8",
+      "width_mm": 67.3,
+      "height_mm": 138.4,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 8 Space Grey-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone 8 Space Grey-1",
+      "model_key": "apple-iphone-8",
+      "width_mm": 67.3,
+      "height_mm": 138.4,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone 8 Space Grey.svg",
+      "category": "phones",
+      "name": "Apple iPhone 8 Space Grey",
+      "model_key": "apple-iphone-8",
+      "width_mm": 67.3,
+      "height_mm": 138.4,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone SE Gold-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone SE Gold-1",
+      "model_key": "apple-iphone-se",
+      "width_mm": 58.6,
+      "height_mm": 123.8,
+      "source": "Apple specs",
+      "notes": "1st-generation iPhone SE (2016)"
+    },
+    {
+      "file": "phones/Apple iPhone SE Gold.svg",
+      "category": "phones",
+      "name": "Apple iPhone SE Gold",
+      "model_key": "apple-iphone-se",
+      "width_mm": 58.6,
+      "height_mm": 123.8,
+      "source": "Apple specs",
+      "notes": "1st-generation iPhone SE (2016)"
+    },
+    {
+      "file": "phones/Apple iPhone SE Rose Gold-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone SE Rose Gold-1",
+      "model_key": "apple-iphone-se",
+      "width_mm": 58.6,
+      "height_mm": 123.8,
+      "source": "Apple specs",
+      "notes": "1st-generation iPhone SE (2016)"
+    },
+    {
+      "file": "phones/Apple iPhone SE Rose Gold.svg",
+      "category": "phones",
+      "name": "Apple iPhone SE Rose Gold",
+      "model_key": "apple-iphone-se",
+      "width_mm": 58.6,
+      "height_mm": 123.8,
+      "source": "Apple specs",
+      "notes": "1st-generation iPhone SE (2016)"
+    },
+    {
+      "file": "phones/Apple iPhone SE Silver-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone SE Silver-1",
+      "model_key": "apple-iphone-se",
+      "width_mm": 58.6,
+      "height_mm": 123.8,
+      "source": "Apple specs",
+      "notes": "1st-generation iPhone SE (2016)"
+    },
+    {
+      "file": "phones/Apple iPhone SE Silver.svg",
+      "category": "phones",
+      "name": "Apple iPhone SE Silver",
+      "model_key": "apple-iphone-se",
+      "width_mm": 58.6,
+      "height_mm": 123.8,
+      "source": "Apple specs",
+      "notes": "1st-generation iPhone SE (2016)"
+    },
+    {
+      "file": "phones/Apple iPhone SE Space Gray-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone SE Space Gray-1",
+      "model_key": "apple-iphone-se",
+      "width_mm": 58.6,
+      "height_mm": 123.8,
+      "source": "Apple specs",
+      "notes": "1st-generation iPhone SE (2016)"
+    },
+    {
+      "file": "phones/Apple iPhone SE Space Gray.svg",
+      "category": "phones",
+      "name": "Apple iPhone SE Space Gray",
+      "model_key": "apple-iphone-se",
+      "width_mm": 58.6,
+      "height_mm": 123.8,
+      "source": "Apple specs",
+      "notes": "1st-generation iPhone SE (2016)"
+    },
+    {
+      "file": "phones/Apple iPhone X Silver-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone X Silver-1",
+      "model_key": "apple-iphone-x",
+      "width_mm": 70.9,
+      "height_mm": 143.6,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone X Silver.svg",
+      "category": "phones",
+      "name": "Apple iPhone X Silver",
+      "model_key": "apple-iphone-x",
+      "width_mm": 70.9,
+      "height_mm": 143.6,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone X Space Grey-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone X Space Grey-1",
+      "model_key": "apple-iphone-x",
+      "width_mm": 70.9,
+      "height_mm": 143.6,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone X Space Grey.svg",
+      "category": "phones",
+      "name": "Apple iPhone X Space Grey",
+      "model_key": "apple-iphone-x",
+      "width_mm": 70.9,
+      "height_mm": 143.6,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XR Blue-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone XR Blue-1",
+      "model_key": "apple-iphone-xr",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XR Blue.svg",
+      "category": "phones",
+      "name": "Apple iPhone XR Blue",
+      "model_key": "apple-iphone-xr",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XR Coral-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone XR Coral-1",
+      "model_key": "apple-iphone-xr",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XR Coral.svg",
+      "category": "phones",
+      "name": "Apple iPhone XR Coral",
+      "model_key": "apple-iphone-xr",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XR Red-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone XR Red-1",
+      "model_key": "apple-iphone-xr",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XR Red.svg",
+      "category": "phones",
+      "name": "Apple iPhone XR Red",
+      "model_key": "apple-iphone-xr",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XR Silver-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone XR Silver-1",
+      "model_key": "apple-iphone-xr",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XR Silver.svg",
+      "category": "phones",
+      "name": "Apple iPhone XR Silver",
+      "model_key": "apple-iphone-xr",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XR Space Grey-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone XR Space Grey-1",
+      "model_key": "apple-iphone-xr",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XR Space Grey.svg",
+      "category": "phones",
+      "name": "Apple iPhone XR Space Grey",
+      "model_key": "apple-iphone-xr",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XR Yellow-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone XR Yellow-1",
+      "model_key": "apple-iphone-xr",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XR Yellow.svg",
+      "category": "phones",
+      "name": "Apple iPhone XR Yellow",
+      "model_key": "apple-iphone-xr",
+      "width_mm": 75.7,
+      "height_mm": 150.9,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XS Gold-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone XS Gold-1",
+      "model_key": "apple-iphone-xs",
+      "width_mm": 70.9,
+      "height_mm": 143.6,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XS Gold.svg",
+      "category": "phones",
+      "name": "Apple iPhone XS Gold",
+      "model_key": "apple-iphone-xs",
+      "width_mm": 70.9,
+      "height_mm": 143.6,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XS Max Gold-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone XS Max Gold-1",
+      "model_key": "apple-iphone-xs-max",
+      "width_mm": 77.4,
+      "height_mm": 157.5,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XS Max Gold.svg",
+      "category": "phones",
+      "name": "Apple iPhone XS Max Gold",
+      "model_key": "apple-iphone-xs-max",
+      "width_mm": 77.4,
+      "height_mm": 157.5,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XS Max Silver-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone XS Max Silver-1",
+      "model_key": "apple-iphone-xs-max",
+      "width_mm": 77.4,
+      "height_mm": 157.5,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XS Max Silver.svg",
+      "category": "phones",
+      "name": "Apple iPhone XS Max Silver",
+      "model_key": "apple-iphone-xs-max",
+      "width_mm": 77.4,
+      "height_mm": 157.5,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XS Max Space Grey-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone XS Max Space Grey-1",
+      "model_key": "apple-iphone-xs-max",
+      "width_mm": 77.4,
+      "height_mm": 157.5,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XS Max Space Grey.svg",
+      "category": "phones",
+      "name": "Apple iPhone XS Max Space Grey",
+      "model_key": "apple-iphone-xs-max",
+      "width_mm": 77.4,
+      "height_mm": 157.5,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XS Silver-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone XS Silver-1",
+      "model_key": "apple-iphone-xs",
+      "width_mm": 70.9,
+      "height_mm": 143.6,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XS Silver.svg",
+      "category": "phones",
+      "name": "Apple iPhone XS Silver",
+      "model_key": "apple-iphone-xs",
+      "width_mm": 70.9,
+      "height_mm": 143.6,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XS Space Grey-1.svg",
+      "category": "phones",
+      "name": "Apple iPhone XS Space Grey-1",
+      "model_key": "apple-iphone-xs",
+      "width_mm": 70.9,
+      "height_mm": 143.6,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Apple iPhone XS Space Grey.svg",
+      "category": "phones",
+      "name": "Apple iPhone XS Space Grey",
+      "model_key": "apple-iphone-xs",
+      "width_mm": 70.9,
+      "height_mm": 143.6,
+      "source": "Apple specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Google Pixel 3 - Clearly White-1.svg",
+      "category": "phones",
+      "name": "Google Pixel 3 - Clearly White-1",
+      "model_key": "google-pixel-3",
+      "width_mm": 68.2,
+      "height_mm": 145.6,
+      "source": "Google specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Google Pixel 3 - Clearly White.svg",
+      "category": "phones",
+      "name": "Google Pixel 3 - Clearly White",
+      "model_key": "google-pixel-3",
+      "width_mm": 68.2,
+      "height_mm": 145.6,
+      "source": "Google specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Google Pixel 3 - Just Black-1.svg",
+      "category": "phones",
+      "name": "Google Pixel 3 - Just Black-1",
+      "model_key": "google-pixel-3",
+      "width_mm": 68.2,
+      "height_mm": 145.6,
+      "source": "Google specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Google Pixel 3 - Just Black.svg",
+      "category": "phones",
+      "name": "Google Pixel 3 - Just Black",
+      "model_key": "google-pixel-3",
+      "width_mm": 68.2,
+      "height_mm": 145.6,
+      "source": "Google specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Google Pixel 3 - Not Pink-1.svg",
+      "category": "phones",
+      "name": "Google Pixel 3 - Not Pink-1",
+      "model_key": "google-pixel-3",
+      "width_mm": 68.2,
+      "height_mm": 145.6,
+      "source": "Google specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Google Pixel 3 - Not Pink.svg",
+      "category": "phones",
+      "name": "Google Pixel 3 - Not Pink",
+      "model_key": "google-pixel-3",
+      "width_mm": 68.2,
+      "height_mm": 145.6,
+      "source": "Google specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Google Pixel 3 XL - Clearly White-1.svg",
+      "category": "phones",
+      "name": "Google Pixel 3 XL - Clearly White-1",
+      "model_key": "google-pixel-3-xl",
+      "width_mm": 76.7,
+      "height_mm": 158.0,
+      "source": "Google specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Google Pixel 3 XL - Clearly White.svg",
+      "category": "phones",
+      "name": "Google Pixel 3 XL - Clearly White",
+      "model_key": "google-pixel-3-xl",
+      "width_mm": 76.7,
+      "height_mm": 158.0,
+      "source": "Google specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Google Pixel 3 XL - Just Black-1.svg",
+      "category": "phones",
+      "name": "Google Pixel 3 XL - Just Black-1",
+      "model_key": "google-pixel-3-xl",
+      "width_mm": 76.7,
+      "height_mm": 158.0,
+      "source": "Google specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Google Pixel 3 XL - Just Black.svg",
+      "category": "phones",
+      "name": "Google Pixel 3 XL - Just Black",
+      "model_key": "google-pixel-3-xl",
+      "width_mm": 76.7,
+      "height_mm": 158.0,
+      "source": "Google specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Google Pixel 3 XL - Not Pink-1.svg",
+      "category": "phones",
+      "name": "Google Pixel 3 XL - Not Pink-1",
+      "model_key": "google-pixel-3-xl",
+      "width_mm": 76.7,
+      "height_mm": 158.0,
+      "source": "Google specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Google Pixel 3 XL - Not Pink.svg",
+      "category": "phones",
+      "name": "Google Pixel 3 XL - Not Pink",
+      "model_key": "google-pixel-3-xl",
+      "width_mm": 76.7,
+      "height_mm": 158.0,
+      "source": "Google specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/HTC One A9 Black-1.svg",
+      "category": "phones",
+      "name": "HTC One A9 Black-1",
+      "model_key": "htc-one-a9",
+      "width_mm": 70.8,
+      "height_mm": 145.8,
+      "source": "HTC / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/HTC One A9 Black.svg",
+      "category": "phones",
+      "name": "HTC One A9 Black",
+      "model_key": "htc-one-a9",
+      "width_mm": 70.8,
+      "height_mm": 145.8,
+      "source": "HTC / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/HTC One A9 White-1.svg",
+      "category": "phones",
+      "name": "HTC One A9 White-1",
+      "model_key": "htc-one-a9",
+      "width_mm": 70.8,
+      "height_mm": 145.8,
+      "source": "HTC / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/HTC One A9 White.svg",
+      "category": "phones",
+      "name": "HTC One A9 White",
+      "model_key": "htc-one-a9",
+      "width_mm": 70.8,
+      "height_mm": 145.8,
+      "source": "HTC / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/HTC One M8 Black-1.svg",
+      "category": "phones",
+      "name": "HTC One M8 Black-1",
+      "model_key": "htc-one-m8",
+      "width_mm": 70.6,
+      "height_mm": 146.4,
+      "source": "HTC / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/HTC One M8 Black.svg",
+      "category": "phones",
+      "name": "HTC One M8 Black",
+      "model_key": "htc-one-m8",
+      "width_mm": 70.6,
+      "height_mm": 146.4,
+      "source": "HTC / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/HTC One M8 Gold-1.svg",
+      "category": "phones",
+      "name": "HTC One M8 Gold-1",
+      "model_key": "htc-one-m8",
+      "width_mm": 70.6,
+      "height_mm": 146.4,
+      "source": "HTC / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/HTC One M8 Gold.svg",
+      "category": "phones",
+      "name": "HTC One M8 Gold",
+      "model_key": "htc-one-m8",
+      "width_mm": 70.6,
+      "height_mm": 146.4,
+      "source": "HTC / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/HTC One M8 Silver-1.svg",
+      "category": "phones",
+      "name": "HTC One M8 Silver-1",
+      "model_key": "htc-one-m8",
+      "width_mm": 70.6,
+      "height_mm": 146.4,
+      "source": "HTC / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/HTC One M8 Silver.svg",
+      "category": "phones",
+      "name": "HTC One M8 Silver",
+      "model_key": "htc-one-m8",
+      "width_mm": 70.6,
+      "height_mm": 146.4,
+      "source": "HTC / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Huawei P8 Black-1.svg",
+      "category": "phones",
+      "name": "Huawei P8 Black-1",
+      "model_key": "huawei-p8",
+      "width_mm": 72.1,
+      "height_mm": 144.9,
+      "source": "Huawei / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Huawei P8 Black.svg",
+      "category": "phones",
+      "name": "Huawei P8 Black",
+      "model_key": "huawei-p8",
+      "width_mm": 72.1,
+      "height_mm": 144.9,
+      "source": "Huawei / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Huawei P8 White-1.svg",
+      "category": "phones",
+      "name": "Huawei P8 White-1",
+      "model_key": "huawei-p8",
+      "width_mm": 72.1,
+      "height_mm": 144.9,
+      "source": "Huawei / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Huawei P8 White.svg",
+      "category": "phones",
+      "name": "Huawei P8 White",
+      "model_key": "huawei-p8",
+      "width_mm": 72.1,
+      "height_mm": 144.9,
+      "source": "Huawei / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Microsoft Lumia 950 Black-1.svg",
+      "category": "phones",
+      "name": "Microsoft Lumia 950 Black-1",
+      "model_key": "microsoft-lumia-950",
+      "width_mm": 73.2,
+      "height_mm": 145.0,
+      "source": "Microsoft / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Microsoft Lumia 950 Black.svg",
+      "category": "phones",
+      "name": "Microsoft Lumia 950 Black",
+      "model_key": "microsoft-lumia-950",
+      "width_mm": 73.2,
+      "height_mm": 145.0,
+      "source": "Microsoft / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Microsoft Lumia 950 White-1.svg",
+      "category": "phones",
+      "name": "Microsoft Lumia 950 White-1",
+      "model_key": "microsoft-lumia-950",
+      "width_mm": 73.2,
+      "height_mm": 145.0,
+      "source": "Microsoft / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Microsoft Lumia 950 White.svg",
+      "category": "phones",
+      "name": "Microsoft Lumia 950 White",
+      "model_key": "microsoft-lumia-950",
+      "width_mm": 73.2,
+      "height_mm": 145.0,
+      "source": "Microsoft / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Motorola Moto E Black-1.svg",
+      "category": "phones",
+      "name": "Motorola Moto E Black-1",
+      "model_key": "motorola-moto-e",
+      "width_mm": 64.8,
+      "height_mm": 124.8,
+      "source": "Motorola / GSMArena",
+      "notes": "1st-gen Moto E (2014)"
+    },
+    {
+      "file": "phones/Motorola Moto E Black.svg",
+      "category": "phones",
+      "name": "Motorola Moto E Black",
+      "model_key": "motorola-moto-e",
+      "width_mm": 64.8,
+      "height_mm": 124.8,
+      "source": "Motorola / GSMArena",
+      "notes": "1st-gen Moto E (2014)"
+    },
+    {
+      "file": "phones/Motorola Moto E White-1.svg",
+      "category": "phones",
+      "name": "Motorola Moto E White-1",
+      "model_key": "motorola-moto-e",
+      "width_mm": 64.8,
+      "height_mm": 124.8,
+      "source": "Motorola / GSMArena",
+      "notes": "1st-gen Moto E (2014)"
+    },
+    {
+      "file": "phones/Motorola Moto E White.svg",
+      "category": "phones",
+      "name": "Motorola Moto E White",
+      "model_key": "motorola-moto-e",
+      "width_mm": 64.8,
+      "height_mm": 124.8,
+      "source": "Motorola / GSMArena",
+      "notes": "1st-gen Moto E (2014)"
+    },
+    {
+      "file": "phones/Motorola Moto G-1.svg",
+      "category": "phones",
+      "name": "Motorola Moto G-1",
+      "model_key": "motorola-moto-g",
+      "width_mm": 65.9,
+      "height_mm": 129.9,
+      "source": "Motorola / GSMArena",
+      "notes": "1st-gen Moto G (2013)"
+    },
+    {
+      "file": "phones/Motorola Moto G.svg",
+      "category": "phones",
+      "name": "Motorola Moto G",
+      "model_key": "motorola-moto-g",
+      "width_mm": 65.9,
+      "height_mm": 129.9,
+      "source": "Motorola / GSMArena",
+      "notes": "1st-gen Moto G (2013)"
+    },
+    {
+      "file": "phones/Nexus 4-1.svg",
+      "category": "phones",
+      "name": "Nexus 4-1",
+      "model_key": "nexus-4",
+      "width_mm": 68.7,
+      "height_mm": 133.9,
+      "source": "Google / LG specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nexus 4.svg",
+      "category": "phones",
+      "name": "Nexus 4",
+      "model_key": "nexus-4",
+      "width_mm": 68.7,
+      "height_mm": 133.9,
+      "source": "Google / LG specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nexus 5x-1.svg",
+      "category": "phones",
+      "name": "Nexus 5x-1",
+      "model_key": "nexus-5x",
+      "width_mm": 72.6,
+      "height_mm": 147.0,
+      "source": "Google / LG specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nexus 5x.svg",
+      "category": "phones",
+      "name": "Nexus 5x",
+      "model_key": "nexus-5x",
+      "width_mm": 72.6,
+      "height_mm": 147.0,
+      "source": "Google / LG specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nexus 6P-1.svg",
+      "category": "phones",
+      "name": "Nexus 6P-1",
+      "model_key": "nexus-6p",
+      "width_mm": 77.8,
+      "height_mm": 159.3,
+      "source": "Google / Huawei specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nexus 6P.svg",
+      "category": "phones",
+      "name": "Nexus 6P",
+      "model_key": "nexus-6p",
+      "width_mm": 77.8,
+      "height_mm": 159.3,
+      "source": "Google / Huawei specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia 220 Black-1.svg",
+      "category": "phones",
+      "name": "Nokia 220 Black-1",
+      "model_key": "nokia-220",
+      "width_mm": 56.0,
+      "height_mm": 116.4,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia 220 Black.svg",
+      "category": "phones",
+      "name": "Nokia 220 Black",
+      "model_key": "nokia-220",
+      "width_mm": 56.0,
+      "height_mm": 116.4,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia 220 Blue-1.svg",
+      "category": "phones",
+      "name": "Nokia 220 Blue-1",
+      "model_key": "nokia-220",
+      "width_mm": 56.0,
+      "height_mm": 116.4,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia 220 Blue.svg",
+      "category": "phones",
+      "name": "Nokia 220 Blue",
+      "model_key": "nokia-220",
+      "width_mm": 56.0,
+      "height_mm": 116.4,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia 220 Red-1.svg",
+      "category": "phones",
+      "name": "Nokia 220 Red-1",
+      "model_key": "nokia-220",
+      "width_mm": 56.0,
+      "height_mm": 116.4,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia 220 Red.svg",
+      "category": "phones",
+      "name": "Nokia 220 Red",
+      "model_key": "nokia-220",
+      "width_mm": 56.0,
+      "height_mm": 116.4,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia 220 White-1.svg",
+      "category": "phones",
+      "name": "Nokia 220 White-1",
+      "model_key": "nokia-220",
+      "width_mm": 56.0,
+      "height_mm": 116.4,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia 220 White.svg",
+      "category": "phones",
+      "name": "Nokia 220 White",
+      "model_key": "nokia-220",
+      "width_mm": 56.0,
+      "height_mm": 116.4,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia 220 Yellow-1.svg",
+      "category": "phones",
+      "name": "Nokia 220 Yellow-1",
+      "model_key": "nokia-220",
+      "width_mm": 56.0,
+      "height_mm": 116.4,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia 220 Yellow.svg",
+      "category": "phones",
+      "name": "Nokia 220 Yellow",
+      "model_key": "nokia-220",
+      "width_mm": 56.0,
+      "height_mm": 116.4,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia 230 Black-1.svg",
+      "category": "phones",
+      "name": "Nokia 230 Black-1",
+      "model_key": "nokia-230",
+      "width_mm": 53.7,
+      "height_mm": 124.6,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia 230 Black.svg",
+      "category": "phones",
+      "name": "Nokia 230 Black",
+      "model_key": "nokia-230",
+      "width_mm": 53.7,
+      "height_mm": 124.6,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia 230 White-1.svg",
+      "category": "phones",
+      "name": "Nokia 230 White-1",
+      "model_key": "nokia-230",
+      "width_mm": 53.7,
+      "height_mm": 124.6,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia 230 White.svg",
+      "category": "phones",
+      "name": "Nokia 230 White",
+      "model_key": "nokia-230",
+      "width_mm": 53.7,
+      "height_mm": 124.6,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia Asha 230 Black-1.svg",
+      "category": "phones",
+      "name": "Nokia Asha 230 Black-1",
+      "model_key": "nokia-asha-230",
+      "width_mm": 53.7,
+      "height_mm": 124.6,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia Asha 230 Black.svg",
+      "category": "phones",
+      "name": "Nokia Asha 230 Black",
+      "model_key": "nokia-asha-230",
+      "width_mm": 53.7,
+      "height_mm": 124.6,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia Asha 230 Blue-1.svg",
+      "category": "phones",
+      "name": "Nokia Asha 230 Blue-1",
+      "model_key": "nokia-asha-230",
+      "width_mm": 53.7,
+      "height_mm": 124.6,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia Asha 230 Blue.svg",
+      "category": "phones",
+      "name": "Nokia Asha 230 Blue",
+      "model_key": "nokia-asha-230",
+      "width_mm": 53.7,
+      "height_mm": 124.6,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia Asha 230 Green-1.svg",
+      "category": "phones",
+      "name": "Nokia Asha 230 Green-1",
+      "model_key": "nokia-asha-230",
+      "width_mm": 53.7,
+      "height_mm": 124.6,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia Asha 230 Green.svg",
+      "category": "phones",
+      "name": "Nokia Asha 230 Green",
+      "model_key": "nokia-asha-230",
+      "width_mm": 53.7,
+      "height_mm": 124.6,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia Asha 230 Red-1.svg",
+      "category": "phones",
+      "name": "Nokia Asha 230 Red-1",
+      "model_key": "nokia-asha-230",
+      "width_mm": 53.7,
+      "height_mm": 124.6,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia Asha 230 Red.svg",
+      "category": "phones",
+      "name": "Nokia Asha 230 Red",
+      "model_key": "nokia-asha-230",
+      "width_mm": 53.7,
+      "height_mm": 124.6,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia Asha 230 White-1.svg",
+      "category": "phones",
+      "name": "Nokia Asha 230 White-1",
+      "model_key": "nokia-asha-230",
+      "width_mm": 53.7,
+      "height_mm": 124.6,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia Asha 230 White.svg",
+      "category": "phones",
+      "name": "Nokia Asha 230 White",
+      "model_key": "nokia-asha-230",
+      "width_mm": 53.7,
+      "height_mm": 124.6,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia Asha 230 Yellow-1.svg",
+      "category": "phones",
+      "name": "Nokia Asha 230 Yellow-1",
+      "model_key": "nokia-asha-230",
+      "width_mm": 53.7,
+      "height_mm": 124.6,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia Asha 230 Yellow.svg",
+      "category": "phones",
+      "name": "Nokia Asha 230 Yellow",
+      "model_key": "nokia-asha-230",
+      "width_mm": 53.7,
+      "height_mm": 124.6,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia C3-00-1.svg",
+      "category": "phones",
+      "name": "Nokia C3-00-1",
+      "model_key": "nokia-c3-00",
+      "width_mm": 58.1,
+      "height_mm": 115.5,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Nokia C3-00.svg",
+      "category": "phones",
+      "name": "Nokia C3-00",
+      "model_key": "nokia-c3-00",
+      "width_mm": 58.1,
+      "height_mm": 115.5,
+      "source": "Nokia / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy Grand Prime Black-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy Grand Prime Black-1",
+      "model_key": "samsung-galaxy-grand-prime",
+      "width_mm": 72.1,
+      "height_mm": 144.8,
+      "source": "Samsung / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy Grand Prime Black.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy Grand Prime Black",
+      "model_key": "samsung-galaxy-grand-prime",
+      "width_mm": 72.1,
+      "height_mm": 144.8,
+      "source": "Samsung / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy Grand Prime Gold-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy Grand Prime Gold-1",
+      "model_key": "samsung-galaxy-grand-prime",
+      "width_mm": 72.1,
+      "height_mm": 144.8,
+      "source": "Samsung / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy Grand Prime Gold.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy Grand Prime Gold",
+      "model_key": "samsung-galaxy-grand-prime",
+      "width_mm": 72.1,
+      "height_mm": 144.8,
+      "source": "Samsung / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy Grand Prime White-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy Grand Prime White-1",
+      "model_key": "samsung-galaxy-grand-prime",
+      "width_mm": 72.1,
+      "height_mm": 144.8,
+      "source": "Samsung / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy Grand Prime White.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy Grand Prime White",
+      "model_key": "samsung-galaxy-grand-prime",
+      "width_mm": 72.1,
+      "height_mm": 144.8,
+      "source": "Samsung / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy Note 5 Black-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy Note 5 Black-1",
+      "model_key": "samsung-galaxy-note-5",
+      "width_mm": 76.1,
+      "height_mm": 153.2,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy Note 5 Black.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy Note 5 Black",
+      "model_key": "samsung-galaxy-note-5",
+      "width_mm": 76.1,
+      "height_mm": 153.2,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy Note 5 Gold-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy Note 5 Gold-1",
+      "model_key": "samsung-galaxy-note-5",
+      "width_mm": 76.1,
+      "height_mm": 153.2,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy Note 5 Gold.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy Note 5 Gold",
+      "model_key": "samsung-galaxy-note-5",
+      "width_mm": 76.1,
+      "height_mm": 153.2,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy Note 5 Pink-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy Note 5 Pink-1",
+      "model_key": "samsung-galaxy-note-5",
+      "width_mm": 76.1,
+      "height_mm": 153.2,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy Note 5 Pink.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy Note 5 Pink",
+      "model_key": "samsung-galaxy-note-5",
+      "width_mm": 76.1,
+      "height_mm": 153.2,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy Note 5 Silver Titanium-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy Note 5 Silver Titanium-1",
+      "model_key": "samsung-galaxy-note-5",
+      "width_mm": 76.1,
+      "height_mm": 153.2,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy Note 5 Silver Titanium.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy Note 5 Silver Titanium",
+      "model_key": "samsung-galaxy-note-5",
+      "width_mm": 76.1,
+      "height_mm": 153.2,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy Note 5 White-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy Note 5 White-1",
+      "model_key": "samsung-galaxy-note-5",
+      "width_mm": 76.1,
+      "height_mm": 153.2,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy Note 5 White.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy Note 5 White",
+      "model_key": "samsung-galaxy-note-5",
+      "width_mm": 76.1,
+      "height_mm": 153.2,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S Duos-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S Duos-1",
+      "model_key": "samsung-galaxy-s-duos",
+      "width_mm": 61.0,
+      "height_mm": 121.0,
+      "source": "Samsung / GSMArena",
+      "notes": "Galaxy S Duos (S7562)"
+    },
+    {
+      "file": "phones/Samsung Galaxy S Duos.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S Duos",
+      "model_key": "samsung-galaxy-s-duos",
+      "width_mm": 61.0,
+      "height_mm": 121.0,
+      "source": "Samsung / GSMArena",
+      "notes": "Galaxy S Duos (S7562)"
+    },
+    {
+      "file": "phones/Samsung Galaxy S3-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S3-1",
+      "model_key": "samsung-galaxy-s3",
+      "width_mm": 70.6,
+      "height_mm": 136.6,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S3.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S3",
+      "model_key": "samsung-galaxy-s3",
+      "width_mm": 70.6,
+      "height_mm": 136.6,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S5 Black-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S5 Black-1",
+      "model_key": "samsung-galaxy-s5",
+      "width_mm": 72.5,
+      "height_mm": 142.0,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S5 Black.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S5 Black",
+      "model_key": "samsung-galaxy-s5",
+      "width_mm": 72.5,
+      "height_mm": 142.0,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S5 White-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S5 White-1",
+      "model_key": "samsung-galaxy-s5",
+      "width_mm": 72.5,
+      "height_mm": 142.0,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S5 White.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S5 White",
+      "model_key": "samsung-galaxy-s5",
+      "width_mm": 72.5,
+      "height_mm": 142.0,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S7 Black-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S7 Black-1",
+      "model_key": "samsung-galaxy-s7",
+      "width_mm": 69.6,
+      "height_mm": 142.4,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S7 Black.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S7 Black",
+      "model_key": "samsung-galaxy-s7",
+      "width_mm": 69.6,
+      "height_mm": 142.4,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S7 Gold-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S7 Gold-1",
+      "model_key": "samsung-galaxy-s7",
+      "width_mm": 69.6,
+      "height_mm": 142.4,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S7 Gold.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S7 Gold",
+      "model_key": "samsung-galaxy-s7",
+      "width_mm": 69.6,
+      "height_mm": 142.4,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S7 Silver-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S7 Silver-1",
+      "model_key": "samsung-galaxy-s7",
+      "width_mm": 69.6,
+      "height_mm": 142.4,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S7 Silver.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S7 Silver",
+      "model_key": "samsung-galaxy-s7",
+      "width_mm": 69.6,
+      "height_mm": 142.4,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S7 White-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S7 White-1",
+      "model_key": "samsung-galaxy-s7",
+      "width_mm": 69.6,
+      "height_mm": 142.4,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S7 White.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S7 White",
+      "model_key": "samsung-galaxy-s7",
+      "width_mm": 69.6,
+      "height_mm": 142.4,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S8 Arctic Silver-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S8 Arctic Silver-1",
+      "model_key": "samsung-galaxy-s8",
+      "width_mm": 68.1,
+      "height_mm": 148.9,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S8 Arctic Silver.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S8 Arctic Silver",
+      "model_key": "samsung-galaxy-s8",
+      "width_mm": 68.1,
+      "height_mm": 148.9,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S8 Coral Blue-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S8 Coral Blue-1",
+      "model_key": "samsung-galaxy-s8",
+      "width_mm": 68.1,
+      "height_mm": 148.9,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S8 Coral Blue.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S8 Coral Blue",
+      "model_key": "samsung-galaxy-s8",
+      "width_mm": 68.1,
+      "height_mm": 148.9,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S8 Maple Gold-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S8 Maple Gold-1",
+      "model_key": "samsung-galaxy-s8",
+      "width_mm": 68.1,
+      "height_mm": 148.9,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S8 Maple Gold.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S8 Maple Gold",
+      "model_key": "samsung-galaxy-s8",
+      "width_mm": 68.1,
+      "height_mm": 148.9,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S8 Midnight Black-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S8 Midnight Black-1",
+      "model_key": "samsung-galaxy-s8",
+      "width_mm": 68.1,
+      "height_mm": 148.9,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S8 Midnight Black.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S8 Midnight Black",
+      "model_key": "samsung-galaxy-s8",
+      "width_mm": 68.1,
+      "height_mm": 148.9,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S8 Orchid Gray-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S8 Orchid Gray-1",
+      "model_key": "samsung-galaxy-s8",
+      "width_mm": 68.1,
+      "height_mm": 148.9,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S8 Orchid Gray.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S8 Orchid Gray",
+      "model_key": "samsung-galaxy-s8",
+      "width_mm": 68.1,
+      "height_mm": 148.9,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S9 Burgundy Red-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S9 Burgundy Red-1",
+      "model_key": "samsung-galaxy-s9",
+      "width_mm": 68.7,
+      "height_mm": 147.7,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S9 Burgundy Red.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S9 Burgundy Red",
+      "model_key": "samsung-galaxy-s9",
+      "width_mm": 68.7,
+      "height_mm": 147.7,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S9 Coral Blue-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S9 Coral Blue-1",
+      "model_key": "samsung-galaxy-s9",
+      "width_mm": 68.7,
+      "height_mm": 147.7,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S9 Coral Blue.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S9 Coral Blue",
+      "model_key": "samsung-galaxy-s9",
+      "width_mm": 68.7,
+      "height_mm": 147.7,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S9 Lilac Purple-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S9 Lilac Purple-1",
+      "model_key": "samsung-galaxy-s9",
+      "width_mm": 68.7,
+      "height_mm": 147.7,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S9 Lilac Purple.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S9 Lilac Purple",
+      "model_key": "samsung-galaxy-s9",
+      "width_mm": 68.7,
+      "height_mm": 147.7,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S9 Midnight Black-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S9 Midnight Black-1",
+      "model_key": "samsung-galaxy-s9",
+      "width_mm": 68.7,
+      "height_mm": 147.7,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S9 Midnight Black.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S9 Midnight Black",
+      "model_key": "samsung-galaxy-s9",
+      "width_mm": 68.7,
+      "height_mm": 147.7,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S9 Sunrise Gold-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S9 Sunrise Gold-1",
+      "model_key": "samsung-galaxy-s9",
+      "width_mm": 68.7,
+      "height_mm": 147.7,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S9 Sunrise Gold.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S9 Sunrise Gold",
+      "model_key": "samsung-galaxy-s9",
+      "width_mm": 68.7,
+      "height_mm": 147.7,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S9 Titanium Gray-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S9 Titanium Gray-1",
+      "model_key": "samsung-galaxy-s9",
+      "width_mm": 68.7,
+      "height_mm": 147.7,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy S9 Titanium Gray.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy S9 Titanium Gray",
+      "model_key": "samsung-galaxy-s9",
+      "width_mm": 68.7,
+      "height_mm": 147.7,
+      "source": "Samsung specs",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy Y Black-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy Y Black-1",
+      "model_key": "samsung-galaxy-y",
+      "width_mm": 58.0,
+      "height_mm": 104.0,
+      "source": "Samsung / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy Y Black.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy Y Black",
+      "model_key": "samsung-galaxy-y",
+      "width_mm": 58.0,
+      "height_mm": 104.0,
+      "source": "Samsung / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy Y White-1.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy Y White-1",
+      "model_key": "samsung-galaxy-y",
+      "width_mm": 58.0,
+      "height_mm": 104.0,
+      "source": "Samsung / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "phones/Samsung Galaxy Y White.svg",
+      "category": "phones",
+      "name": "Samsung Galaxy Y White",
+      "model_key": "samsung-galaxy-y",
+      "width_mm": 58.0,
+      "height_mm": 104.0,
+      "source": "Samsung / GSMArena",
+      "notes": ""
+    },
+    {
+      "file": "tablets/Apple iPad Air Gold-1.svg",
+      "category": "tablets",
+      "name": "Apple iPad Air Gold-1",
+      "model_key": "apple-ipad-air",
+      "width_mm": 169.5,
+      "height_mm": 240.0,
+      "source": "assumed Apple iPad Air 2",
+      "notes": "Generic 'iPad Air' asset; assumed iPad Air 2"
+    },
+    {
+      "file": "tablets/Apple iPad Air Gold.svg",
+      "category": "tablets",
+      "name": "Apple iPad Air Gold",
+      "model_key": "apple-ipad-air",
+      "width_mm": 169.5,
+      "height_mm": 240.0,
+      "source": "assumed Apple iPad Air 2",
+      "notes": "Generic 'iPad Air' asset; assumed iPad Air 2"
+    },
+    {
+      "file": "tablets/Apple iPad Air Silver-1.svg",
+      "category": "tablets",
+      "name": "Apple iPad Air Silver-1",
+      "model_key": "apple-ipad-air",
+      "width_mm": 169.5,
+      "height_mm": 240.0,
+      "source": "assumed Apple iPad Air 2",
+      "notes": "Generic 'iPad Air' asset; assumed iPad Air 2"
+    },
+    {
+      "file": "tablets/Apple iPad Air Silver.svg",
+      "category": "tablets",
+      "name": "Apple iPad Air Silver",
+      "model_key": "apple-ipad-air",
+      "width_mm": 169.5,
+      "height_mm": 240.0,
+      "source": "assumed Apple iPad Air 2",
+      "notes": "Generic 'iPad Air' asset; assumed iPad Air 2"
+    },
+    {
+      "file": "tablets/Apple iPad Air Space Grey-1.svg",
+      "category": "tablets",
+      "name": "Apple iPad Air Space Grey-1",
+      "model_key": "apple-ipad-air",
+      "width_mm": 169.5,
+      "height_mm": 240.0,
+      "source": "assumed Apple iPad Air 2",
+      "notes": "Generic 'iPad Air' asset; assumed iPad Air 2"
+    },
+    {
+      "file": "tablets/Apple iPad Air Space Grey.svg",
+      "category": "tablets",
+      "name": "Apple iPad Air Space Grey",
+      "model_key": "apple-ipad-air",
+      "width_mm": 169.5,
+      "height_mm": 240.0,
+      "source": "assumed Apple iPad Air 2",
+      "notes": "Generic 'iPad Air' asset; assumed iPad Air 2"
+    },
+    {
+      "file": "tablets/Apple iPad Gold-1.svg",
+      "category": "tablets",
+      "name": "Apple iPad Gold-1",
+      "model_key": "apple-ipad",
+      "width_mm": 185.7,
+      "height_mm": 241.2,
+      "source": "assumed Apple iPad (5th/6th gen)",
+      "notes": "Generic 'Apple iPad' asset; assumed 9.7-inch iPad (5th/6th gen)"
+    },
+    {
+      "file": "tablets/Apple iPad Gold.svg",
+      "category": "tablets",
+      "name": "Apple iPad Gold",
+      "model_key": "apple-ipad",
+      "width_mm": 185.7,
+      "height_mm": 241.2,
+      "source": "assumed Apple iPad (5th/6th gen)",
+      "notes": "Generic 'Apple iPad' asset; assumed 9.7-inch iPad (5th/6th gen)"
+    },
+    {
+      "file": "tablets/Apple iPad Mini Gold-1.svg",
+      "category": "tablets",
+      "name": "Apple iPad Mini Gold-1",
+      "model_key": "apple-ipad-mini",
+      "width_mm": 134.8,
+      "height_mm": 200.0,
+      "source": "assumed Apple iPad mini 4",
+      "notes": "Generic 'iPad Mini' asset; assumed iPad mini 4"
+    },
+    {
+      "file": "tablets/Apple iPad Mini Gold.svg",
+      "category": "tablets",
+      "name": "Apple iPad Mini Gold",
+      "model_key": "apple-ipad-mini",
+      "width_mm": 134.8,
+      "height_mm": 200.0,
+      "source": "assumed Apple iPad mini 4",
+      "notes": "Generic 'iPad Mini' asset; assumed iPad mini 4"
+    },
+    {
+      "file": "tablets/Apple iPad Mini Silver-1.svg",
+      "category": "tablets",
+      "name": "Apple iPad Mini Silver-1",
+      "model_key": "apple-ipad-mini",
+      "width_mm": 134.8,
+      "height_mm": 200.0,
+      "source": "assumed Apple iPad mini 4",
+      "notes": "Generic 'iPad Mini' asset; assumed iPad mini 4"
+    },
+    {
+      "file": "tablets/Apple iPad Mini Silver.svg",
+      "category": "tablets",
+      "name": "Apple iPad Mini Silver",
+      "model_key": "apple-ipad-mini",
+      "width_mm": 134.8,
+      "height_mm": 200.0,
+      "source": "assumed Apple iPad mini 4",
+      "notes": "Generic 'iPad Mini' asset; assumed iPad mini 4"
+    },
+    {
+      "file": "tablets/Apple iPad Mini Space Grey-1.svg",
+      "category": "tablets",
+      "name": "Apple iPad Mini Space Grey-1",
+      "model_key": "apple-ipad-mini",
+      "width_mm": 134.8,
+      "height_mm": 200.0,
+      "source": "assumed Apple iPad mini 4",
+      "notes": "Generic 'iPad Mini' asset; assumed iPad mini 4"
+    },
+    {
+      "file": "tablets/Apple iPad Mini Space Grey.svg",
+      "category": "tablets",
+      "name": "Apple iPad Mini Space Grey",
+      "model_key": "apple-ipad-mini",
+      "width_mm": 134.8,
+      "height_mm": 200.0,
+      "source": "assumed Apple iPad mini 4",
+      "notes": "Generic 'iPad Mini' asset; assumed iPad mini 4"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 11-inch Silver - Landscape-1.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 11-inch Silver - Landscape-1",
+      "model_key": "apple-ipad-pro-11-inch",
+      "width_mm": 178.5,
+      "height_mm": 247.6,
+      "source": "Apple specs",
+      "notes": "iPad Pro 11-inch (1st gen class); portrait body size"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 11-inch Silver - Landscape-2.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 11-inch Silver - Landscape-2",
+      "model_key": "apple-ipad-pro-11-inch",
+      "width_mm": 178.5,
+      "height_mm": 247.6,
+      "source": "Apple specs",
+      "notes": "iPad Pro 11-inch (1st gen class); portrait body size"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 11-inch Silver - Landscape-3.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 11-inch Silver - Landscape-3",
+      "model_key": "apple-ipad-pro-11-inch",
+      "width_mm": 178.5,
+      "height_mm": 247.6,
+      "source": "Apple specs",
+      "notes": "iPad Pro 11-inch (1st gen class); portrait body size"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 11-inch Silver - Landscape.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 11-inch Silver - Landscape",
+      "model_key": "apple-ipad-pro-11-inch",
+      "width_mm": 178.5,
+      "height_mm": 247.6,
+      "source": "Apple specs",
+      "notes": "iPad Pro 11-inch (1st gen class); portrait body size"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 11-inch Silver - Portrait-1.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 11-inch Silver - Portrait-1",
+      "model_key": "apple-ipad-pro-11-inch",
+      "width_mm": 178.5,
+      "height_mm": 247.6,
+      "source": "Apple specs",
+      "notes": "iPad Pro 11-inch (1st gen class); portrait body size"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 11-inch Silver - Portrait-2.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 11-inch Silver - Portrait-2",
+      "model_key": "apple-ipad-pro-11-inch",
+      "width_mm": 178.5,
+      "height_mm": 247.6,
+      "source": "Apple specs",
+      "notes": "iPad Pro 11-inch (1st gen class); portrait body size"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 11-inch Silver - Portrait-3.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 11-inch Silver - Portrait-3",
+      "model_key": "apple-ipad-pro-11-inch",
+      "width_mm": 178.5,
+      "height_mm": 247.6,
+      "source": "Apple specs",
+      "notes": "iPad Pro 11-inch (1st gen class); portrait body size"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 11-inch Silver - Portrait.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 11-inch Silver - Portrait",
+      "model_key": "apple-ipad-pro-11-inch",
+      "width_mm": 178.5,
+      "height_mm": 247.6,
+      "source": "Apple specs",
+      "notes": "iPad Pro 11-inch (1st gen class); portrait body size"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 11-inch Space Gray - Landscape-1.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 11-inch Space Gray - Landscape-1",
+      "model_key": "apple-ipad-pro-11-inch",
+      "width_mm": 178.5,
+      "height_mm": 247.6,
+      "source": "Apple specs",
+      "notes": "iPad Pro 11-inch (1st gen class); portrait body size"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 11-inch Space Gray - Landscape-2.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 11-inch Space Gray - Landscape-2",
+      "model_key": "apple-ipad-pro-11-inch",
+      "width_mm": 178.5,
+      "height_mm": 247.6,
+      "source": "Apple specs",
+      "notes": "iPad Pro 11-inch (1st gen class); portrait body size"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 11-inch Space Gray - Landscape-3.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 11-inch Space Gray - Landscape-3",
+      "model_key": "apple-ipad-pro-11-inch",
+      "width_mm": 178.5,
+      "height_mm": 247.6,
+      "source": "Apple specs",
+      "notes": "iPad Pro 11-inch (1st gen class); portrait body size"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 11-inch Space Gray - Landscape.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 11-inch Space Gray - Landscape",
+      "model_key": "apple-ipad-pro-11-inch",
+      "width_mm": 178.5,
+      "height_mm": 247.6,
+      "source": "Apple specs",
+      "notes": "iPad Pro 11-inch (1st gen class); portrait body size"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 11-inch Space Gray - Portrait-1.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 11-inch Space Gray - Portrait-1",
+      "model_key": "apple-ipad-pro-11-inch",
+      "width_mm": 178.5,
+      "height_mm": 247.6,
+      "source": "Apple specs",
+      "notes": "iPad Pro 11-inch (1st gen class); portrait body size"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 11-inch Space Gray - Portrait-2.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 11-inch Space Gray - Portrait-2",
+      "model_key": "apple-ipad-pro-11-inch",
+      "width_mm": 178.5,
+      "height_mm": 247.6,
+      "source": "Apple specs",
+      "notes": "iPad Pro 11-inch (1st gen class); portrait body size"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 11-inch Space Gray - Portrait-3.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 11-inch Space Gray - Portrait-3",
+      "model_key": "apple-ipad-pro-11-inch",
+      "width_mm": 178.5,
+      "height_mm": 247.6,
+      "source": "Apple specs",
+      "notes": "iPad Pro 11-inch (1st gen class); portrait body size"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 11-inch Space Gray - Portrait.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 11-inch Space Gray - Portrait",
+      "model_key": "apple-ipad-pro-11-inch",
+      "width_mm": 178.5,
+      "height_mm": 247.6,
+      "source": "Apple specs",
+      "notes": "iPad Pro 11-inch (1st gen class); portrait body size"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 13-inch Silver - Landscape-1.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 13-inch Silver - Landscape-1",
+      "model_key": "apple-ipad-pro-13-inch",
+      "width_mm": 214.9,
+      "height_mm": 280.6,
+      "source": "assumed Apple iPad Pro 12.9-inch",
+      "notes": "Filename says 13-inch; body size assumed 12.9-inch iPad Pro (3rd gen class)"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 13-inch Silver - Landscape-2.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 13-inch Silver - Landscape-2",
+      "model_key": "apple-ipad-pro-13-inch",
+      "width_mm": 214.9,
+      "height_mm": 280.6,
+      "source": "assumed Apple iPad Pro 12.9-inch",
+      "notes": "Filename says 13-inch; body size assumed 12.9-inch iPad Pro (3rd gen class)"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 13-inch Silver - Landscape-3.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 13-inch Silver - Landscape-3",
+      "model_key": "apple-ipad-pro-13-inch",
+      "width_mm": 214.9,
+      "height_mm": 280.6,
+      "source": "assumed Apple iPad Pro 12.9-inch",
+      "notes": "Filename says 13-inch; body size assumed 12.9-inch iPad Pro (3rd gen class)"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 13-inch Silver - Landscape.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 13-inch Silver - Landscape",
+      "model_key": "apple-ipad-pro-13-inch",
+      "width_mm": 214.9,
+      "height_mm": 280.6,
+      "source": "assumed Apple iPad Pro 12.9-inch",
+      "notes": "Filename says 13-inch; body size assumed 12.9-inch iPad Pro (3rd gen class)"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 13-inch Silver - Portrait-1.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 13-inch Silver - Portrait-1",
+      "model_key": "apple-ipad-pro-13-inch",
+      "width_mm": 214.9,
+      "height_mm": 280.6,
+      "source": "assumed Apple iPad Pro 12.9-inch",
+      "notes": "Filename says 13-inch; body size assumed 12.9-inch iPad Pro (3rd gen class); portrait asset"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 13-inch Silver - Portrait-2.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 13-inch Silver - Portrait-2",
+      "model_key": "apple-ipad-pro-13-inch",
+      "width_mm": 214.9,
+      "height_mm": 280.6,
+      "source": "assumed Apple iPad Pro 12.9-inch",
+      "notes": "Filename says 13-inch; body size assumed 12.9-inch iPad Pro (3rd gen class); portrait asset"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 13-inch Silver - Portrait-3.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 13-inch Silver - Portrait-3",
+      "model_key": "apple-ipad-pro-13-inch",
+      "width_mm": 214.9,
+      "height_mm": 280.6,
+      "source": "assumed Apple iPad Pro 12.9-inch",
+      "notes": "Filename says 13-inch; body size assumed 12.9-inch iPad Pro (3rd gen class); portrait asset"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 13-inch Silver - Portrait.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 13-inch Silver - Portrait",
+      "model_key": "apple-ipad-pro-13-inch",
+      "width_mm": 214.9,
+      "height_mm": 280.6,
+      "source": "assumed Apple iPad Pro 12.9-inch",
+      "notes": "Filename says 13-inch; body size assumed 12.9-inch iPad Pro (3rd gen class); portrait asset"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 13-inch Space Gray - Landscape-1.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 13-inch Space Gray - Landscape-1",
+      "model_key": "apple-ipad-pro-13-inch",
+      "width_mm": 214.9,
+      "height_mm": 280.6,
+      "source": "assumed Apple iPad Pro 12.9-inch",
+      "notes": "Filename says 13-inch; body size assumed 12.9-inch iPad Pro (3rd gen class)"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 13-inch Space Gray - Landscape-2.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 13-inch Space Gray - Landscape-2",
+      "model_key": "apple-ipad-pro-13-inch",
+      "width_mm": 214.9,
+      "height_mm": 280.6,
+      "source": "assumed Apple iPad Pro 12.9-inch",
+      "notes": "Filename says 13-inch; body size assumed 12.9-inch iPad Pro (3rd gen class)"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 13-inch Space Gray - Landscape-3.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 13-inch Space Gray - Landscape-3",
+      "model_key": "apple-ipad-pro-13-inch",
+      "width_mm": 214.9,
+      "height_mm": 280.6,
+      "source": "assumed Apple iPad Pro 12.9-inch",
+      "notes": "Filename says 13-inch; body size assumed 12.9-inch iPad Pro (3rd gen class)"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 13-inch Space Gray - Landscape.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 13-inch Space Gray - Landscape",
+      "model_key": "apple-ipad-pro-13-inch",
+      "width_mm": 214.9,
+      "height_mm": 280.6,
+      "source": "assumed Apple iPad Pro 12.9-inch",
+      "notes": "Filename says 13-inch; body size assumed 12.9-inch iPad Pro (3rd gen class)"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 13-inch Space Gray - Portrait-1.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 13-inch Space Gray - Portrait-1",
+      "model_key": "apple-ipad-pro-13-inch",
+      "width_mm": 214.9,
+      "height_mm": 280.6,
+      "source": "assumed Apple iPad Pro 12.9-inch",
+      "notes": "Filename says 13-inch; body size assumed 12.9-inch iPad Pro (3rd gen class); portrait asset"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 13-inch Space Gray - Portrait-2.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 13-inch Space Gray - Portrait-2",
+      "model_key": "apple-ipad-pro-13-inch",
+      "width_mm": 214.9,
+      "height_mm": 280.6,
+      "source": "assumed Apple iPad Pro 12.9-inch",
+      "notes": "Filename says 13-inch; body size assumed 12.9-inch iPad Pro (3rd gen class); portrait asset"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 13-inch Space Gray - Portrait-3.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 13-inch Space Gray - Portrait-3",
+      "model_key": "apple-ipad-pro-13-inch",
+      "width_mm": 214.9,
+      "height_mm": 280.6,
+      "source": "assumed Apple iPad Pro 12.9-inch",
+      "notes": "Filename says 13-inch; body size assumed 12.9-inch iPad Pro (3rd gen class); portrait asset"
+    },
+    {
+      "file": "tablets/Apple iPad Pro 13-inch Space Gray - Portrait.svg",
+      "category": "tablets",
+      "name": "Apple iPad Pro 13-inch Space Gray - Portrait",
+      "model_key": "apple-ipad-pro-13-inch",
+      "width_mm": 214.9,
+      "height_mm": 280.6,
+      "source": "assumed Apple iPad Pro 12.9-inch",
+      "notes": "Filename says 13-inch; body size assumed 12.9-inch iPad Pro (3rd gen class); portrait asset"
+    },
+    {
+      "file": "tablets/Apple iPad Silver-1.svg",
+      "category": "tablets",
+      "name": "Apple iPad Silver-1",
+      "model_key": "apple-ipad",
+      "width_mm": 185.7,
+      "height_mm": 241.2,
+      "source": "assumed Apple iPad (5th/6th gen)",
+      "notes": "Generic 'Apple iPad' asset; assumed 9.7-inch iPad (5th/6th gen)"
+    },
+    {
+      "file": "tablets/Apple iPad Silver.svg",
+      "category": "tablets",
+      "name": "Apple iPad Silver",
+      "model_key": "apple-ipad",
+      "width_mm": 185.7,
+      "height_mm": 241.2,
+      "source": "assumed Apple iPad (5th/6th gen)",
+      "notes": "Generic 'Apple iPad' asset; assumed 9.7-inch iPad (5th/6th gen)"
+    },
+    {
+      "file": "tablets/Apple iPad Space Grey-1.svg",
+      "category": "tablets",
+      "name": "Apple iPad Space Grey-1",
+      "model_key": "apple-ipad",
+      "width_mm": 185.7,
+      "height_mm": 241.2,
+      "source": "assumed Apple iPad (5th/6th gen)",
+      "notes": "Generic 'Apple iPad' asset; assumed 9.7-inch iPad (5th/6th gen)"
+    },
+    {
+      "file": "tablets/Apple iPad Space Grey.svg",
+      "category": "tablets",
+      "name": "Apple iPad Space Grey",
+      "model_key": "apple-ipad",
+      "width_mm": 185.7,
+      "height_mm": 241.2,
+      "source": "assumed Apple iPad (5th/6th gen)",
+      "notes": "Generic 'Apple iPad' asset; assumed 9.7-inch iPad (5th/6th gen)"
+    },
+    {
+      "file": "tablets/Microsoft Surface Pro 3-1.svg",
+      "category": "tablets",
+      "name": "Microsoft Surface Pro 3-1",
+      "model_key": "microsoft-surface-pro-3",
+      "width_mm": 292.1,
+      "height_mm": 201.3,
+      "source": "Microsoft specs",
+      "notes": "Landscape-oriented body (tablet used flat)"
+    },
+    {
+      "file": "tablets/Microsoft Surface Pro 3.svg",
+      "category": "tablets",
+      "name": "Microsoft Surface Pro 3",
+      "model_key": "microsoft-surface-pro-3",
+      "width_mm": 292.1,
+      "height_mm": 201.3,
+      "source": "Microsoft specs",
+      "notes": "Landscape-oriented body (tablet used flat)"
+    },
+    {
+      "file": "tablets/Microsoft Surface Pro 4-1.svg",
+      "category": "tablets",
+      "name": "Microsoft Surface Pro 4-1",
+      "model_key": "microsoft-surface-pro-4",
+      "width_mm": 292.1,
+      "height_mm": 201.4,
+      "source": "Microsoft specs",
+      "notes": "Landscape-oriented body"
+    },
+    {
+      "file": "tablets/Microsoft Surface Pro 4.svg",
+      "category": "tablets",
+      "name": "Microsoft Surface Pro 4",
+      "model_key": "microsoft-surface-pro-4",
+      "width_mm": 292.1,
+      "height_mm": 201.4,
+      "source": "Microsoft specs",
+      "notes": "Landscape-oriented body"
+    },
+    {
+      "file": "tablets/Nexus 9-1.svg",
+      "category": "tablets",
+      "name": "Nexus 9-1",
+      "model_key": "nexus-9",
+      "width_mm": 153.7,
+      "height_mm": 228.3,
+      "source": "Google / HTC specs",
+      "notes": ""
+    },
+    {
+      "file": "tablets/Nexus 9.svg",
+      "category": "tablets",
+      "name": "Nexus 9",
+      "model_key": "nexus-9",
+      "width_mm": 153.7,
+      "height_mm": 228.3,
+      "source": "Google / HTC specs",
+      "notes": ""
+    },
+    {
+      "file": "watches/Apple Watch 38mm Black Steel + Black Closed-1.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Black Steel + Black Closed-1",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Black Steel + Black Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Black Steel + Black Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Black Steel + Black Open-1.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Black Steel + Black Open-1",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Black Steel + Black Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Black Steel + Black Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Edition Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Edition Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Edition Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Edition Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Gold + Black Leather Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Gold + Black Leather Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Gold + Midnight Blue Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Gold + Midnight Blue Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Gold + Midnight Blue Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Gold + Midnight Blue Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Rose Gold + Black Leather Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Rose Gold + Black Leather Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Rose Gold + Lavender Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Rose Gold + Lavender Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Rose Gold + Lavender Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Rose Gold + Lavender Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Rose Gold Aluminum + Midnight Blue Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Rose Gold Aluminum + Midnight Blue Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Rose Gold Aluminum + Midnight Blue Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Rose Gold Aluminum + Midnight Blue Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Silver Aluminum + Cocoa Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Silver Aluminum + Cocoa Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Silver Aluminum + Cocoa Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Silver Aluminum + Cocoa Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Silver Aluminum + Concrete Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Silver Aluminum + Concrete Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Silver Aluminum + Concrete Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Silver Aluminum + Concrete Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Silver Aluminum + Flat Silver Volt Nike Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Silver Aluminum + Flat Silver Volt Nike Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Silver Aluminum + Flat Silver Volt Nike Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Silver Aluminum + Flat Silver Volt Nike Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Silver Aluminum + Flat Silver White Nike Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Silver Aluminum + Flat Silver White Nike Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Silver Aluminum + Flat Silver White Nike Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Silver Aluminum + Flat Silver White Nike Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Silver Aluminum + Ocean Blue Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Silver Aluminum + Ocean Blue Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Silver Aluminum + Ocean Blue Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Silver Aluminum + Ocean Blue Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Silver Aluminum + Pink Sand Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Silver Aluminum + Pink Sand Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Silver Aluminum + Red Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Silver Aluminum + Red Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Silver Aluminum + Red Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Silver Aluminum + Red Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Silver Aluminum + Turquoise Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Silver Aluminum + Turquoise Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Silver Aluminum + Turquoise Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Silver Aluminum + Turquoise Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Silver Aluminum + White Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Silver Aluminum + White Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Silver Aluminum + White Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Silver Aluminum + White Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Silver Aluminum + Yellow Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Silver Aluminum + Yellow Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Silver Aluminum + Yellow Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Silver Aluminum + Yellow Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Space Gray Aluminum + Black Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Space Gray Aluminum + Black Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Space Gray Aluminum + Black Cool Gray Nike Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Space Gray Aluminum + Black Cool Gray Nike Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Space Gray Aluminum + Black Cool Gray Nike Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Space Gray Aluminum + Black Cool Gray Nike Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Space Gray Aluminum + Black Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Space Gray Aluminum + Black Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Space Gray Aluminum + Black Volt Nike Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Space Gray Aluminum + Black Volt Nike Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Space Gray Aluminum + Black Volt Nike Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Space Gray Aluminum + Black Volt Nike Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Sport Aluminum + Blue Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Sport Aluminum + Blue Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Sport Aluminum + Blue Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Sport Aluminum + Blue Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Sport Aluminum + Fog Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Sport Aluminum + Fog Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Sport Aluminum + Fog Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Sport Aluminum + Fog Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Sport Aluminum + Green Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Sport Aluminum + Green Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Sport Aluminum + Green Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Sport Aluminum + Green Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Sport Aluminum + Red Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Sport Aluminum + Red Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Sport Aluminum + Red Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Sport Aluminum + Red Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Sport Aluminum + Walnut Closed-1.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Sport Aluminum + Walnut Closed-1",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Sport Aluminum + Walnut Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Sport Aluminum + Walnut Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Sport Aluminum + Walnut Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Sport Aluminum + Walnut Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Sport Aluminum + White Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Sport Aluminum + White Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Sport Aluminum + White Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Sport Aluminum + White Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Sport Aluminum Gold + Antique White Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Sport Aluminum Gold + Antique White Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Sport Aluminum Gold + Antique White Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Sport Aluminum Gold + Antique White Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Sport Aluminum Rose Gold + Stone Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Sport Aluminum Rose Gold + Stone Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Sport Aluminum Rose Gold + Stone Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Sport Aluminum Rose Gold + Stone Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Sport Space Gray + Black Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Sport Space Gray + Black Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Sport Space Gray + Black Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Sport Space Gray + Black Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Stainless Steel + Black Leather Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Stainless Steel + Black Leather Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Steel + White Closed-1.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Steel + White Closed-1",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Steel + White Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Steel + White Closed",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Steel + White Open-1.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Steel + White Open-1",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 38mm Steel + White Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 38mm Steel + White Open",
+      "model_key": "apple-watch-38mm",
+      "width_mm": 33.3,
+      "height_mm": 38.6,
+      "source": "Apple specs",
+      "notes": "38mm case"
+    },
+    {
+      "file": "watches/Apple Watch 40mm Gold Aluminum + Pink Sand Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 40mm Gold Aluminum + Pink Sand Closed",
+      "model_key": "apple-watch-40mm",
+      "width_mm": 34.0,
+      "height_mm": 40.0,
+      "source": "Apple specs",
+      "notes": "40mm case"
+    },
+    {
+      "file": "watches/Apple Watch 40mm Gold Aluminum + Pink Sand Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 40mm Gold Aluminum + Pink Sand Open",
+      "model_key": "apple-watch-40mm",
+      "width_mm": 34.0,
+      "height_mm": 40.0,
+      "source": "Apple specs",
+      "notes": "40mm case"
+    },
+    {
+      "file": "watches/Apple Watch 40mm Gold Stainless Steel + Stone Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 40mm Gold Stainless Steel + Stone Closed",
+      "model_key": "apple-watch-40mm",
+      "width_mm": 34.0,
+      "height_mm": 40.0,
+      "source": "Apple specs",
+      "notes": "40mm case"
+    },
+    {
+      "file": "watches/Apple Watch 40mm Gold Stainless Steel + Stone Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 40mm Gold Stainless Steel + Stone Open",
+      "model_key": "apple-watch-40mm",
+      "width_mm": 34.0,
+      "height_mm": 40.0,
+      "source": "Apple specs",
+      "notes": "40mm case"
+    },
+    {
+      "file": "watches/Apple Watch 40mm Silver Aluminum + Clementine Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 40mm Silver Aluminum + Clementine Closed",
+      "model_key": "apple-watch-40mm",
+      "width_mm": 34.0,
+      "height_mm": 40.0,
+      "source": "Apple specs",
+      "notes": "40mm case"
+    },
+    {
+      "file": "watches/Apple Watch 40mm Silver Aluminum + Clementine Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 40mm Silver Aluminum + Clementine Open",
+      "model_key": "apple-watch-40mm",
+      "width_mm": 34.0,
+      "height_mm": 40.0,
+      "source": "Apple specs",
+      "notes": "40mm case"
+    },
+    {
+      "file": "watches/Apple Watch 40mm Space Black Stainless Steel + Alaskan Blue Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 40mm Space Black Stainless Steel + Alaskan Blue Closed",
+      "model_key": "apple-watch-40mm",
+      "width_mm": 34.0,
+      "height_mm": 40.0,
+      "source": "Apple specs",
+      "notes": "40mm case"
+    },
+    {
+      "file": "watches/Apple Watch 40mm Space Black Stainless Steel + Alaskan Blue Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 40mm Space Black Stainless Steel + Alaskan Blue Open",
+      "model_key": "apple-watch-40mm",
+      "width_mm": 34.0,
+      "height_mm": 40.0,
+      "source": "Apple specs",
+      "notes": "40mm case"
+    },
+    {
+      "file": "watches/Apple Watch 40mm Space Black Titanium + Pine Green Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 40mm Space Black Titanium + Pine Green Closed",
+      "model_key": "apple-watch-40mm",
+      "width_mm": 34.0,
+      "height_mm": 40.0,
+      "source": "Apple specs",
+      "notes": "40mm case"
+    },
+    {
+      "file": "watches/Apple Watch 40mm Space Black Titanium + Pine Green Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 40mm Space Black Titanium + Pine Green Open",
+      "model_key": "apple-watch-40mm",
+      "width_mm": 34.0,
+      "height_mm": 40.0,
+      "source": "Apple specs",
+      "notes": "40mm case"
+    },
+    {
+      "file": "watches/Apple Watch 40mm Space Grey Aluminum + Black Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 40mm Space Grey Aluminum + Black Closed",
+      "model_key": "apple-watch-40mm",
+      "width_mm": 34.0,
+      "height_mm": 40.0,
+      "source": "Apple specs",
+      "notes": "40mm case"
+    },
+    {
+      "file": "watches/Apple Watch 40mm Space Grey Aluminum + Black Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 40mm Space Grey Aluminum + Black Open",
+      "model_key": "apple-watch-40mm",
+      "width_mm": 34.0,
+      "height_mm": 40.0,
+      "source": "Apple specs",
+      "notes": "40mm case"
+    },
+    {
+      "file": "watches/Apple Watch 40mm Stainless Steel + Lemon Cream Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 40mm Stainless Steel + Lemon Cream Closed",
+      "model_key": "apple-watch-40mm",
+      "width_mm": 34.0,
+      "height_mm": 40.0,
+      "source": "Apple specs",
+      "notes": "40mm case"
+    },
+    {
+      "file": "watches/Apple Watch 40mm Stainless Steel + Lemon Cream Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 40mm Stainless Steel + Lemon Cream Open",
+      "model_key": "apple-watch-40mm",
+      "width_mm": 34.0,
+      "height_mm": 40.0,
+      "source": "Apple specs",
+      "notes": "40mm case"
+    },
+    {
+      "file": "watches/Apple Watch 40mm Titanium + Red Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 40mm Titanium + Red Closed",
+      "model_key": "apple-watch-40mm",
+      "width_mm": 34.0,
+      "height_mm": 40.0,
+      "source": "Apple specs",
+      "notes": "40mm case"
+    },
+    {
+      "file": "watches/Apple Watch 40mm Titanium + Red Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 40mm Titanium + Red Open",
+      "model_key": "apple-watch-40mm",
+      "width_mm": 34.0,
+      "height_mm": 40.0,
+      "source": "Apple specs",
+      "notes": "40mm case"
+    },
+    {
+      "file": "watches/Apple Watch 40mm White Ceramic + White Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 40mm White Ceramic + White Closed",
+      "model_key": "apple-watch-40mm",
+      "width_mm": 34.0,
+      "height_mm": 40.0,
+      "source": "Apple specs",
+      "notes": "40mm case"
+    },
+    {
+      "file": "watches/Apple Watch 40mm White Ceramic + White Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 40mm White Ceramic + White Open",
+      "model_key": "apple-watch-40mm",
+      "width_mm": 34.0,
+      "height_mm": 40.0,
+      "source": "Apple specs",
+      "notes": "40mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Black Steel + Black Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Black Steel + Black Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Black Steel + Black Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Black Steel + Black Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Edition Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Edition Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Edition Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Edition Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Gold + Black Leather Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Gold + Black Leather Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Gold + Midnight Blue Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Gold + Midnight Blue Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Gold + Midnight Blue Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Gold + Midnight Blue Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Gold Aluminum + Cocoa Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Gold Aluminum + Cocoa Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Rose Gold + Black Leather Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Rose Gold + Black Leather Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Rose Gold + Lavender Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Rose Gold + Lavender Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Rose Gold + Lavender Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Rose Gold + Lavender Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Rose Gold Aluminum + Midnight Blue Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Rose Gold Aluminum + Midnight Blue Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Rose Gold Aluminum + Midnight Blue Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Rose Gold Aluminum + Midnight Blue Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Silver Aluminum + Cocoa Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Silver Aluminum + Cocoa Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Silver Aluminum + Concrete Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Silver Aluminum + Concrete Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Silver Aluminum + Concrete Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Silver Aluminum + Concrete Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Silver Aluminum + Flat Silver Volt Nike Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Silver Aluminum + Flat Silver Volt Nike Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Silver Aluminum + Flat Silver Volt Nike Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Silver Aluminum + Flat Silver Volt Nike Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Silver Aluminum + Flat Silver White Nike Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Silver Aluminum + Flat Silver White Nike Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Silver Aluminum + Flat Silver White Nike Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Silver Aluminum + Flat Silver White Nike Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Silver Aluminum + Green Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Silver Aluminum + Green Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Silver Aluminum + Green Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Silver Aluminum + Green Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Silver Aluminum + Light Pink Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Silver Aluminum + Light Pink Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Silver Aluminum + Light Pink Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Silver Aluminum + Light Pink Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Silver Aluminum + Ocean Blue Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Silver Aluminum + Ocean Blue Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Silver Aluminum + Ocean Blue Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Silver Aluminum + Ocean Blue Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Silver Aluminum + Pink Sand Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Silver Aluminum + Pink Sand Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Silver Aluminum + Pink Sand Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Silver Aluminum + Pink Sand Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Silver Aluminum + Red Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Silver Aluminum + Red Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Silver Aluminum + Red Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Silver Aluminum + Red Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Silver Aluminum + Turquoise Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Silver Aluminum + Turquoise Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Silver Aluminum + Turquoise Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Silver Aluminum + Turquoise Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Silver Aluminum + White Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Silver Aluminum + White Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Silver Aluminum + White Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Silver Aluminum + White Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Silver Aluminum + Yellow Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Silver Aluminum + Yellow Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Silver Aluminum + Yellow Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Silver Aluminum + Yellow Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Space Black Steel + Black Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Space Black Steel + Black Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Space Black Steel + Black Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Space Black Steel + Black Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Space Gray Aluminum + Black Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Space Gray Aluminum + Black Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Space Gray Aluminum + Black Cool Gray Nike Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Space Gray Aluminum + Black Cool Gray Nike Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Space Gray Aluminum + Black Cool Gray Nike Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Space Gray Aluminum + Black Cool Gray Nike Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Space Gray Aluminum + Black Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Space Gray Aluminum + Black Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Space Gray Aluminum + Black Volt Nike Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Space Gray Aluminum + Black Volt Nike Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Space Gray Aluminum + Black Volt Nike Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Space Gray Aluminum + Black Volt Nike Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Sport Aluminum + Blue Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Sport Aluminum + Blue Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Sport Aluminum + Blue Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Sport Aluminum + Blue Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Sport Aluminum + Fog Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Sport Aluminum + Fog Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Sport Aluminum + Fog Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Sport Aluminum + Fog Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Sport Aluminum + Green Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Sport Aluminum + Green Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Sport Aluminum + Green Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Sport Aluminum + Green Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Sport Aluminum + Red Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Sport Aluminum + Red Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Sport Aluminum + Red Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Sport Aluminum + Red Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Sport Aluminum + Walnut Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Sport Aluminum + Walnut Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Sport Aluminum + Walnut Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Sport Aluminum + Walnut Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Sport Aluminum + White Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Sport Aluminum + White Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Sport Aluminum + White Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Sport Aluminum + White Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Sport Aluminum Gold + Antique White Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Sport Aluminum Gold + Antique White Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Sport Aluminum Gold + Antique White Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Sport Aluminum Gold + Antique White Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Sport Aluminum Rose Gold + Stone Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Sport Aluminum Rose Gold + Stone Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Sport Aluminum Rose Gold + Stone Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Sport Aluminum Rose Gold + Stone Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Sport Space Gray + Black Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Sport Space Gray + Black Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Sport Space Gray + Black Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Sport Space Gray + Black Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Stainless Steel + Black Leather Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Stainless Steel + Black Leather Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Steel + White Closed-1.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Steel + White Closed-1",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Steel + White Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Steel + White Closed",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Steel + White Open-1.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Steel + White Open-1",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 42mm Steel + White Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 42mm Steel + White Open",
+      "model_key": "apple-watch-42mm",
+      "width_mm": 36.4,
+      "height_mm": 42.5,
+      "source": "Apple specs",
+      "notes": "42mm case"
+    },
+    {
+      "file": "watches/Apple Watch 44mm Gold Aluminum + Pink Sand Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 44mm Gold Aluminum + Pink Sand Closed",
+      "model_key": "apple-watch-44mm",
+      "width_mm": 38.0,
+      "height_mm": 44.0,
+      "source": "Apple specs",
+      "notes": "44mm case"
+    },
+    {
+      "file": "watches/Apple Watch 44mm Gold Aluminum + Pink Sand Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 44mm Gold Aluminum + Pink Sand Open",
+      "model_key": "apple-watch-44mm",
+      "width_mm": 38.0,
+      "height_mm": 44.0,
+      "source": "Apple specs",
+      "notes": "44mm case"
+    },
+    {
+      "file": "watches/Apple Watch 44mm Gold Stainless Steel + Stone Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 44mm Gold Stainless Steel + Stone Closed",
+      "model_key": "apple-watch-44mm",
+      "width_mm": 38.0,
+      "height_mm": 44.0,
+      "source": "Apple specs",
+      "notes": "44mm case"
+    },
+    {
+      "file": "watches/Apple Watch 44mm Gold Stainless Steel + Stone Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 44mm Gold Stainless Steel + Stone Open",
+      "model_key": "apple-watch-44mm",
+      "width_mm": 38.0,
+      "height_mm": 44.0,
+      "source": "Apple specs",
+      "notes": "44mm case"
+    },
+    {
+      "file": "watches/Apple Watch 44mm Silver Aluminum + Clementine Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 44mm Silver Aluminum + Clementine Closed",
+      "model_key": "apple-watch-44mm",
+      "width_mm": 38.0,
+      "height_mm": 44.0,
+      "source": "Apple specs",
+      "notes": "44mm case"
+    },
+    {
+      "file": "watches/Apple Watch 44mm Silver Aluminum + Clementine Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 44mm Silver Aluminum + Clementine Open",
+      "model_key": "apple-watch-44mm",
+      "width_mm": 38.0,
+      "height_mm": 44.0,
+      "source": "Apple specs",
+      "notes": "44mm case"
+    },
+    {
+      "file": "watches/Apple Watch 44mm Space Black Stainless Steel + Alaskan Blue Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 44mm Space Black Stainless Steel + Alaskan Blue Closed",
+      "model_key": "apple-watch-44mm",
+      "width_mm": 38.0,
+      "height_mm": 44.0,
+      "source": "Apple specs",
+      "notes": "44mm case"
+    },
+    {
+      "file": "watches/Apple Watch 44mm Space Black Stainless Steel + Alaskan Blue Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 44mm Space Black Stainless Steel + Alaskan Blue Open",
+      "model_key": "apple-watch-44mm",
+      "width_mm": 38.0,
+      "height_mm": 44.0,
+      "source": "Apple specs",
+      "notes": "44mm case"
+    },
+    {
+      "file": "watches/Apple Watch 44mm Space Black Titanium + Pine Green Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 44mm Space Black Titanium + Pine Green Closed",
+      "model_key": "apple-watch-44mm",
+      "width_mm": 38.0,
+      "height_mm": 44.0,
+      "source": "Apple specs",
+      "notes": "44mm case"
+    },
+    {
+      "file": "watches/Apple Watch 44mm Space Black Titanium + Pine Green Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 44mm Space Black Titanium + Pine Green Open",
+      "model_key": "apple-watch-44mm",
+      "width_mm": 38.0,
+      "height_mm": 44.0,
+      "source": "Apple specs",
+      "notes": "44mm case"
+    },
+    {
+      "file": "watches/Apple Watch 44mm Space Grey Aluminum + Black Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 44mm Space Grey Aluminum + Black Closed",
+      "model_key": "apple-watch-44mm",
+      "width_mm": 38.0,
+      "height_mm": 44.0,
+      "source": "Apple specs",
+      "notes": "44mm case"
+    },
+    {
+      "file": "watches/Apple Watch 44mm Space Grey Aluminum + Black Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 44mm Space Grey Aluminum + Black Open",
+      "model_key": "apple-watch-44mm",
+      "width_mm": 38.0,
+      "height_mm": 44.0,
+      "source": "Apple specs",
+      "notes": "44mm case"
+    },
+    {
+      "file": "watches/Apple Watch 44mm Stainless Steel + Lemon Cream Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 44mm Stainless Steel + Lemon Cream Closed",
+      "model_key": "apple-watch-44mm",
+      "width_mm": 38.0,
+      "height_mm": 44.0,
+      "source": "Apple specs",
+      "notes": "44mm case"
+    },
+    {
+      "file": "watches/Apple Watch 44mm Stainless Steel + Lemon Cream Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 44mm Stainless Steel + Lemon Cream Open",
+      "model_key": "apple-watch-44mm",
+      "width_mm": 38.0,
+      "height_mm": 44.0,
+      "source": "Apple specs",
+      "notes": "44mm case"
+    },
+    {
+      "file": "watches/Apple Watch 44mm Titanium + Red Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 44mm Titanium + Red Closed",
+      "model_key": "apple-watch-44mm",
+      "width_mm": 38.0,
+      "height_mm": 44.0,
+      "source": "Apple specs",
+      "notes": "44mm case"
+    },
+    {
+      "file": "watches/Apple Watch 44mm Titanium + Red Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 44mm Titanium + Red Open",
+      "model_key": "apple-watch-44mm",
+      "width_mm": 38.0,
+      "height_mm": 44.0,
+      "source": "Apple specs",
+      "notes": "44mm case"
+    },
+    {
+      "file": "watches/Apple Watch 44mm White Ceramic + White Closed.svg",
+      "category": "watches",
+      "name": "Apple Watch 44mm White Ceramic + White Closed",
+      "model_key": "apple-watch-44mm",
+      "width_mm": 38.0,
+      "height_mm": 44.0,
+      "source": "Apple specs",
+      "notes": "44mm case"
+    },
+    {
+      "file": "watches/Apple Watch 44mm White Ceramic + White Open.svg",
+      "category": "watches",
+      "name": "Apple Watch 44mm White Ceramic + White Open",
+      "model_key": "apple-watch-44mm",
+      "width_mm": 38.0,
+      "height_mm": 44.0,
+      "source": "Apple specs",
+      "notes": "44mm case"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Men Black + Black Closed.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Men Black + Black Closed",
+      "model_key": "motorola-moto-360-men",
+      "width_mm": 46.0,
+      "height_mm": 46.0,
+      "source": "Motorola / GSMArena",
+      "notes": "1st-gen Moto 360 (46mm men)"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Men Black + Black Open.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Men Black + Black Open",
+      "model_key": "motorola-moto-360-men",
+      "width_mm": 46.0,
+      "height_mm": 46.0,
+      "source": "Motorola / GSMArena",
+      "notes": "1st-gen Moto 360 (46mm men)"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Men Black + Cognac Closed.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Men Black + Cognac Closed",
+      "model_key": "motorola-moto-360-men",
+      "width_mm": 46.0,
+      "height_mm": 46.0,
+      "source": "Motorola / GSMArena",
+      "notes": "1st-gen Moto 360 (46mm men)"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Men Black + Cognac Open.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Men Black + Cognac Open",
+      "model_key": "motorola-moto-360-men",
+      "width_mm": 46.0,
+      "height_mm": 46.0,
+      "source": "Motorola / GSMArena",
+      "notes": "1st-gen Moto 360 (46mm men)"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Men Gold + Black Closed.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Men Gold + Black Closed",
+      "model_key": "motorola-moto-360-men",
+      "width_mm": 46.0,
+      "height_mm": 46.0,
+      "source": "Motorola / GSMArena",
+      "notes": "1st-gen Moto 360 (46mm men)"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Men Gold + Black Open.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Men Gold + Black Open",
+      "model_key": "motorola-moto-360-men",
+      "width_mm": 46.0,
+      "height_mm": 46.0,
+      "source": "Motorola / GSMArena",
+      "notes": "1st-gen Moto 360 (46mm men)"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Men Gold + Cognac Closed.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Men Gold + Cognac Closed",
+      "model_key": "motorola-moto-360-men",
+      "width_mm": 46.0,
+      "height_mm": 46.0,
+      "source": "Motorola / GSMArena",
+      "notes": "1st-gen Moto 360 (46mm men)"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Men Gold + Cognac Open.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Men Gold + Cognac Open",
+      "model_key": "motorola-moto-360-men",
+      "width_mm": 46.0,
+      "height_mm": 46.0,
+      "source": "Motorola / GSMArena",
+      "notes": "1st-gen Moto 360 (46mm men)"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Men Silver + Black Closed.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Men Silver + Black Closed",
+      "model_key": "motorola-moto-360-men",
+      "width_mm": 46.0,
+      "height_mm": 46.0,
+      "source": "Motorola / GSMArena",
+      "notes": "1st-gen Moto 360 (46mm men)"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Men Silver + Black Open.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Men Silver + Black Open",
+      "model_key": "motorola-moto-360-men",
+      "width_mm": 46.0,
+      "height_mm": 46.0,
+      "source": "Motorola / GSMArena",
+      "notes": "1st-gen Moto 360 (46mm men)"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Men Silver + Cognac Closed.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Men Silver + Cognac Closed",
+      "model_key": "motorola-moto-360-men",
+      "width_mm": 46.0,
+      "height_mm": 46.0,
+      "source": "Motorola / GSMArena",
+      "notes": "1st-gen Moto 360 (46mm men)"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Men Silver + Cognac Open.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Men Silver + Cognac Open",
+      "model_key": "motorola-moto-360-men",
+      "width_mm": 46.0,
+      "height_mm": 46.0,
+      "source": "Motorola / GSMArena",
+      "notes": "1st-gen Moto 360 (46mm men)"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Women Gold + Blush Closed.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Women Gold + Blush Closed",
+      "model_key": "motorola-moto-360-women",
+      "width_mm": 42.0,
+      "height_mm": 42.0,
+      "source": "Motorola / GSMArena",
+      "notes": "Moto 360 women 42mm"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Women Gold + Blush Open.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Women Gold + Blush Open",
+      "model_key": "motorola-moto-360-women",
+      "width_mm": 42.0,
+      "height_mm": 42.0,
+      "source": "Motorola / GSMArena",
+      "notes": "Moto 360 women 42mm"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Women Gold + Stone Closed.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Women Gold + Stone Closed",
+      "model_key": "motorola-moto-360-women",
+      "width_mm": 42.0,
+      "height_mm": 42.0,
+      "source": "Motorola / GSMArena",
+      "notes": "Moto 360 women 42mm"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Women Gold + Stone Open.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Women Gold + Stone Open",
+      "model_key": "motorola-moto-360-women",
+      "width_mm": 42.0,
+      "height_mm": 42.0,
+      "source": "Motorola / GSMArena",
+      "notes": "Moto 360 women 42mm"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Women Rose Gold + Blush Closed.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Women Rose Gold + Blush Closed",
+      "model_key": "motorola-moto-360-women",
+      "width_mm": 42.0,
+      "height_mm": 42.0,
+      "source": "Motorola / GSMArena",
+      "notes": "Moto 360 women 42mm"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Women Rose Gold + Blush Open.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Women Rose Gold + Blush Open",
+      "model_key": "motorola-moto-360-women",
+      "width_mm": 42.0,
+      "height_mm": 42.0,
+      "source": "Motorola / GSMArena",
+      "notes": "Moto 360 women 42mm"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Women Rose Gold + Stone Grey Closed.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Women Rose Gold + Stone Grey Closed",
+      "model_key": "motorola-moto-360-women",
+      "width_mm": 42.0,
+      "height_mm": 42.0,
+      "source": "Motorola / GSMArena",
+      "notes": "Moto 360 women 42mm"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Women Rose Gold + Stone Grey Open.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Women Rose Gold + Stone Grey Open",
+      "model_key": "motorola-moto-360-women",
+      "width_mm": 42.0,
+      "height_mm": 42.0,
+      "source": "Motorola / GSMArena",
+      "notes": "Moto 360 women 42mm"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Women Silver + Blush Closed.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Women Silver + Blush Closed",
+      "model_key": "motorola-moto-360-women",
+      "width_mm": 42.0,
+      "height_mm": 42.0,
+      "source": "Motorola / GSMArena",
+      "notes": "Moto 360 women 42mm"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Women Silver + Blush Open.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Women Silver + Blush Open",
+      "model_key": "motorola-moto-360-women",
+      "width_mm": 42.0,
+      "height_mm": 42.0,
+      "source": "Motorola / GSMArena",
+      "notes": "Moto 360 women 42mm"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Women Silver + Stone Grey Closed.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Women Silver + Stone Grey Closed",
+      "model_key": "motorola-moto-360-women",
+      "width_mm": 42.0,
+      "height_mm": 42.0,
+      "source": "Motorola / GSMArena",
+      "notes": "Moto 360 women 42mm"
+    },
+    {
+      "file": "watches/Motorola Moto 360 Women Silver + Stone Grey Open.svg",
+      "category": "watches",
+      "name": "Motorola Moto 360 Women Silver + Stone Grey Open",
+      "model_key": "motorola-moto-360-women",
+      "width_mm": 42.0,
+      "height_mm": 42.0,
+      "source": "Motorola / GSMArena",
+      "notes": "Moto 360 women 42mm"
+    },
+    {
+      "file": "watches/Sony SmartWatch 3 Black Closed.svg",
+      "category": "watches",
+      "name": "Sony SmartWatch 3 Black Closed",
+      "model_key": "sony-smartwatch-3",
+      "width_mm": 36.0,
+      "height_mm": 51.0,
+      "source": "Sony / GSMArena",
+      "notes": "Approximate case footprint"
+    },
+    {
+      "file": "watches/Sony SmartWatch 3 Black Open.svg",
+      "category": "watches",
+      "name": "Sony SmartWatch 3 Black Open",
+      "model_key": "sony-smartwatch-3",
+      "width_mm": 36.0,
+      "height_mm": 51.0,
+      "source": "Sony / GSMArena",
+      "notes": "Approximate case footprint"
+    },
+    {
+      "file": "watches/Sony SmartWatch 3 White Closed.svg",
+      "category": "watches",
+      "name": "Sony SmartWatch 3 White Closed",
+      "model_key": "sony-smartwatch-3",
+      "width_mm": 36.0,
+      "height_mm": 51.0,
+      "source": "Sony / GSMArena",
+      "notes": "Approximate case footprint"
+    },
+    {
+      "file": "watches/Sony SmartWatch 3 White Open.svg",
+      "category": "watches",
+      "name": "Sony SmartWatch 3 White Open",
+      "model_key": "sony-smartwatch-3",
+      "width_mm": 36.0,
+      "height_mm": 51.0,
+      "source": "Sony / GSMArena",
+      "notes": "Approximate case footprint"
+    }
+  ]
+}

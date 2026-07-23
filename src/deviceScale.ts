@@ -1,4 +1,4 @@
-/** Preview widths by category — approximate real-world relative size. */
+/** Fallback category widths if mm catalog entry is missing. */
 export const CATEGORY_DISPLAY_WIDTH: Record<string, number> = {
   watches: 55,
   phones: 100,
@@ -20,6 +20,12 @@ export type DeviceCategory = (typeof CATEGORY_ORDER)[number] | string;
 /** Fixed 16:9 editing / export artboard (logical pixels). */
 export const ARTBOARD_WIDTH = 1280;
 export const ARTBOARD_HEIGHT = 720;
+
+/**
+ * Shared real-world scale: ~350mm-wide laptop ≈ 480px on the artboard.
+ * Phones ≈ 100–110px; watches ≈ 45–55px.
+ */
+export const PX_PER_MM = 480 / 350;
 
 /** Longest edge cap for export canvases (never invent detail beyond source). */
 export const EXPORT_MAX_EDGE = 8192;
@@ -50,4 +56,60 @@ export function displayHeightFor(
 ): number {
   if (nativeWidth <= 0) return displayWidth;
   return displayWidth * (nativeHeight / nativeWidth);
+}
+
+export interface DisplaySizeFromMmOptions {
+  name?: string;
+  category?: string;
+  /** Image pixel size — used for Open watch strap aspect. */
+  nativeWidth?: number;
+  nativeHeight?: number;
+}
+
+/**
+ * Convert catalog body mm to artboard logical pixels (shared scale).
+ * Landscape / 90deg swaps axes. Open watches keep case width, height from image aspect.
+ */
+export function displaySizeFromMm(
+  widthMm: number | undefined,
+  heightMm: number | undefined,
+  options: DisplaySizeFromMmOptions = {},
+): { displayWidth: number; displayHeight: number } {
+  const { name = '', category = '', nativeWidth = 0, nativeHeight = 0 } = options;
+
+  let wMm = widthMm;
+  let hMm = heightMm;
+
+  if (wMm == null || hMm == null || wMm <= 0 || hMm <= 0) {
+    const fallbackW = getDisplayWidth(category);
+    return {
+      displayWidth: fallbackW,
+      displayHeight:
+        nativeWidth > 0
+          ? displayHeightFor(fallbackW, nativeWidth, nativeHeight)
+          : fallbackW * 2,
+    };
+  }
+
+  const rotated =
+    /\bLandscape\b/i.test(name) || /\b90deg\b/i.test(name);
+  if (rotated) {
+    [wMm, hMm] = [hMm, wMm];
+  }
+
+  const displayWidth = wMm * PX_PER_MM;
+  const isOpenWatch =
+    category === 'watches' && /\bOpen\b/i.test(name);
+
+  if (isOpenWatch && nativeWidth > 0 && nativeHeight > 0) {
+    return {
+      displayWidth,
+      displayHeight: displayHeightFor(displayWidth, nativeWidth, nativeHeight),
+    };
+  }
+
+  return {
+    displayWidth,
+    displayHeight: hMm * PX_PER_MM,
+  };
 }
