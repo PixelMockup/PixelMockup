@@ -94,6 +94,12 @@
   cursor: not-allowed;
 }
 
+.ms-btn[aria-pressed='true'] {
+  background: var(--ms-accent-soft);
+  border-color: var(--ms-accent);
+  color: var(--ms-ink);
+}
+
 .ms-btn--primary {
   background: var(--ms-accent);
   border-color: transparent;
@@ -136,6 +142,79 @@
   background: var(--ms-surface);
   border-right: 1px solid var(--ms-border);
   z-index: 15;
+  position: relative;
+}
+
+.ms-library-resizer {
+  position: absolute;
+  top: 0;
+  right: -6px;
+  width: 12px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 16;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ms-library-resizer-grip {
+  width: 4px;
+  height: 28px;
+  border-radius: 2px;
+  background: var(--ms-border-strong);
+  box-shadow:
+    0 -6px 0 var(--ms-border-strong),
+    0 6px 0 var(--ms-border-strong);
+  opacity: 0.85;
+}
+
+.ms-library-resizer:hover,
+.ms-library-resizer:active {
+  background: var(--ms-accent-soft);
+}
+
+.ms-library-resizer:hover .ms-library-resizer-grip,
+.ms-library-resizer:active .ms-library-resizer-grip {
+  background: var(--ms-accent);
+  box-shadow:
+    0 -6px 0 var(--ms-accent),
+    0 6px 0 var(--ms-accent);
+}
+
+.ms-product-more {
+  position: relative;
+  display: inline-block;
+}
+
+.ms-product-more > summary {
+  list-style: none;
+  cursor: pointer;
+}
+
+.ms-product-more > summary::-webkit-details-marker {
+  display: none;
+}
+
+.ms-product-popover {
+  position: absolute;
+  left: 0;
+  top: calc(100% + 6px);
+  z-index: 30;
+  width: min(280px, 70vw);
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 10px;
+  background: var(--ms-surface-raised);
+  border: 1px solid var(--ms-border);
+  border-radius: var(--ms-radius-sm);
+  box-shadow: var(--ms-shadow);
+}
+
+.ms-device-tile:disabled {
+  opacity: 0.55;
+  cursor: wait;
 }
 
 .ms-library-header {
@@ -157,7 +236,7 @@
 }
 
 .ms-filter-block {
-  padding: 0 12px 10px;
+  padding: 0 12px 8px;
   flex-shrink: 0;
 }
 
@@ -198,6 +277,11 @@
   background: var(--ms-accent);
   border-color: transparent;
   color: var(--ms-accent-fg);
+}
+
+.ms-chip--more {
+  border-style: dashed;
+  color: var(--ms-muted);
 }
 
 .ms-search {
@@ -305,6 +389,10 @@
   flex-shrink: 0;
 }
 
+.ms-toolbar--mobile {
+  display: none;
+}
+
 .ms-toolbar-group {
   display: flex;
   flex-wrap: wrap;
@@ -324,6 +412,54 @@
 .ms-toolbar-spacer {
   flex: 1;
   min-width: 8px;
+}
+
+.ms-export-wrap {
+  position: relative;
+}
+
+.ms-export-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 6px);
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 180px;
+  padding: 12px;
+  background: var(--ms-surface-raised);
+  border: 1px solid var(--ms-border);
+  border-radius: var(--ms-radius-sm);
+  box-shadow: var(--ms-shadow);
+}
+
+.ms-hint-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 14px;
+  background: var(--ms-accent-soft);
+  border-bottom: 1px solid var(--ms-border);
+  font-size: 0.85rem;
+  color: var(--ms-ink);
+}
+
+.ms-a11y-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.ms-tools-sheet {
+  display: none;
 }
 
 .ms-field {
@@ -354,6 +490,57 @@
   background: var(--ms-stage-inner);
   min-height: 0;
   container-type: size;
+  position: relative;
+}
+
+.ms-view-zoom {
+  position: absolute;
+  right: 12px;
+  bottom: calc(12px + var(--ms-safe-b));
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  background: var(--ms-surface);
+  border: 1px solid var(--ms-border);
+  border-radius: var(--ms-radius-sm);
+  box-shadow: var(--ms-shadow);
+}
+
+.ms-view-zoom-label {
+  min-width: 3.2rem;
+  text-align: center;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--ms-muted);
+}
+
+.ms-stage-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 0;
+  padding: 24px;
+  text-align: center;
+}
+
+.ms-stage-empty-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ms-ink);
+}
+
+.ms-stage-empty-sub {
+  margin: 8px 0 0;
+  max-width: 320px;
+  font-size: 0.9rem;
+  color: var(--ms-muted);
 }
 
 .ms-artboard {
@@ -372,6 +559,43 @@
     linear-gradient(-45deg, transparent 75%, var(--ms-checker-a) 75%);
   background-size: 20px 20px;
   background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+  z-index: 1;
+}
+
+.ms-snap-guides {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 10000;
+}
+
+.ms-snap-guide {
+  position: absolute;
+  background: var(--ms-accent);
+  opacity: 0.85;
+}
+
+.ms-snap-guide--v {
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 1px;
+  transform: translateX(-50%);
+}
+
+.ms-snap-guide--h {
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  transform: translateY(-50%);
+}
+
+.ms-snap-guide--bottom {
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
 }
 
 .ms-canvas-item {
@@ -558,11 +782,55 @@
   .ms-library-close {
     display: inline-flex;
   }
+
+  .ms-library-resizer {
+    display: none;
+  }
 }
 
 @media (max-width: 720px) {
   .ms-brand {
     font-size: 1.05rem;
+  }
+
+  .ms-toolbar--desktop {
+    display: none;
+  }
+
+  .ms-toolbar--mobile {
+    display: flex;
+  }
+
+  .ms-tools-sheet {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 60;
+    max-height: min(70vh, 420px);
+    overflow-y: auto;
+    background: var(--ms-surface);
+    border-top: 1px solid var(--ms-border);
+    border-radius: 12px 12px 0 0;
+    box-shadow: var(--ms-shadow);
+    padding-bottom: var(--ms-safe-b);
+  }
+
+  .ms-tools-sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    border-bottom: 1px solid var(--ms-border);
+    font-weight: 600;
+  }
+
+  .ms-tools-sheet-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 12px 14px;
   }
 
   .ms-toolbar {
@@ -593,5 +861,10 @@
   .ms-toolbar-label {
     width: 100%;
     margin-bottom: 2px;
+  }
+
+  .ms-view-zoom {
+    right: 8px;
+    bottom: calc(8px + var(--ms-safe-b));
   }
 }

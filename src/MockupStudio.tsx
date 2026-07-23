@@ -8,8 +8,32 @@ import {
   type ExportFormat,
   type ExportResolution,
 } from './deviceScale';
+import {
+  alignBox,
+  artboardWidthCss,
+  NO_GUIDES,
+  snapPosition,
+  stepViewZoom,
+  viewZoomLabel,
+  type AlignMode,
+  type SnapGuides,
+  type ViewZoom,
+} from './artboardSnap';
+import {
+  bringForwardItems,
+  bringToFrontItems,
+  byZ,
+  pushBackwardItems,
+  reindexZ,
+  selectedZRank,
+  sendToBackItems,
+} from './canvasZOrder';
 import { downloadBlob, exportMockup } from './exportMockup';
 import KeybindingsPanel from './KeybindingsPanel';
+import LibraryPanel, {
+  LIBRARY_W_MAX,
+  LIBRARY_W_MIN,
+} from './LibraryPanel';
 import { matchesSearchQuery, sortBySearchRelevance } from './deviceMeta';
 import {
   detectPlatform,
@@ -17,20 +41,12 @@ import {
   loadBindingsForPlatform,
   type BindingMap,
 } from './keybindings';
+import StudioToolbar from './StudioToolbar';
 import { useKeybindings } from './useKeybindings';
 import { useTheme } from './useTheme';
 
-function clientToLogical(
-  clientX: number,
-  clientY: number,
-  rect: DOMRect,
-): { x: number; y: number } {
-  if (rect.width <= 0 || rect.height <= 0) return { x: 0, y: 0 };
-  return {
-    x: ((clientX - rect.left) / rect.width) * ARTBOARD_WIDTH,
-    y: ((clientY - rect.top) / rect.height) * ARTBOARD_HEIGHT,
-  };
-}
+const LIBRARY_W_KEY = 'mockupStudio.libraryWidth';
+const LIBRARY_W_DEFAULT = 520;
 
 interface MockupStudioProps {
   groupedLibrary: Record<string, DeviceItem[]>;
@@ -47,10 +63,36 @@ interface CanvasItem extends DeviceItem {
   nativeHeight: number;
 }
 
-function reindexZ(items: CanvasItem[]): CanvasItem[] {
-  return [...items]
-    .sort((a, b) => a.zIndex - b.zIndex)
-    .map((item, index) => ({ ...item, zIndex: index }));
+function clientToLogical(
+  clientX: number,
+  clientY: number,
+  rect: DOMRect,
+): { x: number; y: number } {
+  if (rect.width <= 0 || rect.height <= 0) return { x: 0, y: 0 };
+  return {
+    x: ((clientX - rect.left) / rect.width) * ARTBOARD_WIDTH,
+    y: ((clientY - rect.top) / rect.height) * ARTBOARD_HEIGHT,
+  };
+}
+
+function readLibraryWidth(): number {
+  try {
+    const n = Number(localStorage.getItem(LIBRARY_W_KEY));
+    if (Number.isFinite(n)) {
+      return Math.min(LIBRARY_W_MAX, Math.max(LIBRARY_W_MIN, n));
+    }
+  } catch {
+    // ignore
+  }
+  return LIBRARY_W_DEFAULT;
+}
+
+function persistLibraryWidth(w: number) {
+  try {
+    localStorage.setItem(LIBRARY_W_KEY, String(w));
+  } catch {
+    // ignore
+  }
 }
 
 function loadNativeSize(
@@ -73,6 +115,14 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
   );
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
   const [libraryOpen, setLibraryOpen] = useState(false);
+  const [libraryWidth, setLibraryWidth] = useState(readLibraryWidth);
+  const [viewZoom, setViewZoom] = useState<ViewZoom>('fit');
+  const [snapGuides, setSnapGuides] = useState<SnapGuides>(NO_GUIDES);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const [toolsSheetOpen, setToolsSheetOpen] = useState(false);
+  const [placingPath, setPlacingPath] = useState<string | null>(null);
+  const [layerHint, setLayerHint] = useState<string | null>(null);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   const [canvasItems, setCanvasItems] = useState<CanvasItem[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -82,7 +132,6 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     offsetY: 0,
   });
   const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
-  /** null = Brand All */
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -92,6 +141,16 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     useState<ExportResolution>('best');
 
   const canvasRef = useRef<HTMLDivElement>(null);
+  const resizeDragRef = useRef<{ startX: number; startW: number } | null>(
+    null,
+  );
+  const statusTimer = useRef<number | null>(null);
+
+  const announce = (msg: string) => {
+    setStatusMessage(msg);
+    if (statusTimer.current) window.clearTimeout(statusTimer.current);
+    statusTimer.current = window.setTimeout(() => setStatusMessage(null), 1600);
+  };
 
   const categories = useMemo(() => {
     const present = new Set(Object.keys(groupedLibrary));
@@ -102,26 +161,20 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     return [...ordered, ...extras];
   }, [groupedLibrary]);
 
-  /** Category list is always the full library set (Category-first). */
-  const availableCategories = categories;
-
   const effectiveCategory =
-    categoryFilter && availableCategories.includes(categoryFilter)
+    categoryFilter && categories.includes(categoryFilter)
       ? categoryFilter
-      : (availableCategories[0] ?? null);
+      : (categories[0] ?? null);
 
   useEffect(() => {
-    if (availableCategories.length === 0) {
+    if (categories.length === 0) {
       if (categoryFilter != null) setCategoryFilter(null);
       return;
     }
-    if (
-      categoryFilter == null ||
-      !availableCategories.includes(categoryFilter)
-    ) {
-      setCategoryFilter(availableCategories[0]);
+    if (categoryFilter == null || !categories.includes(categoryFilter)) {
+      setCategoryFilter(categories[0]);
     }
-  }, [availableCategories, categoryFilter]);
+  }, [categories, categoryFilter]);
 
   const categoryDevices = useMemo(() => {
     if (!effectiveCategory) return [] as DeviceItem[];
@@ -171,7 +224,6 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     if (!effectiveCategory) {
       return [] as { category: string; items: DeviceItem[] }[];
     }
-
     let items = brandFilteredDevices.filter((item) => {
       if (
         selectedProductValid != null &&
@@ -191,36 +243,24 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     searchQuery,
   ]);
 
-  const handleBrandAll = () => {
-    setSelectedBrand(null);
-    setSelectedProduct(null);
-  };
-
-  const handleSelectBrand = (brand: string) => {
-    setSelectedBrand(brand);
-    setSelectedProduct(null);
-  };
-
-  const handleSelectProduct = (product: string) => {
-    setSelectedProduct((prev) => (prev === product ? null : product));
-  };
-
-  const handleCategoryChange = (next: string) => {
-    setCategoryFilter(next);
-    setSelectedProduct(null);
-    // Brand reset happens via effect if invalid for the new category
-  };
+  const zRank = useMemo(
+    () => selectedZRank(canvasItems, selectedId),
+    [canvasItems, selectedId],
+  );
+  const canBringForward =
+    selectedId != null && zRank.index >= 0 && zRank.index < zRank.max;
+  const canPushBackward = selectedId != null && zRank.index > 0;
 
   const handleAddAndSelect = async (item: DeviceItem) => {
+    setPlacingPath(item.path);
     let nativeWidth = 100;
     let nativeHeight = 200;
-
     try {
       const size = await loadNativeSize(item.src);
       nativeWidth = size.width;
       nativeHeight = size.height;
     } catch {
-      // fallback aspect until export loads the image
+      // fallback
     }
 
     const { displayWidth, displayHeight } = displaySizeFromMm(
@@ -250,6 +290,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
       },
     ]);
     setSelectedId(instanceId);
+    setPlacingPath(null);
     if (window.matchMedia('(max-width: 1024px)').matches) {
       setLibraryOpen(false);
     }
@@ -276,8 +317,14 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
     const logical = clientToLogical(e.clientX, e.clientY, rect);
-    const x = logical.x - dragInfo.offsetX;
-    const y = logical.y - dragInfo.offsetY;
+    const dragging = canvasItems.find((i) => i.instanceId === dragInfo.id);
+    if (!dragging) return;
+    const { x, y, guides } = snapPosition(
+      dragging,
+      logical.x - dragInfo.offsetX,
+      logical.y - dragInfo.offsetY,
+    );
+    setSnapGuides(guides);
     setCanvasItems((prev) =>
       prev.map((item) =>
         item.instanceId === dragInfo.id ? { ...item, x, y } : item,
@@ -287,62 +334,48 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
 
   const handlePointerUp = () => {
     setDragInfo({ id: null, offsetX: 0, offsetY: 0 });
+    setSnapGuides(NO_GUIDES);
   };
 
-  const bringForward = () => {
-    if (!selectedId) return;
-    setCanvasItems((prev) => {
-      const sorted = [...prev].sort((a, b) => a.zIndex - b.zIndex);
-      const index = sorted.findIndex((i) => i.instanceId === selectedId);
-      if (index < 0 || index >= sorted.length - 1) return prev;
-      const next = [...sorted];
-      [next[index], next[index + 1]] = [next[index + 1], next[index]];
-      return reindexZ(next);
-    });
+  const tryLayerAction = (kind: 'forward' | 'back') => {
+    if (canvasItems.length < 2) {
+      setLayerHint('Add another device to change layer order.');
+      return;
+    }
+    if (kind === 'forward') {
+      if (!canBringForward) return;
+      setCanvasItems((prev) => {
+        if (!selectedId) return prev;
+        return bringForwardItems(prev, selectedId) ?? prev;
+      });
+    } else {
+      if (!canPushBackward) return;
+      setCanvasItems((prev) => {
+        if (!selectedId) return prev;
+        return pushBackwardItems(prev, selectedId) ?? prev;
+      });
+    }
   };
 
-  const pushBackward = () => {
-    if (!selectedId) return;
-    setCanvasItems((prev) => {
-      const sorted = [...prev].sort((a, b) => a.zIndex - b.zIndex);
-      const index = sorted.findIndex((i) => i.instanceId === selectedId);
-      if (index <= 0) return prev;
-      const next = [...sorted];
-      [next[index - 1], next[index]] = [next[index], next[index - 1]];
-      return reindexZ(next);
-    });
-  };
+  const bringForward = () => tryLayerAction('forward');
+  const pushBackward = () => tryLayerAction('back');
 
   const deleteSelected = () => {
     if (!selectedId) return;
     setCanvasItems((prev) =>
-      reindexZ(prev.filter((item) => item.instanceId !== selectedId)),
+      reindexZ(byZ(prev.filter((item) => item.instanceId !== selectedId))),
     );
     setSelectedId(null);
   };
 
   const bringToFront = () => {
     if (!selectedId) return;
-    setCanvasItems((prev) => {
-      const sorted = [...prev].sort((a, b) => a.zIndex - b.zIndex);
-      const index = sorted.findIndex((i) => i.instanceId === selectedId);
-      if (index < 0 || index === sorted.length - 1) return prev;
-      const [item] = sorted.splice(index, 1);
-      sorted.push(item);
-      return reindexZ(sorted);
-    });
+    setCanvasItems((prev) => bringToFrontItems(prev, selectedId) ?? prev);
   };
 
   const sendToBack = () => {
     if (!selectedId) return;
-    setCanvasItems((prev) => {
-      const sorted = [...prev].sort((a, b) => a.zIndex - b.zIndex);
-      const index = sorted.findIndex((i) => i.instanceId === selectedId);
-      if (index <= 0) return prev;
-      const [item] = sorted.splice(index, 1);
-      sorted.unshift(item);
-      return reindexZ(sorted);
-    });
+    setCanvasItems((prev) => sendToBackItems(prev, selectedId) ?? prev);
   };
 
   const nudgeSelected = (dx: number, dy: number) => {
@@ -353,6 +386,24 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
           ? { ...item, x: item.x + dx, y: item.y + dy }
           : item,
       ),
+    );
+  };
+
+  const alignSelected = (mode: AlignMode) => {
+    if (!selectedId) return;
+    setCanvasItems((prev) =>
+      prev.map((item) => {
+        if (item.instanceId !== selectedId) return item;
+        const next = alignBox(item, mode);
+        return { ...item, ...next };
+      }),
+    );
+    announce(
+      mode === 'center'
+        ? 'Centered'
+        : mode === 'middle'
+          ? 'Aligned to middle'
+          : 'Aligned to bottom',
     );
   };
 
@@ -369,18 +420,16 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
         y: source.y + 16,
         zIndex: prev.length,
       };
-      // Select after state update
       queueMicrotask(() => setSelectedId(instanceId));
-      return reindexZ([...prev, clone]);
+      return reindexZ([...byZ(prev), clone]);
     });
   };
 
   const downloadCanvas = async () => {
     if (canvasItems.length === 0 || isExporting) return;
-
     setIsExporting(true);
     setSelectedId(null);
-
+    setExportMenuOpen(false);
     try {
       const { blob, filenameHint } = await exportMockup(
         canvasItems.map((item) => ({
@@ -413,6 +462,45 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     }
   };
 
+  const onResizePointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    (e.target as HTMLElement).setPointerCapture(e.pointerId);
+    resizeDragRef.current = { startX: e.clientX, startW: libraryWidth };
+  };
+
+  const onResizePointerMove = (e: React.PointerEvent) => {
+    const drag = resizeDragRef.current;
+    if (!drag) return;
+    setLibraryWidth(
+      Math.min(
+        LIBRARY_W_MAX,
+        Math.max(LIBRARY_W_MIN, drag.startW + (e.clientX - drag.startX)),
+      ),
+    );
+  };
+
+  const onResizePointerUp = () => {
+    if (!resizeDragRef.current) return;
+    resizeDragRef.current = null;
+    persistLibraryWidth(libraryWidth);
+  };
+
+  useEffect(() => {
+    persistLibraryWidth(libraryWidth);
+  }, [libraryWidth]);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setExportMenuOpen(false);
+        setToolsSheetOpen(false);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   useKeybindings(
     bindings,
     {
@@ -436,10 +524,20 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
       },
       openShortcuts: () => setShortcutsOpen(true),
     },
-    { platform, enabled: !shortcutsOpen },
+    { platform, enabled: !shortcutsOpen && !toolsSheetOpen },
   );
 
   const modHint = formatChordForDisplay('mod+s', platform);
+  const forwardTitle = !selectedId
+    ? 'Select a device first'
+    : !canBringForward
+      ? 'Already at front'
+      : formatChordForDisplay(']', platform);
+  const backTitle = !selectedId
+    ? 'Select a device first'
+    : !canPushBackward
+      ? 'Already at back'
+      : formatChordForDisplay('[', platform);
 
   return (
     <div
@@ -447,6 +545,10 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
+      onClick={(e) => {
+        const t = e.target as HTMLElement;
+        if (!t.closest('.ms-export-wrap')) setExportMenuOpen(false);
+      }}
     >
       <header className="ms-topbar">
         <button type="button" className="ms-brand">
@@ -474,11 +576,15 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
             onClick={toggleTheme}
             aria-pressed={theme === 'dark'}
             aria-label={
-              theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'
+              theme === 'dark' ? 'Dark mode active' : 'Light mode active'
             }
-            title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            title={
+              theme === 'dark'
+                ? 'Dark mode (click for light)'
+                : 'Light mode (click for dark)'
+            }
           >
-            {theme === 'dark' ? 'Light' : 'Dark'}
+            {theme === 'dark' ? 'Dark' : 'Light'}
           </button>
           <button
             type="button"
@@ -498,207 +604,150 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
           aria-hidden={!libraryOpen}
         />
 
-        <aside
-          id="ms-device-library"
-          className={`ms-library${libraryOpen ? ' is-open' : ''}`}
-          aria-label="Device library"
-        >
-          <div className="ms-library-header">
-            <h2 className="ms-library-title">Device Library</h2>
-            <button
-              type="button"
-              className="ms-btn ms-btn--ghost ms-library-close"
-              onClick={() => setLibraryOpen(false)}
-              aria-label="Close library"
-            >
-              Close
-            </button>
-          </div>
-
-          {availableCategories.length > 0 && (
-            <div className="ms-filter-block">
-              <div className="ms-filter-label">Category</div>
-              <div className="ms-chip-row">
-                {availableCategories.map((category) => (
-                  <FilterChip
-                    key={category}
-                    label={category}
-                    active={effectiveCategory === category}
-                    onClick={() => handleCategoryChange(category)}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className="ms-filter-block">
-            <div className="ms-filter-label">Brand</div>
-            <div className="ms-chip-row">
-              <FilterChip
-                label="All"
-                active={brandAll}
-                onClick={handleBrandAll}
-              />
-              {availableBrands.map((brand) => (
-                <FilterChip
-                  key={brand}
-                  label={brand}
-                  active={!brandAll && selectedBrand === brand}
-                  onClick={() => handleSelectBrand(brand)}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="ms-filter-block">
-            <div className="ms-filter-label">Product</div>
-            <div className="ms-chip-row">
-              {availableProducts.map((product) => (
-                <FilterChip
-                  key={product}
-                  label={product}
-                  active={selectedProductValid === product}
-                  onClick={() => handleSelectProduct(product)}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="ms-filter-block">
-            <input
-              className="ms-search"
-              type="search"
-              placeholder="Search (e.g. iphone 11 pro, macbook air)…"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              aria-label="Search devices"
-            />
-          </div>
-
-          <div className="ms-library-results">
-            {filteredLibrary.length === 0 ? (
-              <p className="ms-empty">No devices match.</p>
-            ) : (
-              filteredLibrary.map(({ category, items }) => (
-                <div key={category} className="ms-device-section">
-                  <h3 className="ms-device-section-title">{category}</h3>
-                  <div className="ms-device-grid">
-                    {items.map((item) => (
-                      <button
-                        key={item.path}
-                        type="button"
-                        className="ms-device-tile"
-                        onClick={() => void handleAddAndSelect(item)}
-                      >
-                        <img src={item.src} alt="" />
-                        <span>{item.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        </aside>
+        <LibraryPanel
+          open={libraryOpen}
+          width={libraryWidth}
+          categories={categories}
+          effectiveCategory={effectiveCategory}
+          availableBrands={availableBrands}
+          brandAll={brandAll}
+          selectedBrand={selectedBrand}
+          availableProducts={availableProducts}
+          selectedProductValid={selectedProductValid}
+          searchQuery={searchQuery}
+          filteredLibrary={filteredLibrary}
+          placingPath={placingPath}
+          onClose={() => setLibraryOpen(false)}
+          onCategoryChange={(c) => {
+            setCategoryFilter(c);
+            setSelectedProduct(null);
+          }}
+          onBrandAll={() => {
+            setSelectedBrand(null);
+            setSelectedProduct(null);
+          }}
+          onSelectBrand={(b) => {
+            setSelectedBrand(b);
+            setSelectedProduct(null);
+          }}
+          onSelectProduct={(p) =>
+            setSelectedProduct((prev) => (prev === p ? null : p))
+          }
+          onSearchChange={setSearchQuery}
+          onAddDevice={(item) => void handleAddAndSelect(item)}
+          onResizePointerDown={onResizePointerDown}
+          onResizePointerMove={onResizePointerMove}
+          onResizePointerUp={onResizePointerUp}
+        />
 
         <div className="ms-workspace">
-          <div className="ms-toolbar">
-            <div className="ms-toolbar-group">
-              <span className="ms-toolbar-label">Arrange</span>
-              <button
-                type="button"
-                className="ms-btn"
-                onClick={bringForward}
-                disabled={!selectedId}
-                title={formatChordForDisplay(']', platform)}
-              >
-                Forward
-              </button>
-              <button
-                type="button"
-                className="ms-btn"
-                onClick={pushBackward}
-                disabled={!selectedId}
-                title={formatChordForDisplay('[', platform)}
-              >
-                Back
-              </button>
-              <button
-                type="button"
-                className="ms-btn"
-                onClick={duplicateSelected}
-                disabled={!selectedId}
-                title={formatChordForDisplay('mod+d', platform)}
-              >
-                Duplicate
-              </button>
-              <button
-                type="button"
-                className="ms-btn ms-btn--danger"
-                onClick={deleteSelected}
-                disabled={!selectedId}
-                title={`${formatChordForDisplay('delete', platform)} / ${formatChordForDisplay('backspace', platform)}`}
-              >
-                Delete
-              </button>
-            </div>
-
-            <div className="ms-toolbar-spacer" />
-
-            <div className="ms-toolbar-group">
-              <span className="ms-toolbar-label">Export</span>
-              <label className="ms-field">
-                Format
-                <select
-                  className="ms-select"
-                  value={exportFormat}
-                  onChange={(e) =>
-                    setExportFormat(e.target.value as ExportFormat)
-                  }
-                >
-                  <option value="png">PNG</option>
-                  <option value="jpg">JPG</option>
-                </select>
-              </label>
-              <label className="ms-field">
-                Resolution
-                <select
-                  className="ms-select"
-                  value={exportResolution}
-                  onChange={(e) =>
-                    setExportResolution(e.target.value as ExportResolution)
-                  }
-                >
-                  <option value="best">Best</option>
-                  <option value="1440p">1440p</option>
-                  <option value="1080p">1080p</option>
-                  <option value="720p">720p</option>
-                </select>
-              </label>
-              <button
-                type="button"
-                className="ms-btn ms-btn--primary"
-                onClick={() => void downloadCanvas()}
-                disabled={canvasItems.length === 0 || isExporting}
-                title={modHint}
-              >
-                {isExporting ? 'Exporting…' : 'Download'}
-              </button>
-            </div>
-          </div>
+          <StudioToolbar
+            selectedId={selectedId}
+            canBringForward={canBringForward}
+            canPushBackward={canPushBackward}
+            canvasEmpty={canvasItems.length === 0}
+            isExporting={isExporting}
+            exportFormat={exportFormat}
+            exportResolution={exportResolution}
+            exportMenuOpen={exportMenuOpen}
+            toolsSheetOpen={toolsSheetOpen}
+            forwardTitle={forwardTitle}
+            backTitle={backTitle}
+            modHint={modHint}
+            duplicateTitle={formatChordForDisplay('mod+d', platform)}
+            deleteTitle={`${formatChordForDisplay('delete', platform)} / ${formatChordForDisplay('backspace', platform)}`}
+            layerHint={layerHint}
+            statusMessage={statusMessage}
+            onAlign={alignSelected}
+            onBringForward={bringForward}
+            onPushBackward={pushBackward}
+            onDuplicate={duplicateSelected}
+            onDelete={deleteSelected}
+            onExportFormat={setExportFormat}
+            onExportResolution={setExportResolution}
+            onToggleExportMenu={() => setExportMenuOpen((v) => !v)}
+            onDownload={() => void downloadCanvas()}
+            onToggleToolsSheet={() => setToolsSheetOpen((v) => !v)}
+            onDismissLayerHint={() => setLayerHint(null)}
+          />
 
           <div className="ms-stage">
+            {canvasItems.length === 0 && (
+              <div className="ms-stage-empty" aria-live="polite">
+                <p className="ms-stage-empty-title">
+                  Add a device from the library
+                </p>
+                <p className="ms-stage-empty-sub">
+                  Filter by category, then click a device to place it on the
+                  artboard.
+                </p>
+              </div>
+            )}
+
+            <div
+              className="ms-view-zoom"
+              role="group"
+              aria-label="Artboard zoom"
+            >
+              <button
+                type="button"
+                className="ms-btn ms-btn--icon"
+                aria-pressed={viewZoom === 'fit'}
+                title="Fit fills the window · 100% = artboard pixels"
+                aria-label="Fit artboard to stage"
+                onClick={() => setViewZoom('fit')}
+              >
+                Fit
+              </button>
+              <button
+                type="button"
+                className="ms-btn ms-btn--icon"
+                aria-label="Zoom out"
+                title="Zoom out"
+                onClick={() => setViewZoom((z) => stepViewZoom(z, -1))}
+              >
+                −
+              </button>
+              <span className="ms-view-zoom-label" title="Fit fills the window · 100% = artboard pixels">
+                {viewZoomLabel(viewZoom)}
+              </span>
+              <button
+                type="button"
+                className="ms-btn ms-btn--icon"
+                aria-label="Zoom in"
+                title="Zoom in"
+                onClick={() => setViewZoom((z) => stepViewZoom(z, 1))}
+              >
+                +
+              </button>
+            </div>
+
             <div
               ref={canvasRef}
               className="ms-artboard"
               style={{
-                width: `min(100cqw, ${ARTBOARD_WIDTH}px, calc(100cqh * ${ARTBOARD_WIDTH} / ${ARTBOARD_HEIGHT}))`,
+                width: artboardWidthCss(viewZoom),
                 aspectRatio: `${ARTBOARD_WIDTH} / ${ARTBOARD_HEIGHT}`,
               }}
               onClick={(e) => {
                 if (e.target === canvasRef.current) setSelectedId(null);
               }}
             >
+              {(snapGuides.vertical ||
+                snapGuides.horizontal ||
+                snapGuides.bottom) && (
+                <div className="ms-snap-guides" aria-hidden="true">
+                  {snapGuides.vertical && (
+                    <div className="ms-snap-guide ms-snap-guide--v" />
+                  )}
+                  {snapGuides.horizontal && (
+                    <div className="ms-snap-guide ms-snap-guide--h" />
+                  )}
+                  {snapGuides.bottom && (
+                    <div className="ms-snap-guide ms-snap-guide--bottom" />
+                  )}
+                </div>
+              )}
               {canvasItems.map((item) => (
                 <img
                   key={item.instanceId}
@@ -739,26 +788,5 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
         platform={platform}
       />
     </div>
-  );
-}
-
-function FilterChip({
-  label,
-  active,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      className="ms-chip"
-      onClick={onClick}
-      aria-pressed={active}
-    >
-      {label}
-    </button>
   );
 }
