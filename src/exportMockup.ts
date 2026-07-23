@@ -1,6 +1,7 @@
 import {
+  ARTBOARD_HEIGHT,
+  ARTBOARD_WIDTH,
   displayHeightFor,
-  EXPORT_CONTENT_PADDING,
   EXPORT_MAX_EDGE,
   JPEG_QUALITY,
   RESOLUTION_PRESETS,
@@ -26,13 +27,6 @@ export interface ExportOptions {
 export interface ExportResult {
   blob: Blob;
   filenameHint: string;
-}
-
-interface Bounds {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
 }
 
 function loadImage(src: string): Promise<HTMLImageElement> {
@@ -63,64 +57,15 @@ function canvasToBlob(
   });
 }
 
-function intersectBounds(a: Bounds, b: Bounds): Bounds | null {
-  const x1 = Math.max(a.x, b.x);
-  const y1 = Math.max(a.y, b.y);
-  const x2 = Math.min(a.x + a.width, b.x + b.width);
-  const y2 = Math.min(a.y + a.height, b.y + b.height);
-  if (x2 <= x1 || y2 <= y1) return null;
-  return { x: x1, y: y1, width: x2 - x1, height: y2 - y1 };
-}
-
-function contentBounds(
-  items: { x: number; y: number; displayWidth: number; displayHeight: number }[],
-  panelWidth: number,
-  panelHeight: number,
-  padding: number,
-): Bounds {
-  let minX = Infinity;
-  let minY = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-
-  for (const item of items) {
-    minX = Math.min(minX, item.x);
-    minY = Math.min(minY, item.y);
-    maxX = Math.max(maxX, item.x + item.displayWidth);
-    maxY = Math.max(maxY, item.y + item.displayHeight);
-  }
-
-  const padded: Bounds = {
-    x: minX - padding,
-    y: minY - padding,
-    width: maxX - minX + padding * 2,
-    height: maxY - minY + padding * 2,
-  };
-
-  const panel: Bounds = {
-    x: 0,
-    y: 0,
-    width: panelWidth,
-    height: panelHeight,
-  };
-
-  const clipped = intersectBounds(padded, panel);
-  if (!clipped) {
-    // All content outside panel — fall back to a 1×1 empty crop at origin
-    return { x: 0, y: 0, width: 1, height: 1 };
-  }
-  return clipped;
-}
-
 /**
- * Compose a high-res image matching canvas layout and z-order.
- * Crops to device content (+ padding), clipped to the visible panel.
+ * Compose a high-res image matching the fixed artboard (WYSIWYG).
+ * Frame is always ARTBOARD_WIDTH × ARTBOARD_HEIGHT logical units.
  */
 export async function exportMockup(
   items: ExportableItem[],
-  panelWidth: number,
-  panelHeight: number,
   options: ExportOptions,
+  panelWidth: number = ARTBOARD_WIDTH,
+  panelHeight: number = ARTBOARD_HEIGHT,
 ): Promise<ExportResult> {
   if (items.length === 0) {
     throw new Error('Nothing to export');
@@ -142,12 +87,12 @@ export async function exportMockup(
     }),
   );
 
-  const bounds = contentBounds(
-    withNative,
-    panelWidth,
-    panelHeight,
-    EXPORT_CONTENT_PADDING,
-  );
+  const bounds = {
+    x: 0,
+    y: 0,
+    width: panelWidth,
+    height: panelHeight,
+  };
 
   let maxNativeWidth = 0;
   let maxDisplayWidth = 0;
@@ -195,9 +140,14 @@ export async function exportMockup(
     ctx.clearRect(0, 0, outW, outH);
   }
 
+  // Clip to artboard (matches overflow: hidden)
+  ctx.beginPath();
+  ctx.rect(0, 0, outW, outH);
+  ctx.clip();
+
   for (const item of withNative) {
-    const dx = (item.x - bounds.x) * exportScale;
-    const dy = (item.y - bounds.y) * exportScale;
+    const dx = item.x * exportScale;
+    const dy = item.y * exportScale;
     const dw = item.displayWidth * exportScale;
     const dh = item.displayHeight * exportScale;
     ctx.drawImage(item.img, dx, dy, dw, dh);
@@ -205,10 +155,9 @@ export async function exportMockup(
 
   const blob = await canvasToBlob(canvas, options.format);
   const ext = options.format === 'jpg' ? 'jpg' : 'png';
-  const resLabel = options.resolution;
   return {
     blob,
-    filenameHint: `mockup-${resLabel}.${ext}`,
+    filenameHint: `mockup-${options.resolution}.${ext}`,
   };
 }
 

@@ -17,11 +17,12 @@ export const CATEGORY_ORDER = [
 
 export type DeviceCategory = (typeof CATEGORY_ORDER)[number] | string;
 
+/** Fixed 16:9 editing / export artboard (logical pixels). */
+export const ARTBOARD_WIDTH = 1280;
+export const ARTBOARD_HEIGHT = 720;
+
 /** Longest edge cap for export canvases (never invent detail beyond source). */
 export const EXPORT_MAX_EDGE = 8192;
-
-/** Padding around content bounds in canvas/preview units. */
-export const EXPORT_CONTENT_PADDING = 16;
 
 export type ExportFormat = 'png' | 'jpg';
 export type ExportResolution = 'best' | '1440p' | '1080p' | '720p';

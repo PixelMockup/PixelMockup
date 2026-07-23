@@ -45,7 +45,11 @@ for (const category of Object.keys(groupByCategory)) {
 }
 
 function App() {
-  return <MockupStudio groupedLibrary={groupByCategory} />;
+  return (
+    <div style={{ height: '100%', width: '100%', minHeight: 0 }}>
+      <MockupStudio groupedLibrary={groupByCategory} />
+    </div>
+  );
 }
 
 export default App;

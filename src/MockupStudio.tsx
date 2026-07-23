@@ -1,6 +1,8 @@
 import { useMemo, useRef, useState } from 'react';
 import type { DeviceItem } from './App';
 import {
+  ARTBOARD_HEIGHT,
+  ARTBOARD_WIDTH,
   CATEGORY_ORDER,
   displayHeightFor,
   getDisplayWidth,
@@ -8,6 +10,25 @@ import {
   type ExportResolution,
 } from './deviceScale';
 import { downloadBlob, exportMockup } from './exportMockup';
+
+const CHECKERBOARD_BG = `
+  linear-gradient(45deg, #e8e8e8 25%, transparent 25%),
+  linear-gradient(-45deg, #e8e8e8 25%, transparent 25%),
+  linear-gradient(45deg, transparent 75%, #e8e8e8 75%),
+  linear-gradient(-45deg, transparent 75%, #e8e8e8 75%)
+`.replace(/\s+/g, ' ');
+
+function clientToLogical(
+  clientX: number,
+  clientY: number,
+  rect: DOMRect,
+): { x: number; y: number } {
+  if (rect.width <= 0 || rect.height <= 0) return { x: 0, y: 0 };
+  return {
+    x: ((clientX - rect.left) / rect.width) * ARTBOARD_WIDTH,
+    y: ((clientY - rect.top) / rect.height) * ARTBOARD_HEIGHT,
+  };
+}
 
 interface MockupStudioProps {
   groupedLibrary: Record<string, DeviceItem[]>;
@@ -124,10 +145,11 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
+    const logical = clientToLogical(e.clientX, e.clientY, rect);
     setDragInfo({
       id: item.instanceId,
-      offsetX: e.clientX - rect.left - item.x,
-      offsetY: e.clientY - rect.top - item.y,
+      offsetX: logical.x - item.x,
+      offsetY: logical.y - item.y,
     });
     setSelectedId(item.instanceId);
   };
@@ -137,8 +159,9 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left - dragInfo.offsetX;
-    const y = e.clientY - rect.top - dragInfo.offsetY;
+    const logical = clientToLogical(e.clientX, e.clientY, rect);
+    const x = logical.x - dragInfo.offsetX;
+    const y = logical.y - dragInfo.offsetY;
     setCanvasItems((prev) =>
       prev.map((item) =>
         item.instanceId === dragInfo.id ? { ...item, x, y } : item,
@@ -183,13 +206,12 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
   };
 
   const downloadCanvas = async () => {
-    if (!canvasRef.current || canvasItems.length === 0 || isExporting) return;
+    if (canvasItems.length === 0 || isExporting) return;
 
     setIsExporting(true);
     setSelectedId(null);
 
     try {
-      const { width, height } = canvasRef.current.getBoundingClientRect();
       const { blob, filenameHint } = await exportMockup(
         canvasItems.map((item) => ({
           src: item.src,
@@ -200,9 +222,9 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
           nativeWidth: item.nativeWidth,
           nativeHeight: item.nativeHeight,
         })),
-        width,
-        height,
         { format: exportFormat, resolution: exportResolution },
+        ARTBOARD_WIDTH,
+        ARTBOARD_HEIGHT,
       );
       const stamp = new Date()
         .toISOString()
@@ -225,10 +247,11 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
       style={{
         display: 'flex',
         height: '100%',
+        minHeight: 0,
         width: '100%',
         fontFamily: 'sans-serif',
         overflow: 'hidden',
-        margin: '0 auto',
+        margin: 0,
       }}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -418,49 +441,71 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
         </div>
 
         <div
-          ref={canvasRef}
           style={{
             flex: 1,
-            position: 'relative',
-            overflow: 'hidden',
-            backgroundColor: 'transparent',
-          }}
-          onClick={(e) => {
-            if (e.target === canvasRef.current) setSelectedId(null);
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '24px',
+            backgroundColor: '#d0d0d0',
+            minHeight: 0,
+            boxSizing: 'border-box',
+            // Enable size queries so the artboard fits width and height
+            containerType: 'size',
           }}
         >
-          {canvasItems.map((item) => {
-            const height = displayHeightFor(
-              item.displayWidth,
-              item.nativeWidth,
-              item.nativeHeight,
-            );
-            return (
-              <img
-                key={item.instanceId}
-                src={item.src}
-                alt={item.name}
-                draggable={false}
-                onPointerDown={(e) => handlePointerDown(e, item)}
-                style={{
-                  position: 'absolute',
-                  left: `${item.x}px`,
-                  top: `${item.y}px`,
-                  width: `${item.displayWidth}px`,
-                  height: `${height}px`,
-                  objectFit: 'contain',
-                  zIndex: item.zIndex,
-                  cursor:
-                    dragInfo.id === item.instanceId ? 'grabbing' : 'grab',
-                  outline:
-                    selectedId === item.instanceId
-                      ? '2px solid #007bff'
-                      : 'none',
-                  userSelect: 'none',
-                }}
-              />
-            );
-          })}
+          <div
+            ref={canvasRef}
+            style={{
+              width: `min(100cqw, ${ARTBOARD_WIDTH}px, calc(100cqh * ${ARTBOARD_WIDTH} / ${ARTBOARD_HEIGHT}))`,
+              aspectRatio: `${ARTBOARD_WIDTH} / ${ARTBOARD_HEIGHT}`,
+              position: 'relative',
+              overflow: 'hidden',
+              boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
+              border: '1px solid #bbb',
+              backgroundColor: '#f5f5f5',
+              backgroundImage: CHECKERBOARD_BG,
+              backgroundSize: '20px 20px',
+              backgroundPosition: '0 0, 0 10px, 10px -10px, -10px 0',
+              flexShrink: 0,
+            }}
+            onClick={(e) => {
+              if (e.target === canvasRef.current) setSelectedId(null);
+            }}
+          >
+            {canvasItems.map((item) => {
+              const height = displayHeightFor(
+                item.displayWidth,
+                item.nativeWidth,
+                item.nativeHeight,
+              );
+              return (
+                <img
+                  key={item.instanceId}
+                  src={item.src}
+                  alt={item.name}
+                  draggable={false}
+                  onPointerDown={(e) => handlePointerDown(e, item)}
+                  style={{
+                    position: 'absolute',
+                    left: `${(item.x / ARTBOARD_WIDTH) * 100}%`,
+                    top: `${(item.y / ARTBOARD_HEIGHT) * 100}%`,
+                    width: `${(item.displayWidth / ARTBOARD_WIDTH) * 100}%`,
+                    height: `${(height / ARTBOARD_HEIGHT) * 100}%`,
+                    objectFit: 'contain',
+                    zIndex: item.zIndex,
+                    cursor:
+                      dragInfo.id === item.instanceId ? 'grabbing' : 'grab',
+                    outline:
+                      selectedId === item.instanceId
+                        ? '2px solid #007bff'
+                        : 'none',
+                    userSelect: 'none',
+                  }}
+                />
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
