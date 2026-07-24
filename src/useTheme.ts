@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
+import { storageGet, storageSet } from './storage';
 
 export type ThemeId = 'light' | 'dark';
 
-const STORAGE_KEY = 'mockupStudio.theme';
+const STORAGE_KEY = 'pixelMockup.theme';
+const LEGACY_KEY = 'mockupStudio.theme';
 
 function readStoredTheme(): ThemeId {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = storageGet(STORAGE_KEY, LEGACY_KEY);
     if (raw === 'dark' || raw === 'light') return raw;
   } catch {
     // ignore
@@ -31,7 +33,7 @@ export function useTheme() {
   useEffect(() => {
     applyTheme(theme);
     try {
-      localStorage.setItem(STORAGE_KEY, theme);
+      storageSet(STORAGE_KEY, theme);
     } catch {
       // ignore
     }

@@ -1,9 +1,13 @@
 import type { DeviceItem } from './App';
+import { formatDeviceDisplayName } from './deviceMeta';
 
 const PRODUCT_CHIP_PREVIEW = 8;
+const LIBRARY_DRAG_MIME = 'application/x-mockup-device';
 
 export const LIBRARY_W_MIN = 280;
 export const LIBRARY_W_MAX = 720;
+
+export { LIBRARY_DRAG_MIME };
 
 interface LibraryPanelProps {
   open: boolean;
@@ -18,12 +22,15 @@ interface LibraryPanelProps {
   searchQuery: string;
   filteredLibrary: { category: string; items: DeviceItem[] }[];
   placingPath: string | null;
+  searchIsGlobal: boolean;
   onClose: () => void;
   onCategoryChange: (category: string) => void;
   onBrandAll: () => void;
   onSelectBrand: (brand: string) => void;
+  onProductAll: () => void;
   onSelectProduct: (product: string) => void;
   onSearchChange: (query: string) => void;
+  onClearFilters: () => void;
   onAddDevice: (item: DeviceItem) => void;
   onResizePointerDown: (e: React.PointerEvent) => void;
   onResizePointerMove: (e: React.PointerEvent) => void;
@@ -43,12 +50,15 @@ export default function LibraryPanel({
   searchQuery,
   filteredLibrary,
   placingPath,
+  searchIsGlobal,
   onClose,
   onCategoryChange,
   onBrandAll,
   onSelectBrand,
+  onProductAll,
   onSelectProduct,
   onSearchChange,
+  onClearFilters,
   onAddDevice,
   onResizePointerDown,
   onResizePointerMove,
@@ -57,6 +67,8 @@ export default function LibraryPanel({
   const preview = availableProducts.slice(0, PRODUCT_CHIP_PREVIEW);
   const hiddenCount = Math.max(0, availableProducts.length - PRODUCT_CHIP_PREVIEW);
   const showMore = availableProducts.length > PRODUCT_CHIP_PREVIEW;
+  const hasActiveFilters =
+    !brandAll || selectedProductValid != null || searchQuery.trim().length > 0;
 
   return (
     <aside
@@ -85,11 +97,14 @@ export default function LibraryPanel({
               <FilterChip
                 key={category}
                 label={category}
-                active={effectiveCategory === category}
+                active={!searchIsGlobal && effectiveCategory === category}
                 onClick={() => onCategoryChange(category)}
               />
             ))}
           </div>
+          {searchIsGlobal && (
+            <p className="ms-filter-hint">Searching all categories</p>
+          )}
         </div>
       )}
 
@@ -111,6 +126,11 @@ export default function LibraryPanel({
       <div className="ms-filter-block ms-filter-block--products">
         <div className="ms-filter-label">Product</div>
         <div className="ms-chip-row">
+          <FilterChip
+            label="All"
+            active={selectedProductValid == null}
+            onClick={onProductAll}
+          />
           {preview.map((product) => (
             <FilterChip
               key={product}
@@ -149,7 +169,7 @@ export default function LibraryPanel({
         <input
           className="ms-search"
           type="search"
-          placeholder="Search (e.g. iphone 11 pro, macbook air)…"
+          placeholder="Search all devices (e.g. macbook air)…"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           aria-label="Search devices"
@@ -158,7 +178,18 @@ export default function LibraryPanel({
 
       <div className="ms-library-results">
         {filteredLibrary.length === 0 ? (
-          <p className="ms-empty">No devices match.</p>
+          <div className="ms-empty-block">
+            <p className="ms-empty">No devices match.</p>
+            {hasActiveFilters && (
+              <button
+                type="button"
+                className="ms-btn"
+                onClick={onClearFilters}
+              >
+                Clear filters
+              </button>
+            )}
+          </div>
         ) : (
           filteredLibrary.map(({ category, items }) => (
             <div key={category} className="ms-device-section">
@@ -166,6 +197,7 @@ export default function LibraryPanel({
               <div className="ms-device-grid">
                 {items.map((item) => {
                   const placing = placingPath === item.path;
+                  const label = formatDeviceDisplayName(item.name);
                   return (
                     <button
                       key={item.path}
@@ -173,10 +205,18 @@ export default function LibraryPanel({
                       className="ms-device-tile"
                       disabled={placingPath != null}
                       aria-busy={placing}
+                      aria-label={label}
+                      title={`${label} — click or drag to artboard`}
+                      draggable={placingPath == null}
+                      onDragStart={(e) => {
+                        e.dataTransfer.setData(LIBRARY_DRAG_MIME, item.path);
+                        e.dataTransfer.setData('text/plain', item.path);
+                        e.dataTransfer.effectAllowed = 'copy';
+                      }}
                       onClick={() => onAddDevice(item)}
                     >
-                      <img src={item.src} alt="" />
-                      <span>{placing ? 'Placing…' : item.name}</span>
+                      <img src={item.src} alt="" draggable={false} />
+                      <span>{placing ? 'Placing…' : label}</span>
                     </button>
                   );
                 })}

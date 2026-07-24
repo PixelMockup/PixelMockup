@@ -17,6 +17,7 @@
   --ms-accent-hover: #0d9488;
   --ms-accent-fg: #ffffff;
   --ms-accent-soft: rgba(15, 118, 110, 0.12);
+  --ms-snap-page: #e20074;
   --ms-danger: #b91c1c;
   --ms-danger-soft: rgba(185, 28, 28, 0.1);
   --ms-stage: #c8d0db;
@@ -70,6 +71,7 @@
   --ms-accent-hover: #5eead4;
   --ms-accent-fg: #042f2e;
   --ms-accent-soft: rgba(45, 212, 191, 0.14);
+  --ms-snap-page: #ff2d95;
   --ms-danger: #f87171;
   --ms-danger-soft: rgba(248, 113, 113, 0.12);
   --ms-stage: #0e1218;

@@ -13,6 +13,16 @@ import {
   type ContentBounds,
 } from './imageContentBounds';
 
+export type ExportBgMode = 'transparent' | 'color' | 'image';
+
+export interface ExportBackground {
+  mode: ExportBgMode;
+  /** Used when mode is `color` (and as JPG fallback). */
+  color: string;
+  /** Object URL or data URL when mode is `image`. */
+  imageSrc?: string | null;
+}
+
 export interface ExportableItem {
   src: string;
   x: number;
@@ -30,6 +40,7 @@ export interface ExportableItem {
 export interface ExportOptions {
   format: ExportFormat;
   resolution: ExportResolution;
+  background?: ExportBackground;
 }
 
 export interface ExportResult {
@@ -65,9 +76,53 @@ function canvasToBlob(
   });
 }
 
+async function paintBackground(
+  ctx: CanvasRenderingContext2D,
+  outW: number,
+  outH: number,
+  format: ExportFormat,
+  background?: ExportBackground,
+) {
+  const mode = background?.mode ?? (format === 'jpg' ? 'color' : 'transparent');
+  const color = background?.color || '#ffffff';
+
+  if (mode === 'transparent') {
+    if (format === 'jpg') {
+      ctx.fillStyle = color || '#ffffff';
+      ctx.fillRect(0, 0, outW, outH);
+    } else {
+      ctx.clearRect(0, 0, outW, outH);
+    }
+    return;
+  }
+
+  if (mode === 'color') {
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, outW, outH);
+    return;
+  }
+
+  if (background?.imageSrc) {
+    try {
+      const img = await loadImage(background.imageSrc);
+      const scale = Math.max(outW / img.naturalWidth, outH / img.naturalHeight);
+      const dw = img.naturalWidth * scale;
+      const dh = img.naturalHeight * scale;
+      const dx = (outW - dw) / 2;
+      const dy = (outH - dh) / 2;
+      ctx.drawImage(img, dx, dy, dw, dh);
+      return;
+    } catch {
+      // fall through
+    }
+  }
+  ctx.fillStyle = color || '#000000';
+  ctx.fillRect(0, 0, outW, outH);
+}
+
 /**
  * Compose a high-res image matching the fixed artboard (WYSIWYG).
- * Frame is always ARTBOARD_WIDTH × ARTBOARD_HEIGHT logical units.
+ * Frame defaults to 16:9; pass active artboard width/height from the studio.
  */
 export async function exportMockup(
   items: ExportableItem[],
@@ -116,7 +171,6 @@ export async function exportMockup(
     maxDisplayWidth = Math.max(maxDisplayWidth, item.displayWidth);
   }
 
-  // Best: widest device approaches native width
   let bestScale =
     maxDisplayWidth > 0 ? maxNativeWidth / maxDisplayWidth : 1;
 
@@ -135,7 +189,6 @@ export async function exportMockup(
       Math.max(bounds.width, bounds.height) > 0
         ? target / Math.max(bounds.width, bounds.height)
         : bestScale;
-    // Never upscale past Best
     exportScale = Math.min(bestScale, presetScale);
   }
 
@@ -148,14 +201,8 @@ export async function exportMockup(
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('Could not get 2d context');
 
-  if (options.format === 'jpg') {
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, outW, outH);
-  } else {
-    ctx.clearRect(0, 0, outW, outH);
-  }
+  await paintBackground(ctx, outW, outH, options.format, options.background);
 
-  // Clip to artboard (matches overflow: hidden)
   ctx.beginPath();
   ctx.rect(0, 0, outW, outH);
   ctx.clip();

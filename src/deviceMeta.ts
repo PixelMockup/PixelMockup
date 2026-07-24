@@ -171,6 +171,16 @@ export function parseProductFamily(
   return s;
 }
 
+/**
+ * Human-facing device label from filename stem.
+ * Keeps color/finish; spaces trailing variant: `Black-1` → `Black -1`.
+ */
+export function formatDeviceDisplayName(name: string | undefined): string {
+  const raw = (name ?? '').trim();
+  if (!raw) return 'Device';
+  return raw.replace(/-(\d+)$/, ' -$1');
+}
+
 export interface SearchableDevice {
   name?: string;
   brand: string;

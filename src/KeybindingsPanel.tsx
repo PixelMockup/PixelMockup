@@ -171,7 +171,7 @@ export default function KeybindingsPanel({
 
           <p className="ms-modal-foot">
             Defaults use Mod = {isMacHint(platform)}. Example:{' '}
-            {formatChordForDisplay('mod+s', platform)}.
+            {formatChordForDisplay('mod+shift+s', platform)}.
           </p>
         </div>
       </div>

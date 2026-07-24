@@ -1,5 +1,7 @@
 /** OS-aware keybindings with per-platform remaps in localStorage. */
 
+import { storageGet, storageSet } from './storage';
+
 export type PlatformId = 'mac' | 'windows' | 'linux';
 
 export type KeyActionId =
@@ -18,15 +20,20 @@ export type KeyActionId =
   | 'nudgeUpLarge'
   | 'nudgeDownLarge'
   | 'duplicate'
+  | 'undo'
   | 'download'
-  | 'openShortcuts';
+  | 'openShortcuts'
+  | 'selectAll'
+  | 'copy'
+  | 'paste';
 
 /** Action id → list of chord strings (e.g. "mod+s", "backspace"). */
 export type BindingMap = Record<KeyActionId, string[]>;
 
 export type PlatformBindingsStore = Partial<Record<PlatformId, BindingMap>>;
 
-export const STORAGE_KEY = 'mockupStudio.keybindings.v1';
+export const STORAGE_KEY = 'pixelMockup.keybindings.v1';
+const LEGACY_STORAGE_KEY = 'mockupStudio.keybindings.v1';
 
 export const ACTION_LABELS: Record<KeyActionId, string> = {
   deleteSelected: 'Delete selected',
@@ -44,12 +51,19 @@ export const ACTION_LABELS: Record<KeyActionId, string> = {
   nudgeUpLarge: 'Nudge up (10px)',
   nudgeDownLarge: 'Nudge down (10px)',
   duplicate: 'Duplicate selected',
+  undo: 'Undo',
   download: 'Download mockup',
   openShortcuts: 'Open shortcuts settings',
+  selectAll: 'Select all',
+  copy: 'Copy',
+  paste: 'Paste',
 };
 
 /** Display order in the settings panel. */
 export const ACTION_ORDER: KeyActionId[] = [
+  'selectAll',
+  'copy',
+  'paste',
   'deleteSelected',
   'deselect',
   'duplicate',
@@ -65,6 +79,7 @@ export const ACTION_ORDER: KeyActionId[] = [
   'nudgeRightLarge',
   'nudgeUpLarge',
   'nudgeDownLarge',
+  'undo',
   'download',
   'openShortcuts',
 ];
@@ -85,8 +100,12 @@ const SHARED_DEFAULTS: BindingMap = {
   nudgeUpLarge: ['shift+arrowup'],
   nudgeDownLarge: ['shift+arrowdown'],
   duplicate: ['mod+d'],
-  download: ['mod+s'],
+  undo: ['mod+z'],
+  download: ['mod+shift+s'],
   openShortcuts: ['mod+/', 'shift+/', '?'],
+  selectAll: ['mod+a'],
+  copy: ['mod+c'],
+  paste: ['mod+v'],
 };
 
 export function detectPlatform(): PlatformId {
@@ -128,7 +147,7 @@ function cloneBindings(map: BindingMap): BindingMap {
 
 export function loadStore(): PlatformBindingsStore {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = storageGet(STORAGE_KEY, LEGACY_STORAGE_KEY);
     if (!raw) return {};
     return JSON.parse(raw) as PlatformBindingsStore;
   } catch {
@@ -137,7 +156,7 @@ export function loadStore(): PlatformBindingsStore {
 }
 
 export function saveStore(store: PlatformBindingsStore): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(store));
+  storageSet(STORAGE_KEY, JSON.stringify(store));
 }
 
 export function loadBindingsForPlatform(platform: PlatformId): BindingMap {

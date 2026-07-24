@@ -1,4 +1,6 @@
 /** Fallback category widths if mm catalog entry is missing. */
+import { storageGet, storageSet } from './storage';
+
 export const CATEGORY_DISPLAY_WIDTH: Record<string, number> = {
   watches: 55,
   phones: 100,
@@ -17,9 +19,137 @@ export const CATEGORY_ORDER = [
 
 export type DeviceCategory = (typeof CATEGORY_ORDER)[number] | string;
 
-/** Fixed 16:9 editing / export artboard (logical pixels). */
+/** Default 16:9 editing / export artboard (logical pixels). Prefer active format. */
 export const ARTBOARD_WIDTH = 1280;
 export const ARTBOARD_HEIGHT = 720;
+
+export const ARTBOARD_FORMAT_KEY = 'pixelMockup.artboardFormat';
+const ARTBOARD_FORMAT_LEGACY_KEY = 'mockupStudio.artboardFormat';
+
+export type ArtboardFormatId =
+  | '16-9'
+  | '9-16'
+  | '1-1'
+  | '4-5'
+  | '4-3'
+  | '3-2'
+  | '2-3'
+  | '21-9'
+  | 'a4-p'
+  | 'a4-l';
+
+export interface ArtboardFormat {
+  id: ArtboardFormatId;
+  /** Short UI label, e.g. "16:9" */
+  label: string;
+  /** One-line hint for title/tooltip */
+  hint: string;
+  width: number;
+  height: number;
+}
+
+/** Professionally recognized canvas formats (recommended ship list). */
+export const ARTBOARD_FORMATS: readonly ArtboardFormat[] = [
+  {
+    id: '16-9',
+    label: '16:9',
+    hint: 'HDTV / YouTube / web video',
+    width: 1280,
+    height: 720,
+  },
+  {
+    id: '9-16',
+    label: '9:16',
+    hint: 'TikTok, Reels, Shorts, Stories',
+    width: 720,
+    height: 1280,
+  },
+  {
+    id: '1-1',
+    label: '1:1',
+    hint: 'Square feed / profile-safe',
+    width: 1080,
+    height: 1080,
+  },
+  {
+    id: '4-5',
+    label: '4:5',
+    hint: 'Instagram / Facebook feed portrait',
+    width: 1080,
+    height: 1350,
+  },
+  {
+    id: '4-3',
+    label: '4:3',
+    hint: 'Classic display / presentation',
+    width: 1280,
+    height: 960,
+  },
+  {
+    id: '3-2',
+    label: '3:2',
+    hint: 'Classic photo / APS-C stills',
+    width: 1200,
+    height: 800,
+  },
+  {
+    id: '2-3',
+    label: '2:3',
+    hint: 'Pinterest pin portrait',
+    width: 1000,
+    height: 1500,
+  },
+  {
+    id: '21-9',
+    label: '21:9',
+    hint: 'Ultrawide / cinematic',
+    width: 1680,
+    height: 720,
+  },
+  {
+    id: 'a4-p',
+    label: 'A4',
+    hint: 'ISO 216 A4 portrait',
+    width: 794,
+    height: 1123,
+  },
+  {
+    id: 'a4-l',
+    label: 'A4 landscape',
+    hint: 'ISO 216 A4 landscape',
+    width: 1123,
+    height: 794,
+  },
+] as const;
+
+export const DEFAULT_ARTBOARD_FORMAT_ID: ArtboardFormatId = '16-9';
+
+export function getArtboardFormat(id: string): ArtboardFormat {
+  return (
+    ARTBOARD_FORMATS.find((f) => f.id === id) ??
+    ARTBOARD_FORMATS.find((f) => f.id === DEFAULT_ARTBOARD_FORMAT_ID)!
+  );
+}
+
+export function readStoredArtboardFormatId(): ArtboardFormatId {
+  try {
+    const raw = storageGet(ARTBOARD_FORMAT_KEY, ARTBOARD_FORMAT_LEGACY_KEY);
+    if (raw && ARTBOARD_FORMATS.some((f) => f.id === raw)) {
+      return raw as ArtboardFormatId;
+    }
+  } catch {
+    // ignore
+  }
+  return DEFAULT_ARTBOARD_FORMAT_ID;
+}
+
+export function persistArtboardFormatId(id: ArtboardFormatId) {
+  try {
+    storageSet(ARTBOARD_FORMAT_KEY, id);
+  } catch {
+    // ignore
+  }
+}
 
 /**
  * Shared real-world scale: ~350mm-wide laptop ≈ 480px on the artboard.
@@ -46,7 +176,8 @@ export const RESOLUTION_PRESETS: Record<
 export const JPEG_QUALITY = 0.92;
 
 /** Artboard device size presets (2× = today’s mm baseline). */
-export const SIZE_SCALE_STORAGE_KEY = 'mockupStudio.sizeScale';
+export const SIZE_SCALE_STORAGE_KEY = 'pixelMockup.sizeScale';
+const SIZE_SCALE_LEGACY_KEY = 'mockupStudio.sizeScale';
 
 export type SizeScaleId = '2x' | '1x' | '0.5x' | '0.25x';
 
@@ -58,10 +189,26 @@ export interface SizeScalePreset {
 }
 
 export const SIZE_SCALE_PRESETS: readonly SizeScalePreset[] = [
-  { id: '2x', label: '2×', factor: 1 },
-  { id: '1x', label: '1×', factor: 0.5 },
-  { id: '0.5x', label: '0.5×', factor: 0.25 },
-  { id: '0.25x', label: '0.25×', factor: 0.125 },
+  {
+    id: '2x',
+    label: 'Actual',
+    factor: 1,
+  },
+  {
+    id: '1x',
+    label: 'Half',
+    factor: 0.5,
+  },
+  {
+    id: '0.5x',
+    label: 'Quarter',
+    factor: 0.25,
+  },
+  {
+    id: '0.25x',
+    label: 'Eighth',
+    factor: 0.125,
+  },
 ] as const;
 
 export const DEFAULT_SIZE_SCALE_ID: SizeScaleId = '1x';
@@ -75,7 +222,7 @@ export function getSizeScalePreset(id: string): SizeScalePreset {
 
 export function readStoredSizeScaleId(): SizeScaleId {
   try {
-    const raw = localStorage.getItem(SIZE_SCALE_STORAGE_KEY);
+    const raw = storageGet(SIZE_SCALE_STORAGE_KEY, SIZE_SCALE_LEGACY_KEY);
     if (raw && SIZE_SCALE_PRESETS.some((p) => p.id === raw)) {
       return raw as SizeScaleId;
     }
@@ -87,7 +234,7 @@ export function readStoredSizeScaleId(): SizeScaleId {
 
 export function persistSizeScaleId(id: SizeScaleId) {
   try {
-    localStorage.setItem(SIZE_SCALE_STORAGE_KEY, id);
+    storageSet(SIZE_SCALE_STORAGE_KEY, id);
   } catch {
     // ignore
   }

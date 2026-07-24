@@ -92,7 +92,7 @@ const missing = Object.values(groupByCategory)
   .filter((d) => d.widthMm == null || d.heightMm == null);
 if (missing.length > 0) {
   console.warn(
-    `[Mockup Studio] ${missing.length} assets missing mm dimensions:`,
+    `[Pixel Mockup] ${missing.length} assets missing mm dimensions:`,
     missing.map((d) => d.catalogFile),
   );
 }

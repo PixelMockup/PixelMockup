@@ -2,9 +2,11 @@
 <html lang="en" data-theme="light">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/app-icon-192.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Mockup Studio</title>
+    <title>Pixel Mockup</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -13,7 +15,9 @@
     />
     <script>
       try {
-        var t = localStorage.getItem('mockupStudio.theme');
+        var t =
+          localStorage.getItem('pixelMockup.theme') ||
+          localStorage.getItem('mockupStudio.theme');
         if (t === 'dark' || t === 'light') {
           document.documentElement.setAttribute('data-theme', t);
         }
