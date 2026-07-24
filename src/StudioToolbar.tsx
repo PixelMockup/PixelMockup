@@ -1,4 +1,9 @@
-import type { ExportFormat, ExportResolution } from './deviceScale';
+import {
+  SIZE_SCALE_PRESETS,
+  type ExportFormat,
+  type ExportResolution,
+  type SizeScaleId,
+} from './deviceScale';
 import type { AlignMode } from './artboardSnap';
 
 interface StudioToolbarProps {
@@ -11,6 +16,7 @@ interface StudioToolbarProps {
   exportResolution: ExportResolution;
   exportMenuOpen: boolean;
   toolsSheetOpen: boolean;
+  sizeScaleId: SizeScaleId;
   forwardTitle: string;
   backTitle: string;
   modHint: string;
@@ -23,6 +29,7 @@ interface StudioToolbarProps {
   onPushBackward: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onSizeScale: (id: SizeScaleId) => void;
   onExportFormat: (f: ExportFormat) => void;
   onExportResolution: (r: ExportResolution) => void;
   onToggleExportMenu: () => void;
@@ -41,6 +48,7 @@ export default function StudioToolbar({
   exportResolution,
   exportMenuOpen,
   toolsSheetOpen,
+  sizeScaleId,
   forwardTitle,
   backTitle,
   modHint,
@@ -53,6 +61,7 @@ export default function StudioToolbar({
   onPushBackward,
   onDuplicate,
   onDelete,
+  onSizeScale,
   onExportFormat,
   onExportResolution,
   onToggleExportMenu,
@@ -60,8 +69,33 @@ export default function StudioToolbar({
   onToggleToolsSheet,
   onDismissLayerHint,
 }: StudioToolbarProps) {
+  const sizeGroup = (
+    <div
+      className="ms-toolbar-group"
+      role="group"
+      aria-label="Device size on artboard"
+      title="Device size on artboard (quality unchanged)"
+    >
+      <span className="ms-toolbar-label">Size</span>
+      {SIZE_SCALE_PRESETS.map((preset) => (
+        <button
+          key={preset.id}
+          type="button"
+          className="ms-btn"
+          aria-pressed={sizeScaleId === preset.id}
+          onClick={() => onSizeScale(preset.id)}
+          title={`Device size ${preset.label} (quality unchanged)`}
+        >
+          {preset.label}
+        </button>
+      ))}
+    </div>
+  );
+
   const alignArrange = (
     <>
+      {sizeGroup}
+
       <div className="ms-toolbar-group">
         <span className="ms-toolbar-label">Align</span>
         <button

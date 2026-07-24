@@ -10,10 +10,15 @@ import {
   ARTBOARD_HEIGHT,
   ARTBOARD_WIDTH,
   CATEGORY_ORDER,
+  applySizeScale,
   displayHeightForContent,
   displaySizeFromMm,
+  getSizeScalePreset,
+  persistSizeScaleId,
+  readStoredSizeScaleId,
   type ExportFormat,
   type ExportResolution,
+  type SizeScaleId,
 } from './deviceScale';
 import {
   alignBox,
@@ -167,6 +172,9 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
   const [exportFormat, setExportFormat] = useState<ExportFormat>('png');
   const [exportResolution, setExportResolution] =
     useState<ExportResolution>('best');
+  const [sizeScaleId, setSizeScaleId] = useState<SizeScaleId>(
+    readStoredSizeScaleId,
+  );
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const resizeDragRef = useRef<{ startX: number; startW: number } | null>(
@@ -303,21 +311,23 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
       // fallback = full image
     }
 
-    const { displayWidth, displayHeight: mmHeight } = displaySizeFromMm(
-      item.widthMm,
-      item.heightMm,
-      {
+    const { displayWidth: mmWidth, displayHeight: mmHeight } =
+      displaySizeFromMm(item.widthMm, item.heightMm, {
         name: item.name,
         category: item.category,
         nativeWidth,
         nativeHeight,
-      },
-    );
-    const displayHeight = displayHeightForContent(
-      displayWidth,
+      });
+    const contentHeight = displayHeightForContent(
+      mmWidth,
       contentBounds.width,
       contentBounds.height,
       mmHeight,
+    );
+    const { displayWidth, displayHeight } = applySizeScale(
+      mmWidth,
+      contentHeight,
+      getSizeScalePreset(sizeScaleId).factor,
     );
 
     const instanceId = crypto.randomUUID();
@@ -406,6 +416,31 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
 
   const bringForward = () => tryLayerAction('forward');
   const pushBackward = () => tryLayerAction('back');
+
+  const changeSizeScale = (nextId: SizeScaleId) => {
+    if (nextId === sizeScaleId) return;
+    const oldFactor = getSizeScalePreset(sizeScaleId).factor;
+    const newFactor = getSizeScalePreset(nextId).factor;
+    const ratio = newFactor / oldFactor;
+    setSizeScaleId(nextId);
+    persistSizeScaleId(nextId);
+    setCanvasItems((prev) =>
+      prev.map((item) => {
+        const displayWidth = item.displayWidth * ratio;
+        const displayHeight = item.displayHeight * ratio;
+        const cx = item.x + item.displayWidth / 2;
+        const cy = item.y + item.displayHeight / 2;
+        return {
+          ...item,
+          displayWidth,
+          displayHeight,
+          x: cx - displayWidth / 2,
+          y: cy - displayHeight / 2,
+        };
+      }),
+    );
+    announce(`Size ${getSizeScalePreset(nextId).label}`);
+  };
 
   const deleteSelected = () => {
     if (!selectedId) return;
@@ -699,6 +734,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
             exportResolution={exportResolution}
             exportMenuOpen={exportMenuOpen}
             toolsSheetOpen={toolsSheetOpen}
+            sizeScaleId={sizeScaleId}
             forwardTitle={forwardTitle}
             backTitle={backTitle}
             modHint={modHint}
@@ -711,6 +747,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
             onPushBackward={pushBackward}
             onDuplicate={duplicateSelected}
             onDelete={deleteSelected}
+            onSizeScale={changeSizeScale}
             onExportFormat={setExportFormat}
             onExportResolution={setExportResolution}
             onToggleExportMenu={() => setExportMenuOpen((v) => !v)}

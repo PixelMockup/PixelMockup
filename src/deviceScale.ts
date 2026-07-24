@@ -45,6 +45,65 @@ export const RESOLUTION_PRESETS: Record<
 
 export const JPEG_QUALITY = 0.92;
 
+/** Artboard device size presets (2× = today’s mm baseline). */
+export const SIZE_SCALE_STORAGE_KEY = 'mockupStudio.sizeScale';
+
+export type SizeScaleId = '2x' | '1x' | '0.5x' | '0.25x';
+
+export interface SizeScalePreset {
+  id: SizeScaleId;
+  label: string;
+  /** Multiplier vs today’s PX_PER_MM baseline (2× = 1). */
+  factor: number;
+}
+
+export const SIZE_SCALE_PRESETS: readonly SizeScalePreset[] = [
+  { id: '2x', label: '2×', factor: 1 },
+  { id: '1x', label: '1×', factor: 0.5 },
+  { id: '0.5x', label: '0.5×', factor: 0.25 },
+  { id: '0.25x', label: '0.25×', factor: 0.125 },
+] as const;
+
+export const DEFAULT_SIZE_SCALE_ID: SizeScaleId = '1x';
+
+export function getSizeScalePreset(id: string): SizeScalePreset {
+  return (
+    SIZE_SCALE_PRESETS.find((p) => p.id === id) ??
+    SIZE_SCALE_PRESETS.find((p) => p.id === DEFAULT_SIZE_SCALE_ID)!
+  );
+}
+
+export function readStoredSizeScaleId(): SizeScaleId {
+  try {
+    const raw = localStorage.getItem(SIZE_SCALE_STORAGE_KEY);
+    if (raw && SIZE_SCALE_PRESETS.some((p) => p.id === raw)) {
+      return raw as SizeScaleId;
+    }
+  } catch {
+    // ignore
+  }
+  return DEFAULT_SIZE_SCALE_ID;
+}
+
+export function persistSizeScaleId(id: SizeScaleId) {
+  try {
+    localStorage.setItem(SIZE_SCALE_STORAGE_KEY, id);
+  } catch {
+    // ignore
+  }
+}
+
+export function applySizeScale(
+  displayWidth: number,
+  displayHeight: number,
+  factor: number,
+): { displayWidth: number; displayHeight: number } {
+  return {
+    displayWidth: displayWidth * factor,
+    displayHeight: displayHeight * factor,
+  };
+}
+
 export function getDisplayWidth(category: string): number {
   return CATEGORY_DISPLAY_WIDTH[category] ?? 120;
 }
