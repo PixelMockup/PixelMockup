@@ -8,6 +8,10 @@ import {
   type ExportFormat,
   type ExportResolution,
 } from './deviceScale';
+import {
+  getImageContentBounds,
+  type ContentBounds,
+} from './imageContentBounds';
 
 export interface ExportableItem {
   src: string;
@@ -19,6 +23,8 @@ export interface ExportableItem {
   displayHeight?: number;
   nativeWidth: number;
   nativeHeight: number;
+  /** Opaque crop in native pixels; re-detected if missing. */
+  contentBounds?: ContentBounds;
 }
 
 export interface ExportOptions {
@@ -83,7 +89,16 @@ export async function exportMockup(
       const displayHeight =
         item.displayHeight ??
         displayHeightFor(item.displayWidth, nativeWidth, nativeHeight);
-      return { ...item, img, nativeWidth, nativeHeight, displayHeight };
+      const contentBounds =
+        item.contentBounds ?? (await getImageContentBounds(item.src));
+      return {
+        ...item,
+        img,
+        nativeWidth,
+        nativeHeight,
+        displayHeight,
+        contentBounds,
+      };
     }),
   );
 
@@ -150,7 +165,8 @@ export async function exportMockup(
     const dy = item.y * exportScale;
     const dw = item.displayWidth * exportScale;
     const dh = item.displayHeight * exportScale;
-    ctx.drawImage(item.img, dx, dy, dw, dh);
+    const { x: sx, y: sy, width: sw, height: sh } = item.contentBounds;
+    ctx.drawImage(item.img, sx, sy, sw, sh, dx, dy, dw, dh);
   }
 
   const blob = await canvasToBlob(canvas, options.format);

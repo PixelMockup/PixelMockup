@@ -71,6 +71,7 @@ python3 scripts/build_device_catalog.py --catalog-only
 
 | Command | Description |
 | --- | --- |
+| `python3 scripts/trim_device_library.py` | Crop white/transparent padding from all `device_library` SVGs (in place) |
 | `npm run build` | Typecheck and build for production |
 | `npm run preview` | Serve the production build locally |
 | `npm run lint` | Run Oxlint |

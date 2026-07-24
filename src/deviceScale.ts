@@ -58,6 +58,17 @@ export function displayHeightFor(
   return displayWidth * (nativeHeight / nativeWidth);
 }
 
+/** Artboard height from mm width + cropped content aspect (hugs open laptops, etc.). */
+export function displayHeightForContent(
+  displayWidth: number,
+  contentWidth: number,
+  contentHeight: number,
+  fallbackHeight: number,
+): number {
+  if (contentWidth <= 0 || contentHeight <= 0) return fallbackHeight;
+  return displayWidth * (contentHeight / contentWidth);
+}
+
 export interface DisplaySizeFromMmOptions {
   name?: string;
   category?: string;

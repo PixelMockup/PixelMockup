@@ -1,9 +1,16 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type CSSProperties,
+} from 'react';
 import type { DeviceItem } from './App';
 import {
   ARTBOARD_HEIGHT,
   ARTBOARD_WIDTH,
   CATEGORY_ORDER,
+  displayHeightForContent,
   displaySizeFromMm,
   type ExportFormat,
   type ExportResolution,
@@ -29,6 +36,10 @@ import {
   sendToBackItems,
 } from './canvasZOrder';
 import { downloadBlob, exportMockup } from './exportMockup';
+import {
+  getImageContentBounds,
+  type ContentBounds,
+} from './imageContentBounds';
 import KeybindingsPanel from './KeybindingsPanel';
 import LibraryPanel, {
   LIBRARY_W_MAX,
@@ -61,6 +72,23 @@ interface CanvasItem extends DeviceItem {
   displayHeight: number;
   nativeWidth: number;
   nativeHeight: number;
+  /** Opaque crop in native pixels; selection/export hug the device. */
+  contentBounds: ContentBounds;
+}
+
+function contentCropImgStyle(
+  bounds: ContentBounds,
+  nativeWidth: number,
+  nativeHeight: number,
+): CSSProperties {
+  const w = Math.max(1, bounds.width);
+  const h = Math.max(1, bounds.height);
+  return {
+    width: `${(nativeWidth / w) * 100}%`,
+    height: `${(nativeHeight / h) * 100}%`,
+    left: `${(-bounds.x / w) * 100}%`,
+    top: `${(-bounds.y / h) * 100}%`,
+  };
 }
 
 function clientToLogical(
@@ -263,7 +291,19 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
       // fallback
     }
 
-    const { displayWidth, displayHeight } = displaySizeFromMm(
+    let contentBounds: ContentBounds = {
+      x: 0,
+      y: 0,
+      width: nativeWidth,
+      height: nativeHeight,
+    };
+    try {
+      contentBounds = await getImageContentBounds(item.src);
+    } catch {
+      // fallback = full image
+    }
+
+    const { displayWidth, displayHeight: mmHeight } = displaySizeFromMm(
       item.widthMm,
       item.heightMm,
       {
@@ -272,6 +312,12 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
         nativeWidth,
         nativeHeight,
       },
+    );
+    const displayHeight = displayHeightForContent(
+      displayWidth,
+      contentBounds.width,
+      contentBounds.height,
+      mmHeight,
     );
 
     const instanceId = crypto.randomUUID();
@@ -287,6 +333,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
         displayHeight,
         nativeWidth,
         nativeHeight,
+        contentBounds,
       },
     ]);
     setSelectedId(instanceId);
@@ -441,6 +488,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
           displayHeight: item.displayHeight,
           nativeWidth: item.nativeWidth,
           nativeHeight: item.nativeHeight,
+          contentBounds: item.contentBounds,
         })),
         { format: exportFormat, resolution: exportResolution },
         ARTBOARD_WIDTH,
@@ -749,11 +797,10 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
                 </div>
               )}
               {canvasItems.map((item) => (
-                <img
+                <div
                   key={item.instanceId}
-                  src={item.src}
-                  alt={item.name}
-                  draggable={false}
+                  role="img"
+                  aria-label={item.name}
                   onPointerDown={(e) => handlePointerDown(e, item)}
                   className={[
                     'ms-canvas-item',
@@ -773,7 +820,19 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
                     height: `${(item.displayHeight / ARTBOARD_HEIGHT) * 100}%`,
                     zIndex: item.zIndex,
                   }}
-                />
+                >
+                  <img
+                    src={item.src}
+                    alt=""
+                    draggable={false}
+                    className="ms-canvas-item__img"
+                    style={contentCropImgStyle(
+                      item.contentBounds,
+                      item.nativeWidth,
+                      item.nativeHeight,
+                    )}
+                  />
+                </div>
               ))}
             </div>
           </div>
