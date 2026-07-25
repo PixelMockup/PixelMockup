@@ -58,11 +58,23 @@ import {
 import {
   getCatalogScreenRect,
   screenClipInsetCss,
+  type DeviceScreenRect,
 } from './deviceScreens';
 import {
   getImageContentBounds,
   type ContentBounds,
 } from './imageContentBounds';
+import {
+  captureWebsiteScreenshotsCached,
+  clearWebsiteCaptureCache,
+  describeCaptureError,
+} from './captureWebsite';
+import {
+  getWebsiteViewport,
+  websiteHostname,
+} from './websiteUrl';
+import WebsiteScreen from './WebsiteScreen';
+import WebsiteUrlBar from './WebsiteUrlBar';
 import {
   getLayoutPreset,
   indexLibraryByCatalog,
@@ -183,6 +195,18 @@ function screenLayerStyle(
   };
 }
 
+/** Prefer item metadata, else catalog map. */
+function resolveItemScreen(item: {
+  catalogFile: string;
+  screenBounds: ContentBounds | null;
+  screenRx: number;
+}): DeviceScreenRect | null {
+  if (item.screenBounds) {
+    return { ...item.screenBounds, rx: item.screenRx };
+  }
+  return getCatalogScreenRect(item.catalogFile);
+}
+
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -259,6 +283,8 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
   const [placingPath, setPlacingPath] = useState<string | null>(null);
   const [layerHint, setLayerHint] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  /** Global website shown on all devices without a per-device screen image. */
+  const [websiteUrl, setWebsiteUrl] = useState<string | null>(null);
 
   const [canvasItems, setCanvasItems] = useState<CanvasItem[]>([]);
   /** Last id is primary (context / layer target). */
@@ -1236,31 +1262,78 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
   };
 
+  const applyWebsiteUrl = (url: string) => {
+    clearWebsiteCaptureCache();
+    setWebsiteUrl(url);
+    announce(`Website applied: ${websiteHostname(url)}`);
+  };
+
+  const clearWebsiteUrl = () => {
+    if (!websiteUrl) return;
+    clearWebsiteCaptureCache();
+    setWebsiteUrl(null);
+    announce('Website cleared');
+  };
+
   const downloadCanvas = async () => {
     if (canvasItems.length === 0 || isExporting) return;
     setIsExporting(true);
     setSelectedIds([]);
     setExportMenuOpen(false);
     try {
+      const websiteJobs = websiteUrl
+        ? canvasItems
+            .filter((item) => !item.screenImageSrc)
+            .map((item) => {
+              const viewport = getWebsiteViewport(
+                item.category,
+                item.catalogFile,
+              );
+              return {
+                key: item.instanceId,
+                url: websiteUrl,
+                width: viewport.width,
+                height: viewport.height,
+              };
+            })
+        : [];
+
+      let websiteShots = new Map<string, string>();
+      if (websiteJobs.length > 0) {
+        announce('Capturing website for export…');
+        try {
+          websiteShots = await captureWebsiteScreenshotsCached(websiteJobs);
+        } catch (err) {
+          throw new Error(describeCaptureError(err));
+        }
+      }
+
       const { blob, filenameHint } = await exportMockup(
-        canvasItems.map((item) => ({
-          src:
-            item.screenImageSrc && item.punchedSrc ? item.punchedSrc : item.src,
-          x: item.x,
-          y: item.y,
-          zIndex: item.zIndex,
-          displayWidth: item.displayWidth,
-          displayHeight: item.displayHeight,
-          nativeWidth: item.nativeWidth,
-          nativeHeight: item.nativeHeight,
-          contentBounds: item.contentBounds,
-          screenImageSrc: item.screenImageSrc,
-          screenBounds: item.screenBounds,
-          screenRx: item.screenRx,
-          screenPanX: item.screenPanX,
-          screenPanY: item.screenPanY,
-          screenZoom: item.screenZoom,
-        })),
+        canvasItems.map((item) => {
+          const screen = resolveItemScreen(item);
+          const captured = websiteShots.get(item.instanceId) ?? null;
+          const screenImageSrc = item.screenImageSrc || captured;
+          const usePunched =
+            Boolean(screenImageSrc) &&
+            (item.punchedSrc || Boolean(captured));
+          return {
+            src: usePunched ? (item.punchedSrc ?? item.src) : item.src,
+            x: item.x,
+            y: item.y,
+            zIndex: item.zIndex,
+            displayWidth: item.displayWidth,
+            displayHeight: item.displayHeight,
+            nativeWidth: item.nativeWidth,
+            nativeHeight: item.nativeHeight,
+            contentBounds: item.contentBounds,
+            screenImageSrc,
+            screenBounds: screen,
+            screenRx: screen?.rx ?? item.screenRx,
+            screenPanX: item.screenImageSrc ? item.screenPanX : 0,
+            screenPanY: item.screenImageSrc ? item.screenPanY : 0,
+            screenZoom: item.screenImageSrc ? item.screenZoom : 1,
+          };
+        }),
         {
           format: exportFormat,
           resolution: exportResolution,
@@ -1284,7 +1357,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
       announce('Downloaded');
     } catch (err) {
       console.error(err);
-      announce(err instanceof Error ? err.message : 'Export failed');
+      announce(describeCaptureError(err));
     } finally {
       setIsExporting(false);
     }
@@ -1666,6 +1739,12 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
             onDismissLayerHint={() => setLayerHint(null)}
           />
 
+          <WebsiteUrlBar
+            websiteUrl={websiteUrl}
+            onApply={applyWebsiteUrl}
+            onClear={clearWebsiteUrl}
+          />
+
           <div className="ms-stage">
             {canvasItems.length === 0 && (
               <div className="ms-stage-empty" aria-live="polite">
@@ -1850,56 +1929,85 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
                   }}
                 >
                   <div className="ms-canvas-item__frame">
-                    {item.screenImageSrc && item.screenBounds ? (
-                      <>
-                        <div
-                          className="ms-canvas-item__screen"
-                          style={screenClipInsetCss(
-                            {
-                              ...item.screenBounds,
-                              rx: item.screenRx,
-                            },
-                            item.contentBounds,
-                          )}
-                        >
-                          <img
-                            src={item.screenImageSrc}
-                            alt=""
-                            draggable={false}
-                            className="ms-canvas-item__screen-img"
-                            style={{
-                              objectPosition: (() => {
-                                const p = screenObjectPosition(
-                                  item.screenPanX,
-                                  item.screenPanY,
-                                );
-                                return `${p.x}% ${p.y}%`;
-                              })(),
-                              transform: `scale(${item.screenZoom})`,
-                            }}
-                          />
-                        </div>
-                        {isSelected ? (
+                    {(() => {
+                      const screen = resolveItemScreen(item);
+                      if (item.screenImageSrc && screen) {
+                        return (
+                          <>
+                            <div
+                              className="ms-canvas-item__screen"
+                              style={screenClipInsetCss(
+                                screen,
+                                item.contentBounds,
+                              )}
+                            >
+                              <img
+                                src={item.screenImageSrc}
+                                alt=""
+                                draggable={false}
+                                className="ms-canvas-item__screen-img"
+                                style={{
+                                  objectPosition: (() => {
+                                    const p = screenObjectPosition(
+                                      item.screenPanX,
+                                      item.screenPanY,
+                                    );
+                                    return `${p.x}% ${p.y}%`;
+                                  })(),
+                                  transform: `scale(${item.screenZoom})`,
+                                }}
+                              />
+                            </div>
+                            {isSelected ? (
+                              <div
+                                className={[
+                                  'ms-canvas-item__screen-hit',
+                                  screenDrag?.id === item.instanceId
+                                    ? 'ms-canvas-item__screen-hit--panning'
+                                    : '',
+                                ]
+                                  .filter(Boolean)
+                                  .join(' ')}
+                                style={screenLayerStyle(
+                                  screen,
+                                  item.contentBounds,
+                                )}
+                                onPointerDown={(e) =>
+                                  handleScreenPointerDown(e, item)
+                                }
+                              />
+                            ) : null}
+                          </>
+                        );
+                      }
+                      if (websiteUrl && screen) {
+                        const viewport = getWebsiteViewport(
+                          item.category,
+                          item.catalogFile,
+                        );
+                        const rxPct =
+                          screen.width > 0
+                            ? (screen.rx / screen.width) * 100
+                            : 0;
+                        return (
                           <div
-                            className={[
-                              'ms-canvas-item__screen-hit',
-                              screenDrag?.id === item.instanceId
-                                ? 'ms-canvas-item__screen-hit--panning'
-                                : '',
-                            ]
-                              .filter(Boolean)
-                              .join(' ')}
-                            style={screenLayerStyle(
-                              item.screenBounds,
-                              item.contentBounds,
-                            )}
-                            onPointerDown={(e) =>
-                              handleScreenPointerDown(e, item)
-                            }
-                          />
-                        ) : null}
-                      </>
-                    ) : null}
+                            className="ms-canvas-item__screen ms-canvas-item__screen--website"
+                            style={{
+                              ...screenLayerStyle(screen, item.contentBounds),
+                              borderRadius:
+                                screen.rx > 0 ? `${rxPct}%` : undefined,
+                            }}
+                          >
+                            <WebsiteScreen
+                              url={websiteUrl}
+                              viewport={viewport}
+                              title={`Website on ${displayName}`}
+                            />
+                          </div>
+                        );
+                      }
+                      return null;
+                    })()}
                     <img
                       src={
                         item.screenImageSrc && item.punchedSrc

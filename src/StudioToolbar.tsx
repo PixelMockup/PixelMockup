@@ -50,6 +50,8 @@ interface StudioToolbarProps {
   onSendToBack: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onAddScreenImage: () => void;
+  onRemoveScreenImage: () => void;
   onSizeScale: (id: SizeScaleId) => void;
   onArtboardFormat: (id: ArtboardFormatId) => void;
   onZoomScreenIn: () => void;

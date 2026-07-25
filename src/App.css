@@ -819,6 +819,104 @@
   -webkit-user-drag: none;
 }
 
+.ms-canvas-item__screen--website {
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ms-canvas-item__website {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.ms-canvas-item__website-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.ms-canvas-item__website-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 8%;
+  transform: translateX(-50%);
+  max-width: 90%;
+  padding: 4px 8px;
+  font-size: 0.65rem;
+  line-height: 1.2;
+  text-align: center;
+  color: #fff;
+  background: rgba(20, 20, 20, 0.72);
+  pointer-events: none;
+}
+
+.ms-website-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--ms-border);
+  background: var(--ms-surface-raised, var(--ms-surface));
+  flex-shrink: 0;
+}
+
+.ms-website-bar__label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ms-muted);
+}
+
+.ms-website-bar__input {
+  flex: 1 1 180px;
+  min-width: 140px;
+  max-width: 420px;
+  padding: 6px 10px;
+  border: 1px solid var(--ms-border);
+  border-radius: 6px;
+  background: var(--ms-surface);
+  color: var(--ms-text);
+  font-size: 0.875rem;
+}
+
+.ms-website-bar__input:focus {
+  outline: 2px solid var(--ms-accent, #3b82f6);
+  outline-offset: 1px;
+}
+
+.ms-website-bar__active {
+  font-size: 0.8rem;
+  color: var(--ms-text);
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ms-website-bar__error {
+  flex: 1 1 100%;
+  font-size: 0.8rem;
+  color: var(--ms-danger, #c0392b);
+}
+
+.ms-website-bar__hint {
+  flex: 1 1 100%;
+  font-size: 0.75rem;
+  color: var(--ms-muted);
+}
+
 /* Hidden picker triggered from toolbar / context menu. */
 .ms-screen-file-input {
   position: fixed;
