@@ -761,22 +761,6 @@
   transform: translateY(-50%);
 }
 
-.ms-input--margin {
-  width: 4.25rem;
-  min-height: 40px;
-  padding: 6px 8px;
-  border-radius: var(--ms-radius-sm);
-  border: 1px solid var(--ms-border);
-  background: var(--ms-surface-raised);
-  color: var(--ms-ink);
-  font: inherit;
-  font-size: 0.85rem;
-}
-
-.ms-input--margin:disabled {
-  opacity: 0.5;
-}
-
 .ms-toolbar-sublabel {
   font-size: 0.75rem;
   color: var(--ms-muted);
@@ -798,10 +782,50 @@
 
 .ms-canvas-item__img {
   position: absolute;
+  z-index: 1;
   max-width: none;
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
+}
+
+/* User image layered under the punched device frame. */
+.ms-canvas-item__screen {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.ms-canvas-item__screen-hit {
+  position: absolute;
+  z-index: 2;
+  pointer-events: auto;
+  cursor: grab;
+}
+
+.ms-canvas-item__screen-hit--panning {
+  cursor: grabbing;
+}
+
+.ms-canvas-item__screen-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform-origin: center center;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Hidden picker triggered from toolbar / context menu. */
+.ms-screen-file-input {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
 }
 
 .ms-canvas-item__caption {
@@ -851,8 +875,8 @@
   max-width: min(280px, calc(100vw - 16px));
   padding: 6px;
   border-radius: 10px;
-  background: var(--ms-panel);
-  border: 1px solid var(--ms-line);
+  background: var(--ms-surface-raised);
+  border: 1px solid var(--ms-border);
   box-shadow: 0 12px 40px color-mix(in srgb, var(--ms-ink) 22%, transparent);
   display: flex;
   flex-direction: column;
@@ -897,7 +921,7 @@
 .ms-ctx-sep {
   height: 1px;
   margin: 4px 6px;
-  background: var(--ms-line);
+  background: var(--ms-border);
 }
 
 .ms-ctx-label {

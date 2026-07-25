@@ -12,6 +12,8 @@ import type { ExportBgMode } from './exportMockup';
 
 interface StudioToolbarProps {
   hasSelection: boolean;
+  /** Any selected device already has a screen image. */
+  selectionHasScreenImage: boolean;
   canBringForward: boolean;
   canPushBackward: boolean;
   canBringToFront: boolean;
@@ -28,7 +30,6 @@ interface StudioToolbarProps {
   artboardWidth: number;
   artboardHeight: number;
   snapEnabled: boolean;
-  snapMargin: number;
   exportBgMode: ExportBgMode;
   exportBgColor: string;
   exportBgImageName: string | null;
@@ -51,8 +52,10 @@ interface StudioToolbarProps {
   onDelete: () => void;
   onSizeScale: (id: SizeScaleId) => void;
   onArtboardFormat: (id: ArtboardFormatId) => void;
+  onZoomScreenIn: () => void;
+  onZoomScreenOut: () => void;
+  onResetScreenFraming: () => void;
   onToggleSnap: () => void;
-  onSnapMargin: (margin: number) => void;
   onApplyPreset: (id: string) => void;
   onExportFormat: (f: ExportFormat) => void;
   onExportResolution: (r: ExportResolution) => void;
@@ -85,6 +88,7 @@ export default function StudioToolbar({
   hasSelection,
   canBringForward,
   canPushBackward,
+  selectionHasScreenImage,
   canBringToFront,
   canSendToBack,
   canvasEmpty,
@@ -99,7 +103,6 @@ export default function StudioToolbar({
   artboardWidth,
   artboardHeight,
   snapEnabled,
-  snapMargin,
   exportBgMode,
   exportBgColor,
   exportBgImageName,
@@ -122,8 +125,12 @@ export default function StudioToolbar({
   onDelete,
   onSizeScale,
   onArtboardFormat,
+  onAddScreenImage,
+  onRemoveScreenImage,
+  onZoomScreenIn,
+  onZoomScreenOut,
+  onResetScreenFraming,
   onToggleSnap,
-  onSnapMargin,
   onApplyPreset,
   onExportFormat,
   onExportResolution,
@@ -200,21 +207,6 @@ export default function StudioToolbar({
         >
           Snap
         </button>
-        <label className="ms-field ms-field--inline ms-field--toolbar">
-          <span className="ms-toolbar-sublabel">Margin</span>
-          <input
-            type="number"
-            className="ms-input ms-input--margin"
-            min={0}
-            max={200}
-            step={4}
-            value={snapMargin}
-            disabled={!snapEnabled}
-            onChange={(e) => onSnapMargin(Number(e.target.value))}
-            title="Page margin snap inset (magenta guides)"
-            aria-label="Snap margin in pixels"
-          />
-        </label>
       </div>
 
       <div className="ms-toolbar-group" role="group" aria-label="Align">
@@ -253,6 +245,61 @@ export default function StudioToolbar({
 
       <div className="ms-toolbar-group" role="group" aria-label="Arrange">
         <span className="ms-toolbar-label">Arrange</span>
+      <div className="ms-toolbar-group" role="group" aria-label="Screen image">
+        <span className="ms-toolbar-label">Screen</span>
+        <button
+          type="button"
+          className="ms-btn"
+          onClick={onAddScreenImage}
+          disabled={!hasSelection}
+          title={
+            hasSelection
+              ? 'Show an image on the selected device screens'
+              : 'Select a device first'
+          }
+        >
+          {selectionHasScreenImage ? 'Replace image' : 'Add image'}
+        </button>
+        <button
+          type="button"
+          className="ms-btn"
+          onClick={onRemoveScreenImage}
+          disabled={!selectionHasScreenImage}
+          title="Remove screen image from selected devices"
+        >
+          Remove
+        </button>
+        <button
+          type="button"
+          className="ms-btn"
+          onClick={onZoomScreenOut}
+          disabled={!selectionHasScreenImage}
+          title="Zoom out screen image"
+          aria-label="Zoom out screen image"
+        >
+          −
+        </button>
+        <button
+          type="button"
+          className="ms-btn"
+          onClick={onZoomScreenIn}
+          disabled={!selectionHasScreenImage}
+          title="Zoom in screen image"
+          aria-label="Zoom in screen image"
+        >
+          +
+        </button>
+        <button
+          type="button"
+          className="ms-btn"
+          onClick={onResetScreenFraming}
+          disabled={!selectionHasScreenImage}
+          title="Reset screen image framing"
+        >
+          Reset
+        </button>
+      </div>
+
         <button
           type="button"
           className="ms-btn"

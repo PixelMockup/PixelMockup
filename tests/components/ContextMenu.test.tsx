@@ -7,6 +7,7 @@ const baseProps = {
   state: { x: 12, y: 24, target: 'device' as const },
   platform: 'linux' as const,
   hasSelection: true,
+  hasScreenImage: false,
   canPaste: true,
   canBringForward: true,
   canPushBackward: true,
@@ -22,6 +23,9 @@ const baseProps = {
   onBringToFront: vi.fn(),
   onSendToBack: vi.fn(),
   onAlign: vi.fn(),
+  onAddScreenImage: vi.fn(),
+  onRemoveScreenImage: vi.fn(),
+  onResetScreenFraming: vi.fn(),
   onClose: vi.fn(),
 };
 
@@ -68,6 +72,40 @@ describe('ContextMenu', () => {
       />,
     );
     expect(screen.getByRole('menuitem', { name: /Select all/i })).toBeInTheDocument();
+  });
+
+  it('shows screen image actions and fires callbacks', async () => {
+    const user = userEvent.setup();
+    const onAddScreenImage = vi.fn();
+    const onRemoveScreenImage = vi.fn();
+    const onResetScreenFraming = vi.fn();
+    render(
+      <ContextMenu
+        {...baseProps}
+        hasScreenImage
+        onAddScreenImage={onAddScreenImage}
+        onRemoveScreenImage={onRemoveScreenImage}
+        onResetScreenFraming={onResetScreenFraming}
+      />,
+    );
+    expect(
+      screen.getByRole('menuitem', { name: /Replace screen image/i }),
+    ).toBeInTheDocument();
+    await user.click(
+      screen.getByRole('menuitem', { name: /Remove screen image/i }),
+    );
+    expect(onRemoveScreenImage).toHaveBeenCalledTimes(1);
+    await user.click(
+      screen.getByRole('menuitem', { name: /Reset screen framing/i }),
+    );
+    expect(onResetScreenFraming).toHaveBeenCalledTimes(1);
+  });
+
+  it('disables add screen image without selection', () => {
+    render(<ContextMenu {...baseProps} hasSelection={false} />);
+    expect(
+      screen.getByRole('menuitem', { name: /Add screen image/i }),
+    ).toBeDisabled();
   });
 
   it('fires align callbacks', async () => {

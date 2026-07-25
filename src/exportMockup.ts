@@ -8,6 +8,8 @@ import {
   type ExportFormat,
   type ExportResolution,
 } from './deviceScale';
+import { coverCropRectWithFraming } from './deviceScreenBounds';
+import { mapScreenRectToDisplay } from './deviceScreens';
 import {
   getImageContentBounds,
   type ContentBounds,
@@ -35,6 +37,15 @@ export interface ExportableItem {
   nativeHeight: number;
   /** Opaque crop in native pixels; re-detected if missing. */
   contentBounds?: ContentBounds;
+  /** User image drawn on the device screen (under a punched frame `src`). */
+  screenImageSrc?: string | null;
+  /** Screen rect in native device pixels (same space as `contentBounds`). */
+  screenBounds?: ContentBounds | null;
+  /** Corner radius in native pixels (0 = sharp). */
+  screenRx?: number;
+  screenPanX?: number;
+  screenPanY?: number;
+  screenZoom?: number;
 }
 
 export interface ExportOptions {
@@ -56,6 +67,84 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
     img.src = src;
   });
+}
+
+/**
+ * Cover-fit a screen image into a mapped screen destination rect
+ * (SVG preserveAspectRatio xMidYMid slice equivalent).
+ */
+export function getClippedScreenPlacement(
+  srcWidth: number,
+  srcHeight: number,
+  destX: number,
+  destY: number,
+  destW: number,
+  destH: number,
+  panX: number = 0,
+  panY: number = 0,
+  zoom: number = 1,
+) {
+  return {
+    crop: coverCropRectWithFraming(srcWidth, srcHeight, destW, destH, {
+      panX,
+      panY,
+      zoom,
+    }),
+    destination: { x: destX, y: destY, width: destW, height: destH },
+  };
+}
+
+/**
+ * @deprecated Prefer getClippedScreenPlacement with a mapped screen rect.
+ * Kept for tests covering full-frame cover-fit math.
+ */
+export function getFullBleedScreenPlacement(
+  srcWidth: number,
+  srcHeight: number,
+  dx: number,
+  dy: number,
+  dw: number,
+  dh: number,
+  panX: number = 0,
+  panY: number = 0,
+  zoom: number = 1,
+) {
+  return getClippedScreenPlacement(
+    srcWidth,
+    srcHeight,
+    dx,
+    dy,
+    dw,
+    dh,
+    panX,
+    panY,
+    zoom,
+  );
+}
+
+function roundRectPath(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  rx: number,
+) {
+  const r = Math.max(0, Math.min(rx, w / 2, h / 2));
+  if (r <= 0) {
+    ctx.rect(x, y, w, h);
+    return;
+  }
+  if (typeof ctx.roundRect === 'function') {
+    ctx.roundRect(x, y, w, h, r);
+    return;
+  }
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
 }
 
 function canvasToBlob(
@@ -146,6 +235,14 @@ export async function exportMockup(
         displayHeightFor(item.displayWidth, nativeWidth, nativeHeight);
       const contentBounds =
         item.contentBounds ?? (await getImageContentBounds(item.src));
+      let screenImg: HTMLImageElement | null = null;
+      if (item.screenImageSrc && item.screenBounds) {
+        try {
+          screenImg = await loadImage(item.screenImageSrc);
+        } catch {
+          screenImg = null;
+        }
+      }
       return {
         ...item,
         img,
@@ -153,6 +250,7 @@ export async function exportMockup(
         nativeHeight,
         displayHeight,
         contentBounds,
+        screenImg,
       };
     }),
   );
@@ -213,6 +311,53 @@ export async function exportMockup(
     const dw = item.displayWidth * exportScale;
     const dh = item.displayHeight * exportScale;
     const { x: sx, y: sy, width: sw, height: sh } = item.contentBounds;
+
+    // Clip screen photo to the catalog/detected screen rect (cover / slice).
+    if (item.screenImg && item.screenBounds) {
+      const mapped = mapScreenRectToDisplay(
+        { ...item.screenBounds, rx: item.screenRx ?? 0 },
+        item.contentBounds,
+        dx,
+        dy,
+        dw,
+        dh,
+      );
+      const { crop, destination } = getClippedScreenPlacement(
+        item.screenImg.naturalWidth,
+        item.screenImg.naturalHeight,
+        mapped.x,
+        mapped.y,
+        mapped.width,
+        mapped.height,
+        item.screenPanX ?? 0,
+        item.screenPanY ?? 0,
+        item.screenZoom ?? 1,
+      );
+      ctx.save();
+      ctx.beginPath();
+      roundRectPath(
+        ctx,
+        destination.x,
+        destination.y,
+        destination.width,
+        destination.height,
+        mapped.rx,
+      );
+      ctx.clip();
+      ctx.drawImage(
+        item.screenImg,
+        crop.x,
+        crop.y,
+        crop.width,
+        crop.height,
+        destination.x,
+        destination.y,
+        destination.width,
+        destination.height,
+      );
+      ctx.restore();
+    }
+
     ctx.drawImage(item.img, sx, sy, sw, sh, dx, dy, dw, dh);
   }
 

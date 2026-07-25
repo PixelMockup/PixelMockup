@@ -42,6 +42,36 @@ test.describe('library and canvas interactions', () => {
     await expect(page.locator('#root')).toBeVisible();
   });
 
+  test('screen image action enables with a selected device', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'More' }).click();
+    const addImage = page
+      .getByRole('group', { name: 'Screen image' })
+      .getByRole('button', { name: 'Add image' });
+    await expect(addImage).toBeDisabled();
+
+    await ensureLibraryOpen(page);
+    await page.getByRole('searchbox', { name: /Search devices/i }).fill('iPhone 11 Black');
+    await page
+      .getByRole('complementary', { name: /Device library/i })
+      .getByRole('button', { name: /iPhone 11 Black/i })
+      .first()
+      .click();
+    await expect(page.locator('.ms-canvas-item').first()).toBeVisible({
+      timeout: 30_000,
+    });
+    // Placement selects the new device, so the action becomes available.
+    await expect(addImage).toBeEnabled();
+    const screenGroup = page.getByRole('group', { name: 'Screen image' });
+    // Zoom/Reset stay disabled until a screen image is attached.
+    await expect(
+      screenGroup.getByRole('button', { name: 'Zoom in screen image' }),
+    ).toBeDisabled();
+    await expect(
+      screenGroup.getByRole('button', { name: 'Reset' }),
+    ).toBeDisabled();
+  });
+
   test('selection and delete shortcut path stays stable', async ({ page }) => {
     await page.goto('/');
     await ensureLibraryOpen(page);

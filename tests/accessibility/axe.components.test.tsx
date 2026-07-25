@@ -26,6 +26,7 @@ describe('accessibility', () => {
         state={{ x: 8, y: 8, target: 'device' }}
         platform="linux"
         hasSelection
+        hasScreenImage={false}
         canPaste
         canBringForward
         canPushBackward
@@ -41,6 +42,9 @@ describe('accessibility', () => {
         onBringToFront={vi.fn()}
         onSendToBack={vi.fn()}
         onAlign={vi.fn()}
+        onAddScreenImage={vi.fn()}
+        onRemoveScreenImage={vi.fn()}
+        onResetScreenFraming={vi.fn()}
         onClose={vi.fn()}
       />,
     );

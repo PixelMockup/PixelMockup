@@ -26,10 +26,8 @@ import {
   alignBox,
   artboardWidthCss,
   clampItemToArtboard,
-  clampSnapMargin,
   NO_GUIDES,
   persistSnapEnabled,
-  persistSnapMargin,
   readSnapEnabled,
   readSnapMargin,
   snapPosition,
@@ -50,6 +48,17 @@ import {
   sendToBackItems,
 } from './canvasZOrder';
 import { downloadBlob, exportMockup, type ExportBgMode } from './exportMockup';
+import {
+  clampScreenPan,
+  clampScreenZoom,
+  getDeviceScreenInfo,
+  getPunchedDeviceSrc,
+  screenObjectPosition,
+} from './deviceScreenBounds';
+import {
+  getCatalogScreenRect,
+  screenClipInsetCss,
+} from './deviceScreens';
 import {
   getImageContentBounds,
   type ContentBounds,
@@ -120,6 +129,18 @@ interface CanvasItem extends DeviceItem {
   nativeHeight: number;
   /** Opaque crop in native pixels; selection/export hug the device. */
   contentBounds: ContentBounds;
+  /** User image shown on the device screen (data URL). */
+  screenImageSrc: string | null;
+  /** Screen rect in native device pixels (same space as `contentBounds`). */
+  screenBounds: ContentBounds | null;
+  /** Screen corner radius in native pixels (from deviceScreens.json). */
+  screenRx: number;
+  /** Device frame with a transparent screen, used while a screen image is set. */
+  punchedSrc: string | null;
+  /** Screen image pan (-1…1) and zoom (1…4). */
+  screenPanX: number;
+  screenPanY: number;
+  screenZoom: number;
 }
 
 /** Snapshot for in-memory copy/paste (relative offsets from selection origin). */
@@ -145,6 +166,30 @@ function contentCropImgStyle(
     left: `${(-bounds.x / w) * 100}%`,
     top: `${(-bounds.y / h) * 100}%`,
   };
+}
+
+/** Screen rect positioned relative to the visible (content-cropped) frame. */
+function screenLayerStyle(
+  screen: ContentBounds,
+  content: ContentBounds,
+): CSSProperties {
+  const w = Math.max(1, content.width);
+  const h = Math.max(1, content.height);
+  return {
+    left: `${((screen.x - content.x) / w) * 100}%`,
+    top: `${((screen.y - content.y) / h) * 100}%`,
+    width: `${(screen.width / w) * 100}%`,
+    height: `${(screen.height / h) * 100}%`,
+  };
+}
+
+function readFileAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = () => reject(new Error('Failed to read file'));
+    reader.readAsDataURL(file);
+  });
 }
 
 function clientToLogical(
@@ -205,7 +250,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
   const [viewZoom, setViewZoom] = useState<ViewZoom>('fit');
   const [snapGuides, setSnapGuides] = useState<SnapGuides>(NO_GUIDES);
   const [snapEnabled, setSnapEnabled] = useState(readSnapEnabled);
-  const [snapMargin, setSnapMargin] = useState(readSnapMargin);
+  const [snapMargin] = useState(readSnapMargin);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [toolsSheetOpen, setToolsSheetOpen] = useState(false);
   const [moreToolsOpen, setMoreToolsOpen] = useState(false);
@@ -228,6 +273,14 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     /** Origins at pointer-down for group members. */
     origins: {} as Record<string, { x: number; y: number }>,
   });
+  /** Pan the screen image (not the device) when dragging the screen rect. */
+  const [screenDrag, setScreenDrag] = useState<{
+    id: string;
+    lastX: number;
+    lastY: number;
+    screenW: number;
+    screenH: number;
+  } | null>(null);
   const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
   const clipboardRef = useRef<ClipboardPayload | null>(null);
   const [clipboardRev, setClipboardRev] = useState(0);
@@ -242,7 +295,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
   const [exportResolution, setExportResolution] =
     useState<ExportResolution>('best');
   const [exportBgMode, setExportBgMode] = useState<ExportBgMode>('transparent');
-  const [exportBgColor, setExportBgColor] = useState('#000000');
+  const [exportBgColor, setExportBgColor] = useState('#ffffff');
   const [exportBgImageSrc, setExportBgImageSrc] = useState<string | null>(null);
   const [sizeScaleId, setSizeScaleId] = useState<SizeScaleId>(
     readStoredSizeScaleId,
@@ -259,6 +312,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
   const artboardH = artboard.height;
 
   const canvasRef = useRef<HTMLDivElement>(null);
+  const screenFileInputRef = useRef<HTMLInputElement>(null);
   const resizeDragRef = useRef<{ startX: number; startW: number } | null>(
     null,
   );
@@ -411,6 +465,13 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     selectedIds.length > 0 ? selectedIds[selectedIds.length - 1]! : null;
   const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const hasSelection = selectedIds.length > 0;
+  const selectionHasScreenImage = useMemo(
+    () =>
+      canvasItems.some(
+        (i) => selectedIdSet.has(i.instanceId) && i.screenImageSrc != null,
+      ),
+    [canvasItems, selectedIdSet],
+  );
 
   const zRank = useMemo(
     () => selectedZRank(canvasItems, primaryId),
@@ -490,6 +551,13 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
       nativeWidth,
       nativeHeight,
       contentBounds,
+      screenImageSrc: null,
+      screenBounds: null,
+      screenRx: 0,
+      punchedSrc: null,
+      screenPanX: 0,
+      screenPanY: 0,
+      screenZoom: 1,
     };
   };
 
@@ -642,6 +710,31 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
   };
 
   const handlePointerMove = (e: React.PointerEvent) => {
+    if (screenDrag) {
+      const dx = e.clientX - screenDrag.lastX;
+      const dy = e.clientY - screenDrag.lastY;
+      if (dx === 0 && dy === 0) return;
+      // Dragging the image right reveals content on the left → decrease pan.
+      const dPanX = (-2 * dx) / screenDrag.screenW;
+      const dPanY = (-2 * dy) / screenDrag.screenH;
+      setScreenDrag({
+        ...screenDrag,
+        lastX: e.clientX,
+        lastY: e.clientY,
+      });
+      setCanvasItems((prev) =>
+        prev.map((item) =>
+          item.instanceId === screenDrag.id
+            ? {
+                ...item,
+                screenPanX: clampScreenPan(item.screenPanX + dPanX),
+                screenPanY: clampScreenPan(item.screenPanY + dPanY),
+              }
+            : item,
+        ),
+      );
+      return;
+    }
     if (!dragInfo.id) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -722,6 +815,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
   };
 
   const handlePointerUp = () => {
+    setScreenDrag(null);
     setDragInfo({
       id: null,
       offsetX: 0,
@@ -784,13 +878,6 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     persistSnapEnabled(next);
     if (!next) setSnapGuides(NO_GUIDES);
     announce(next ? 'Snap on' : 'Snap off');
-  };
-
-  const changeSnapMargin = (raw: number) => {
-    const next = clampSnapMargin(raw);
-    setSnapMargin(next);
-    persistSnapMargin(next);
-    announce(`Margin ${next}px`);
   };
 
   const changeArtboardFormat = (nextId: ArtboardFormatId) => {
@@ -947,6 +1034,208 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     );
   };
 
+  const requestScreenImage = () => {
+    if (selectedIdsRef.current.length === 0) return;
+    screenFileInputRef.current?.click();
+  };
+
+  const applyScreenImageFile = async (file: File) => {
+    const ids = selectedIdsRef.current;
+    if (ids.length === 0) return;
+    if (!file.type.startsWith('image/')) {
+      announce('Choose an image file');
+      return;
+    }
+    if (file.size > 25 * 1024 * 1024) {
+      announce('Image too large (max 25 MB)');
+      return;
+    }
+    let dataUrl: string;
+    try {
+      dataUrl = await readFileAsDataUrl(file);
+    } catch {
+      announce('Could not read image');
+      return;
+    }
+
+    const idSet = new Set(ids);
+    const targets = canvasItemsRef.current.filter((i) =>
+      idSet.has(i.instanceId),
+    );
+    if (targets.length === 0) return;
+
+    // Prefer catalog clip rects; fall back to runtime detection.
+    const prepared = new Map<
+      string,
+      { screenBounds: ContentBounds; screenRx: number; punchedSrc: string }
+    >();
+    for (const item of targets) {
+      if (prepared.has(item.src)) continue;
+      const catalog = getCatalogScreenRect(item.catalogFile);
+      if (catalog) {
+        prepared.set(item.src, {
+          screenBounds: {
+            x: catalog.x,
+            y: catalog.y,
+            width: catalog.width,
+            height: catalog.height,
+          },
+          screenRx: catalog.rx,
+          // Library SVGs ship with transparent apertures.
+          punchedSrc: item.src,
+        });
+        continue;
+      }
+      const screenInfo = await getDeviceScreenInfo(
+        item.src,
+        item.contentBounds,
+      );
+      const screenBounds = screenInfo.bounds;
+      const punchedSrc = screenInfo.hasTransparentAperture
+        ? item.src
+        : await getPunchedDeviceSrc(item.src, screenBounds);
+      prepared.set(item.src, {
+        screenBounds,
+        screenRx: 0,
+        punchedSrc,
+      });
+    }
+
+    pushUndo();
+    setCanvasItems((prev) =>
+      prev.map((item) => {
+        if (!idSet.has(item.instanceId)) return item;
+        const p = prepared.get(item.src);
+        if (!p) return item;
+        return {
+          ...item,
+          screenImageSrc: dataUrl,
+          screenBounds: p.screenBounds,
+          screenRx: p.screenRx,
+          punchedSrc: p.punchedSrc,
+          screenPanX: 0,
+          screenPanY: 0,
+          screenZoom: 1,
+        };
+      }),
+    );
+    announce(
+      targets.length === 1
+        ? 'Screen image added'
+        : `Screen image added to ${targets.length} devices`,
+    );
+  };
+
+  const removeScreenImage = () => {
+    const ids = new Set(selectedIdsRef.current);
+    if (ids.size === 0) return;
+    const hasAny = canvasItemsRef.current.some(
+      (i) => ids.has(i.instanceId) && i.screenImageSrc != null,
+    );
+    if (!hasAny) return;
+    pushUndo();
+    setCanvasItems((prev) =>
+      prev.map((item) =>
+        ids.has(item.instanceId) && item.screenImageSrc != null
+          ? {
+              ...item,
+              screenImageSrc: null,
+              screenBounds: null,
+              screenRx: 0,
+              punchedSrc: null,
+              screenPanX: 0,
+              screenPanY: 0,
+              screenZoom: 1,
+            }
+          : item,
+      ),
+    );
+    announce('Screen image removed');
+  };
+
+  const nudgeScreenZoom = (delta: number) => {
+    const ids = new Set(selectedIdsRef.current);
+    const targets = canvasItemsRef.current.filter(
+      (i) => ids.has(i.instanceId) && i.screenImageSrc != null,
+    );
+    if (targets.length === 0) return;
+    pushUndo();
+    let nextZoom = 1;
+    setCanvasItems((prev) =>
+      prev.map((item) => {
+        if (!ids.has(item.instanceId) || item.screenImageSrc == null) {
+          return item;
+        }
+        const zoom = clampScreenZoom(item.screenZoom + delta);
+        nextZoom = zoom;
+        return { ...item, screenZoom: zoom };
+      }),
+    );
+    announce(`Zoom ${Math.round(nextZoom * 100)}%`);
+  };
+
+  const resetScreenFraming = () => {
+    const ids = new Set(selectedIdsRef.current);
+    const hasAny = canvasItemsRef.current.some(
+      (i) =>
+        ids.has(i.instanceId) &&
+        i.screenImageSrc != null &&
+        (i.screenPanX !== 0 || i.screenPanY !== 0 || i.screenZoom !== 1),
+    );
+    if (!hasAny) {
+      const anyImage = canvasItemsRef.current.some(
+        (i) => ids.has(i.instanceId) && i.screenImageSrc != null,
+      );
+      if (anyImage) announce('Framing already centered');
+      return;
+    }
+    pushUndo();
+    setCanvasItems((prev) =>
+      prev.map((item) =>
+        ids.has(item.instanceId) && item.screenImageSrc != null
+          ? { ...item, screenPanX: 0, screenPanY: 0, screenZoom: 1 }
+          : item,
+      ),
+    );
+    announce('Framing reset');
+  };
+
+  const handleScreenPointerDown = (
+    e: React.PointerEvent,
+    item: CanvasItem,
+  ) => {
+    if (!item.screenImageSrc || !item.screenBounds) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setContextMenu(null);
+    setSelectedIds((prev) =>
+      prev.includes(item.instanceId)
+        ? [...prev.filter((id) => id !== item.instanceId), item.instanceId]
+        : [item.instanceId],
+    );
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const screenW =
+      (item.screenBounds.width / Math.max(1, item.contentBounds.width)) *
+      item.displayWidth;
+    const screenH =
+      (item.screenBounds.height / Math.max(1, item.contentBounds.height)) *
+      item.displayHeight;
+    // Convert screen size to client pixels for drag sensitivity.
+    const clientScreenW = (screenW / artboardW) * rect.width;
+    const clientScreenH = (screenH / artboardH) * rect.height;
+    pushUndo();
+    setScreenDrag({
+      id: item.instanceId,
+      lastX: e.clientX,
+      lastY: e.clientY,
+      screenW: Math.max(1, clientScreenW),
+      screenH: Math.max(1, clientScreenH),
+    });
+    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+  };
+
   const downloadCanvas = async () => {
     if (canvasItems.length === 0 || isExporting) return;
     setIsExporting(true);
@@ -955,7 +1244,8 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     try {
       const { blob, filenameHint } = await exportMockup(
         canvasItems.map((item) => ({
-          src: item.src,
+          src:
+            item.screenImageSrc && item.punchedSrc ? item.punchedSrc : item.src,
           x: item.x,
           y: item.y,
           zIndex: item.zIndex,
@@ -964,6 +1254,12 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
           nativeWidth: item.nativeWidth,
           nativeHeight: item.nativeHeight,
           contentBounds: item.contentBounds,
+          screenImageSrc: item.screenImageSrc,
+          screenBounds: item.screenBounds,
+          screenRx: item.screenRx,
+          screenPanX: item.screenPanX,
+          screenPanY: item.screenPanY,
+          screenZoom: item.screenZoom,
         })),
         {
           format: exportFormat,
@@ -1136,7 +1432,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     }
     const pad = 8;
     const menuW = 240;
-    const menuH = target === 'device' ? 420 : 100;
+    const menuH = target === 'device' ? 560 : 100;
     const x = Math.min(e.clientX, window.innerWidth - menuW - pad);
     const y = Math.min(e.clientY, window.innerHeight - menuH - pad);
     setContextMenu({
@@ -1298,6 +1594,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
           )}
           <StudioToolbar
             hasSelection={hasSelection}
+            selectionHasScreenImage={selectionHasScreenImage}
             canBringForward={canBringForward}
             canPushBackward={canPushBackward}
             canBringToFront={canBringToFront}
@@ -1314,7 +1611,6 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
             artboardWidth={artboardW}
             artboardHeight={artboardH}
             snapEnabled={snapEnabled}
-            snapMargin={snapMargin}
             exportBgMode={exportBgMode}
             exportBgColor={exportBgColor}
             exportBgImageName={
@@ -1340,10 +1636,14 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
             onSendToBack={sendToBack}
             onDuplicate={duplicateSelected}
             onDelete={deleteSelected}
+            onAddScreenImage={requestScreenImage}
+            onRemoveScreenImage={removeScreenImage}
+            onZoomScreenIn={() => nudgeScreenZoom(0.25)}
+            onZoomScreenOut={() => nudgeScreenZoom(-0.25)}
+            onResetScreenFraming={resetScreenFraming}
             onSizeScale={changeSizeScale}
             onArtboardFormat={changeArtboardFormat}
             onToggleSnap={toggleSnap}
-            onSnapMargin={changeSnapMargin}
             onApplyPreset={(id) => void applyLayoutPreset(id)}
             onExportFormat={setExportFormat}
             onExportResolution={setExportResolution}
@@ -1550,8 +1850,62 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
                   }}
                 >
                   <div className="ms-canvas-item__frame">
+                    {item.screenImageSrc && item.screenBounds ? (
+                      <>
+                        <div
+                          className="ms-canvas-item__screen"
+                          style={screenClipInsetCss(
+                            {
+                              ...item.screenBounds,
+                              rx: item.screenRx,
+                            },
+                            item.contentBounds,
+                          )}
+                        >
+                          <img
+                            src={item.screenImageSrc}
+                            alt=""
+                            draggable={false}
+                            className="ms-canvas-item__screen-img"
+                            style={{
+                              objectPosition: (() => {
+                                const p = screenObjectPosition(
+                                  item.screenPanX,
+                                  item.screenPanY,
+                                );
+                                return `${p.x}% ${p.y}%`;
+                              })(),
+                              transform: `scale(${item.screenZoom})`,
+                            }}
+                          />
+                        </div>
+                        {isSelected ? (
+                          <div
+                            className={[
+                              'ms-canvas-item__screen-hit',
+                              screenDrag?.id === item.instanceId
+                                ? 'ms-canvas-item__screen-hit--panning'
+                                : '',
+                            ]
+                              .filter(Boolean)
+                              .join(' ')}
+                            style={screenLayerStyle(
+                              item.screenBounds,
+                              item.contentBounds,
+                            )}
+                            onPointerDown={(e) =>
+                              handleScreenPointerDown(e, item)
+                            }
+                          />
+                        ) : null}
+                      </>
+                    ) : null}
                     <img
-                      src={item.src}
+                      src={
+                        item.screenImageSrc && item.punchedSrc
+                          ? item.punchedSrc
+                          : item.src
+                      }
                       alt=""
                       draggable={false}
                       className="ms-canvas-item__img"
@@ -1575,6 +1929,20 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
         </div>
       </div>
 
+      <input
+        ref={screenFileInputRef}
+        type="file"
+        accept="image/*"
+        className="ms-screen-file-input"
+        aria-label="Choose a screen image for selected devices"
+        tabIndex={-1}
+        onChange={(e) => {
+          const file = e.target.files?.[0] ?? null;
+          e.target.value = '';
+          if (file) void applyScreenImageFile(file);
+        }}
+      />
+
       <KeybindingsPanel
         open={shortcutsOpen}
         onClose={() => setShortcutsOpen(false)}
@@ -1588,6 +1956,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
           state={contextMenu}
           platform={platform}
           hasSelection={hasSelection}
+          hasScreenImage={selectionHasScreenImage}
           canPaste={canPaste}
           canBringForward={canBringForward}
           canPushBackward={canPushBackward}
@@ -1603,6 +1972,9 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
           onBringToFront={bringToFront}
           onSendToBack={sendToBack}
           onAlign={alignSelected}
+          onAddScreenImage={requestScreenImage}
+          onRemoveScreenImage={removeScreenImage}
+          onResetScreenFraming={resetScreenFraming}
           onClose={() => setContextMenu(null)}
         />
       ) : null}

@@ -14,6 +14,8 @@ interface ContextMenuProps {
   state: ContextMenuState;
   platform: PlatformId;
   hasSelection: boolean;
+  /** Any selected device already has a screen image. */
+  hasScreenImage: boolean;
   canPaste: boolean;
   canBringForward: boolean;
   canPushBackward: boolean;
@@ -29,6 +31,9 @@ interface ContextMenuProps {
   onBringToFront: () => void;
   onSendToBack: () => void;
   onAlign: (mode: AlignMode) => void;
+  onAddScreenImage: () => void;
+  onRemoveScreenImage: () => void;
+  onResetScreenFraming: () => void;
   onClose: () => void;
 }
 
@@ -65,6 +70,7 @@ export default function ContextMenu({
   state,
   platform,
   hasSelection,
+  hasScreenImage,
   canPaste,
   canBringForward,
   canPushBackward,
@@ -80,6 +86,9 @@ export default function ContextMenu({
   onBringToFront,
   onSendToBack,
   onAlign,
+  onAddScreenImage,
+  onRemoveScreenImage,
+  onResetScreenFraming,
   onClose,
 }: ContextMenuProps) {
   const run = (fn: () => void) => () => {
@@ -127,6 +136,22 @@ export default function ContextMenu({
             hint={`${formatChordForDisplay('delete', platform)} / ${formatChordForDisplay('backspace', platform)}`}
             disabled={!hasSelection}
             onClick={run(onDelete)}
+          />
+          <Sep />
+          <Item
+            label={hasScreenImage ? 'Replace screen image…' : 'Add screen image…'}
+            disabled={!hasSelection}
+            onClick={run(onAddScreenImage)}
+          />
+          <Item
+            label="Remove screen image"
+            disabled={!hasScreenImage}
+            onClick={run(onRemoveScreenImage)}
+          />
+          <Item
+            label="Reset screen framing"
+            disabled={!hasScreenImage}
+            onClick={run(onResetScreenFraming)}
           />
           <Sep />
           <Item
