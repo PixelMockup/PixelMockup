@@ -1,4 +1,5 @@
 import { existsSync } from 'node:fs';
+import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Plugin } from 'vite';
 import { chromium, type Browser } from 'playwright';
 import { CAPTURE_WEBSITE_PATH } from '../src/capturePath.js';
@@ -92,7 +93,7 @@ async function captureWebsite(
   }
 }
 
-function readJsonBody(req: import('http').IncomingMessage): Promise<CaptureBody> {
+function readJsonBody(req: IncomingMessage): Promise<CaptureBody> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
     req.on('data', (c) => chunks.push(Buffer.isBuffer(c) ? c : Buffer.from(c)));
@@ -117,8 +118,8 @@ export function websiteCapturePlugin(): Plugin {
     middlewares: {
       use: (
         fn: (
-          req: import('http').IncomingMessage,
-          res: import('http').ServerResponse,
+          req: IncomingMessage,
+          res: ServerResponse,
           next: () => void,
         ) => void,
       ) => void;

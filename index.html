@@ -19,7 +19,7 @@
           localStorage.getItem('pixelMockup.theme') ||
           localStorage.getItem('mockupStudio.theme');
         if (t === 'dark' || t === 'light') {
-          document.documentElement.setAttribute('data-theme', t);
+          document.documentElement.dataset.theme = t;
         }
       } catch (e) {}
     </script>

@@ -9,7 +9,7 @@ export interface ContentBounds {
   height: number;
 }
 
-/** Match scripts/trim_device_library.py / deviceScreenBounds.ts */
+/** Match deviceScreenBounds.ts (thresholds used to trim device_library assets). */
 export const WHITE_THRESHOLD = 248;
 export const ALPHA_THRESHOLD = 8;
 

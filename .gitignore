@@ -30,3 +30,7 @@ test-results
 blob-report
 .lighthouseci
 .TODO
+
+# Python bytecode (legacy one-off scripts)
+__pycache__/
+*.py[cod]
