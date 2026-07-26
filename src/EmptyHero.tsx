@@ -25,7 +25,7 @@ export default function EmptyHero({
     e.preventDefault();
     const normalized = normalizeWebsiteUrl(draft);
     if (!normalized) {
-      setError('Enter a valid http(s) URL');
+      setError('Enter a website (e.g. google.com)');
       return;
     }
     setError(null);
@@ -44,11 +44,11 @@ export default function EmptyHero({
         <input
           id={inputId}
           className="ms-empty-hero__input"
-          type="url"
+          type="text"
           inputMode="url"
           autoComplete="url"
           spellCheck={false}
-          placeholder="https://your-site.com"
+          placeholder="google.com"
           value={draft}
           disabled={busy}
           onChange={(e) => {

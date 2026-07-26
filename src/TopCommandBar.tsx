@@ -85,11 +85,11 @@ export default function TopCommandBar({
           <input
             id="ms-url-command-input"
             className="ms-url-command__input"
-            type="url"
+            type="text"
             inputMode="url"
             autoComplete="url"
             spellCheck={false}
-            placeholder="https://your-site.com"
+            placeholder="google.com"
             value={websiteUrlDraft}
             onChange={(e) => onWebsiteUrlDraftChange(e.target.value)}
             aria-busy={captureBusy}

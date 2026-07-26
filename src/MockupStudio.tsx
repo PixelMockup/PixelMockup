@@ -1317,7 +1317,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
   const tryApplyWebsiteUrl = (raw: string) => {
     const normalized = normalizeWebsiteUrl(raw);
     if (!normalized) {
-      announce('Enter a valid http(s) URL');
+      announce('Enter a website (e.g. google.com)');
       return;
     }
     applyWebsiteUrl(normalized);
