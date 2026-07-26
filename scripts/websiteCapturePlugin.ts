@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import type { Plugin } from 'vite';
 import { chromium, type Browser } from 'playwright';
 import { CAPTURE_WEBSITE_PATH } from '../src/capturePath.js';
+import { normalizeWebsiteUrl } from '../src/websiteUrl.js';
 
 type CaptureBody = {
   url?: string;
@@ -130,28 +131,20 @@ export function websiteCapturePlugin(): Plugin {
       }
       try {
         const body = await readJsonBody(req);
-        const url = typeof body.url === 'string' ? body.url.trim() : '';
+        const rawUrl = typeof body.url === 'string' ? body.url : '';
+        const url = normalizeWebsiteUrl(rawUrl);
         const width = Number(body.width);
         const height = Number(body.height);
-        if (!url || !Number.isFinite(width) || !Number.isFinite(height)) {
+        if (!url) {
           res.statusCode = 400;
           res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ error: 'url, width, and height required' }));
+          res.end(JSON.stringify({ error: 'invalid or non-http(s) url' }));
           return;
         }
-        let parsed: URL;
-        try {
-          parsed = new URL(url);
-        } catch {
+        if (!Number.isFinite(width) || !Number.isFinite(height)) {
           res.statusCode = 400;
           res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ error: 'invalid url' }));
-          return;
-        }
-        if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-          res.statusCode = 400;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ error: 'only http(s) urls allowed' }));
+          res.end(JSON.stringify({ error: 'width and height required' }));
           return;
         }
         const png = await captureWebsite(url, width, height);

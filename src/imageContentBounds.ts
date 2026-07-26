@@ -1,5 +1,7 @@
 /** Detect content bounds of an image for crop (non-near-white + opaque). */
 
+import { loadImage } from './loadImage';
+
 export interface ContentBounds {
   x: number;
   y: number;
@@ -7,21 +9,11 @@ export interface ContentBounds {
   height: number;
 }
 
-/** Match scripts/trim_device_library.py */
-const WHITE_THRESHOLD = 248;
-const ALPHA_THRESHOLD = 8;
+/** Match scripts/trim_device_library.py / deviceScreenBounds.ts */
+export const WHITE_THRESHOLD = 248;
+export const ALPHA_THRESHOLD = 8;
 
 const cache = new Map<string, Promise<ContentBounds>>();
-
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.decoding = 'async';
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
-    img.src = src;
-  });
-}
 
 function fullBounds(width: number, height: number): ContentBounds {
   return {

@@ -4,11 +4,13 @@
  * transparent, so user images can composite underneath the bezel.
  */
 
-import type { ContentBounds } from './imageContentBounds';
-
-/** Match imageContentBounds.ts / scripts/trim_device_library.py */
-const WHITE_THRESHOLD = 248;
-const ALPHA_THRESHOLD = 8;
+import {
+  ALPHA_THRESHOLD,
+  WHITE_THRESHOLD,
+  type ContentBounds,
+} from './imageContentBounds';
+import { coverScale } from './coverScale';
+import { loadImage } from './loadImage';
 
 /** Include AA fringe when expanding a transparent screen hole. */
 const LOW_ALPHA_EXPAND = 64;
@@ -140,15 +142,14 @@ function largestRectWhere(
 }
 
 /**
- * Grow a white LCD rect outward through dark screen-border chrome until the
- * next strip looks like chassis (silver, color, mid gray). Optional `limit`
- * keeps growth inside content bounds.
+ * Grow `rect` outward while each adjacent strip satisfies `stripOk`.
+ * Optional `limit` keeps growth inside content bounds.
  */
-export function expandScreenIntoDarkBorder(
-  px: Uint8ClampedArray,
+function expandRectWhile(
   width: number,
   height: number,
   rect: ContentBounds,
+  stripOk: (x0: number, y0: number, x1: number, y1: number) => boolean,
   limit?: ContentBounds,
 ): ContentBounds {
   const minX = Math.max(0, limit?.x ?? 0);
@@ -164,44 +165,26 @@ export function expandScreenIntoDarkBorder(
   let rw = Math.max(1, right - x);
   let rh = Math.max(1, bottom - y);
 
-  const stripIsScreen = (
-    x0: number,
-    y0: number,
-    x1: number,
-    y1: number,
-  ): boolean => {
-    let total = 0;
-    let ok = 0;
-    for (let yy = y0; yy < y1; yy++) {
-      const row = yy * width;
-      for (let xx = x0; xx < x1; xx++) {
-        total++;
-        if (isScreenAperturePixel(px, (row + xx) * 4)) ok++;
-      }
-    }
-    return total > 0 && ok / total >= EXPAND_MIN_SCREEN_RATIO;
-  };
-
   let changed = true;
   // Cap iterations so a pathological image cannot loop forever.
   let guard = Math.max(width, height) + 8;
   while (changed && guard-- > 0) {
     changed = false;
-    if (x > minX && stripIsScreen(x - 1, y, x, y + rh)) {
+    if (x > minX && stripOk(x - 1, y, x, y + rh)) {
       x -= 1;
       rw += 1;
       changed = true;
     }
-    if (x + rw < maxR && stripIsScreen(x + rw, y, x + rw + 1, y + rh)) {
+    if (x + rw < maxR && stripOk(x + rw, y, x + rw + 1, y + rh)) {
       rw += 1;
       changed = true;
     }
-    if (y > minY && stripIsScreen(x, y - 1, x + rw, y)) {
+    if (y > minY && stripOk(x, y - 1, x + rw, y)) {
       y -= 1;
       rh += 1;
       changed = true;
     }
-    if (y + rh < maxB && stripIsScreen(x, y + rh, x + rw, y + rh + 1)) {
+    if (y + rh < maxB && stripOk(x, y + rh, x + rw, y + rh + 1)) {
       rh += 1;
       changed = true;
     }
@@ -213,6 +196,50 @@ export function expandScreenIntoDarkBorder(
     width: Math.max(1, rw),
     height: Math.max(1, rh),
   };
+}
+
+function stripMeetsRatio(
+  width: number,
+  x0: number,
+  y0: number,
+  x1: number,
+  y1: number,
+  pred: (i: number) => boolean,
+): boolean {
+  let total = 0;
+  let ok = 0;
+  for (let yy = y0; yy < y1; yy++) {
+    const row = yy * width;
+    for (let xx = x0; xx < x1; xx++) {
+      total++;
+      if (pred((row + xx) * 4)) ok++;
+    }
+  }
+  return total > 0 && ok / total >= EXPAND_MIN_SCREEN_RATIO;
+}
+
+/**
+ * Grow a white LCD rect outward through dark screen-border chrome until the
+ * next strip looks like chassis (silver, color, mid gray). Optional `limit`
+ * keeps growth inside content bounds.
+ */
+export function expandScreenIntoDarkBorder(
+  px: Uint8ClampedArray,
+  width: number,
+  height: number,
+  rect: ContentBounds,
+  limit?: ContentBounds,
+): ContentBounds {
+  return expandRectWhile(
+    width,
+    height,
+    rect,
+    (x0, y0, x1, y1) =>
+      stripMeetsRatio(width, x0, y0, x1, y1, (i) =>
+        isScreenAperturePixel(px, i),
+      ),
+    limit,
+  );
 }
 
 /**
@@ -227,66 +254,14 @@ export function expandTransparentIntoLowAlpha(
   limit?: ContentBounds,
   alphaMax: number = LOW_ALPHA_EXPAND,
 ): ContentBounds {
-  const minX = Math.max(0, limit?.x ?? 0);
-  const minY = Math.max(0, limit?.y ?? 0);
-  const maxR = Math.min(width, limit ? limit.x + limit.width : width);
-  const maxB = Math.min(height, limit ? limit.y + limit.height : height);
-
-  let x = Math.max(minX, rect.x);
-  let y = Math.max(minY, rect.y);
-  let right = Math.min(maxR, rect.x + rect.width);
-  let bottom = Math.min(maxB, rect.y + rect.height);
-  let rw = Math.max(1, right - x);
-  let rh = Math.max(1, bottom - y);
-
-  const stripIsLowAlpha = (
-    x0: number,
-    y0: number,
-    x1: number,
-    y1: number,
-  ): boolean => {
-    let total = 0;
-    let ok = 0;
-    for (let yy = y0; yy < y1; yy++) {
-      const row = yy * width;
-      for (let xx = x0; xx < x1; xx++) {
-        total++;
-        if (px[(row + xx) * 4 + 3] <= alphaMax) ok++;
-      }
-    }
-    return total > 0 && ok / total >= EXPAND_MIN_SCREEN_RATIO;
-  };
-
-  let changed = true;
-  let guard = Math.max(width, height) + 8;
-  while (changed && guard-- > 0) {
-    changed = false;
-    if (x > minX && stripIsLowAlpha(x - 1, y, x, y + rh)) {
-      x -= 1;
-      rw += 1;
-      changed = true;
-    }
-    if (x + rw < maxR && stripIsLowAlpha(x + rw, y, x + rw + 1, y + rh)) {
-      rw += 1;
-      changed = true;
-    }
-    if (y > minY && stripIsLowAlpha(x, y - 1, x + rw, y)) {
-      y -= 1;
-      rh += 1;
-      changed = true;
-    }
-    if (y + rh < maxB && stripIsLowAlpha(x, y + rh, x + rw, y + rh + 1)) {
-      rh += 1;
-      changed = true;
-    }
-  }
-
-  return {
-    x,
-    y,
-    width: Math.max(1, rw),
-    height: Math.max(1, rh),
-  };
+  return expandRectWhile(
+    width,
+    height,
+    rect,
+    (x0, y0, x1, y1) =>
+      stripMeetsRatio(width, x0, y0, x1, y1, (i) => px[i + 3] <= alphaMax),
+    limit,
+  );
 }
 
 /** Inset fallback rect used when white-region detection fails. */
@@ -330,6 +305,11 @@ export function clampScreenZoom(v: number): number {
 }
 
 /**
+ * Cover-scale factor so a source fills a destination (object-fit: cover).
+ */
+export { coverScale } from './coverScale';
+
+/**
  * Source crop so `drawImage` fills a destination rect ("cover": fill, crop
  * overflow, keep aspect, center).
  */
@@ -370,7 +350,7 @@ export function coverCropRectWithFraming(
   const zoom = clampScreenZoom(framing.zoom);
   const panX = clampScreenPan(framing.panX);
   const panY = clampScreenPan(framing.panY);
-  const scale = Math.max(dstWidth / srcWidth, dstHeight / srcHeight) * zoom;
+  const scale = coverScale(srcWidth, srcHeight, dstWidth, dstHeight) * zoom;
   const cropW = dstWidth / scale;
   const cropH = dstHeight / scale;
   const maxX = Math.max(0, srcWidth - cropW);
@@ -400,16 +380,6 @@ export function screenObjectPosition(
     x: ((px + 1) / 2) * 100,
     y: ((py + 1) / 2) * 100,
   };
-}
-
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.decoding = 'async';
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
-    img.src = src;
-  });
 }
 
 function clampRectTo(rect: ContentBounds, limit: ContentBounds): ContentBounds {

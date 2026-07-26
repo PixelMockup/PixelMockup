@@ -64,6 +64,7 @@ import {
   getImageContentBounds,
   type ContentBounds,
 } from './imageContentBounds';
+import { loadNativeSize } from './loadImage';
 import {
   captureWebsiteScreenshotsCached,
   clearWebsiteCaptureCache,
@@ -253,18 +254,6 @@ function persistLibraryWidth(w: number) {
   } catch {
     // ignore
   }
-}
-
-function loadNativeSize(
-  src: string,
-): Promise<{ width: number; height: number }> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.onload = () =>
-      resolve({ width: img.naturalWidth, height: img.naturalHeight });
-    img.onerror = () => reject(new Error(`Failed to load ${src}`));
-    img.src = src;
-  });
 }
 
 export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {

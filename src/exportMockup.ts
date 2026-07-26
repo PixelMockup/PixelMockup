@@ -14,6 +14,7 @@ import {
   getImageContentBounds,
   type ContentBounds,
 } from './imageContentBounds';
+import { loadImage } from './loadImage';
 
 export type ExportBgMode = 'transparent' | 'color' | 'image';
 
@@ -57,16 +58,6 @@ export interface ExportOptions {
 export interface ExportResult {
   blob: Blob;
   filenameHint: string;
-}
-
-function loadImage(src: string): Promise<HTMLImageElement> {
-  return new Promise((resolve, reject) => {
-    const img = new Image();
-    img.decoding = 'async';
-    img.onload = () => resolve(img);
-    img.onerror = () => reject(new Error(`Failed to load image: ${src}`));
-    img.src = src;
-  });
 }
 
 /**

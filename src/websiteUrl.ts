@@ -1,6 +1,9 @@
 /**
  * Website URL validation / normalization and per-device CSS viewports
  * for the screenshot preview and Playwright export capture.
+ *
+ * Keep this module free of relative imports so the Vite capture plugin
+ * (Node / nodenext) can share `normalizeWebsiteUrl` safely.
  */
 
 export interface WebsiteViewport {
@@ -85,7 +88,8 @@ export function websiteHostname(url: string): string {
 
 /**
  * Cover-scale a logical viewport into a destination screen size
- * (same idea as object-fit: cover).
+ * (same idea as object-fit: cover / `coverScale` in coverScale.ts).
+ * Inlined so this module stays import-free for the Node capture plugin.
  */
 export function coverScaleForViewport(
   viewportW: number,
