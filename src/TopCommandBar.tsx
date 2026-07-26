@@ -2,6 +2,26 @@ import { Download, Ellipsis, X } from 'lucide-react';
 import BrandMark from './BrandMark';
 import type { ExportFormat, ExportResolution } from './deviceScale';
 
+const EXPORT_FORMATS: readonly ExportFormat[] = ['png', 'jpg'];
+const EXPORT_RESOLUTIONS: readonly ExportResolution[] = [
+  'best',
+  '1440p',
+  '1080p',
+  '720p',
+];
+
+function parseExportFormat(value: string): ExportFormat | null {
+  return EXPORT_FORMATS.includes(value as ExportFormat)
+    ? (value as ExportFormat)
+    : null;
+}
+
+function parseExportResolution(value: string): ExportResolution | null {
+  return EXPORT_RESOLUTIONS.includes(value as ExportResolution)
+    ? (value as ExportResolution)
+    : null;
+}
+
 type Props = {
   hasDevices: boolean;
   websiteUrlDraft: string;
@@ -139,9 +159,10 @@ export default function TopCommandBar({
                 <span className="ms-field__label">Format</span>
                 <select
                   value={exportFormat}
-                  onChange={(e) =>
-                    onExportFormat(e.target.value as ExportFormat)
-                  }
+                  onChange={(e) => {
+                    const next = parseExportFormat(e.target.value);
+                    if (next) onExportFormat(next);
+                  }}
                 >
                   <option value="png">PNG</option>
                   <option value="jpg">JPG</option>
@@ -151,9 +172,10 @@ export default function TopCommandBar({
                 <span className="ms-field__label">Resolution</span>
                 <select
                   value={exportResolution}
-                  onChange={(e) =>
-                    onExportResolution(e.target.value as ExportResolution)
-                  }
+                  onChange={(e) => {
+                    const next = parseExportResolution(e.target.value);
+                    if (next) onExportResolution(next);
+                  }}
                 >
                   <option value="best">Best</option>
                   <option value="1440p">1440p</option>

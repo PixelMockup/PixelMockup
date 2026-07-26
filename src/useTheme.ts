@@ -33,7 +33,9 @@ export function useTheme() {
   useEffect(() => {
     applyTheme(theme);
     try {
-      storageSet(STORAGE_KEY, theme);
+      if (theme === 'light' || theme === 'dark') {
+        storageSet(STORAGE_KEY, theme);
+      }
     } catch {
       // ignore
     }

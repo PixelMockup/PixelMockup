@@ -155,8 +155,40 @@ export function loadStore(): PlatformBindingsStore {
   }
 }
 
+const CHORD_RE = /^[a-z0-9+[\]/?-]+$/i;
+const PLATFORMS: PlatformId[] = ['mac', 'windows', 'linux'];
+
+/** Drop unknown platforms/actions/chords before persisting. */
+export function sanitizeStore(
+  store: PlatformBindingsStore,
+): PlatformBindingsStore | null {
+  if (store == null || typeof store !== 'object') return null;
+  const out: PlatformBindingsStore = {};
+  let any = false;
+  for (const platform of PLATFORMS) {
+    const bindings = store[platform];
+    if (!bindings || typeof bindings !== 'object') continue;
+    const cleaned = {} as BindingMap;
+    for (const id of ACTION_ORDER) {
+      const chords = bindings[id];
+      if (!Array.isArray(chords)) {
+        cleaned[id] = [];
+        continue;
+      }
+      cleaned[id] = chords.filter(
+        (c): c is string => typeof c === 'string' && CHORD_RE.test(c),
+      );
+    }
+    out[platform] = cleaned;
+    any = true;
+  }
+  return any ? out : {};
+}
+
 export function saveStore(store: PlatformBindingsStore): void {
-  storageSet(STORAGE_KEY, JSON.stringify(store));
+  const cleaned = sanitizeStore(store);
+  if (cleaned == null) return;
+  storageSet(STORAGE_KEY, JSON.stringify(cleaned));
 }
 
 export function loadBindingsForPlatform(platform: PlatformId): BindingMap {

@@ -164,7 +164,9 @@ export function readSnapMargin(): number {
 
 export function persistSnapMargin(margin: number) {
   try {
-    storageSet(SNAP_MARGIN_KEY, String(clampSnapMargin(margin)));
+    const clamped = clampSnapMargin(margin);
+    if (!Number.isFinite(clamped)) return;
+    storageSet(SNAP_MARGIN_KEY, String(clamped));
   } catch {
     // Private / locked storage — ignore
   }
@@ -212,7 +214,10 @@ export function readSnapEnabled(): boolean {
 
 export function persistSnapEnabled(enabled: boolean) {
   try {
-    storageSet(SNAP_ENABLED_KEY, enabled ? '1' : '0');
+    const flag = enabled ? '1' : '0';
+    if (flag === '0' || flag === '1') {
+      storageSet(SNAP_ENABLED_KEY, flag);
+    }
   } catch {
     // ignore
   }

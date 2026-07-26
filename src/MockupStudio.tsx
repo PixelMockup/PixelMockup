@@ -126,7 +126,10 @@ function readLibraryCollapsed(): boolean {
 
 function persistLibraryCollapsed(collapsed: boolean) {
   try {
-    storageSet(LIBRARY_COLLAPSED_KEY, collapsed ? '1' : '0');
+    const flag = collapsed ? '1' : '0';
+    if (flag === '0' || flag === '1') {
+      storageSet(LIBRARY_COLLAPSED_KEY, flag);
+    }
   } catch {
     // ignore
   }
@@ -250,7 +253,9 @@ function readLibraryWidth(): number {
 
 function persistLibraryWidth(w: number) {
   try {
-    storageSet(LIBRARY_W_KEY, String(w));
+    if (!Number.isFinite(w)) return;
+    const clamped = Math.min(LIBRARY_W_MAX, Math.max(LIBRARY_W_MIN, w));
+    storageSet(LIBRARY_W_KEY, String(clamped));
   } catch {
     // ignore
   }

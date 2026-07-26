@@ -145,7 +145,9 @@ export function readStoredArtboardFormatId(): ArtboardFormatId {
 
 export function persistArtboardFormatId(id: ArtboardFormatId) {
   try {
-    storageSet(ARTBOARD_FORMAT_KEY, id);
+    if (ARTBOARD_FORMATS.some((f) => f.id === id)) {
+      storageSet(ARTBOARD_FORMAT_KEY, id);
+    }
   } catch {
     // ignore
   }
@@ -234,7 +236,9 @@ export function readStoredSizeScaleId(): SizeScaleId {
 
 export function persistSizeScaleId(id: SizeScaleId) {
   try {
-    storageSet(SIZE_SCALE_STORAGE_KEY, id);
+    if (SIZE_SCALE_PRESETS.some((p) => p.id === id)) {
+      storageSet(SIZE_SCALE_STORAGE_KEY, id);
+    }
   } catch {
     // ignore
   }
