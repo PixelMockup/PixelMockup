@@ -54,14 +54,19 @@
 }
 
 .ms-brand {
-  font-family: var(--ms-display);
-  font-size: 1.15rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  font-family: var(--ms-brand-icon);
+  font-size: 1.25rem;
+  font-weight: 400;
+  letter-spacing: -0.08em;
   color: var(--ms-ink);
   margin: 0;
   padding: 0;
-  line-height: 1.2;
+  line-height: 1;
   flex-shrink: 0;
 }
 
@@ -1742,7 +1747,7 @@
 
 @media (max-width: 720px) {
   .ms-brand {
-    font-size: 1.05rem;
+    font-size: 1.15rem;
   }
 
   .ms-icon-rail {

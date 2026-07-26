@@ -1,3 +1,11 @@
+@font-face {
+  font-family: 'Pixeloid Mono';
+  src: url('./assets/PixeloidMono-nAOpP.ttf') format('truetype');
+  font-display: swap;
+  font-style: normal;
+  font-weight: 400;
+}
+
 :root {
   --ms-ink: #1b2430;
   --ms-muted: #5b6675;
@@ -43,6 +51,7 @@
   --ms-library-w: 320px;
   --ms-font: 'Outfit', system-ui, sans-serif;
   --ms-display: 'Fraunces', Georgia, serif;
+  --ms-brand-icon: 'Pixeloid Mono', monospace;
   --ms-mono: ui-monospace, 'SF Mono', Consolas, monospace;
   --ms-safe-t: env(safe-area-inset-top, 0px);
   --ms-safe-b: env(safe-area-inset-bottom, 0px);

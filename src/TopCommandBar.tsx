@@ -1,4 +1,5 @@
 import { Download, Ellipsis, X } from 'lucide-react';
+import BrandMark from './BrandMark';
 import type { ExportFormat, ExportResolution } from './deviceScale';
 
 type Props = {
@@ -48,7 +49,7 @@ export default function TopCommandBar({
 }: Props) {
   return (
     <header className="ms-top-command">
-      <h1 className="ms-brand">Pixel Mockup</h1>
+      <BrandMark />
 
       {hasDevices ? (
         <form
