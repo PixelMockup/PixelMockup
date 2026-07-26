@@ -28,6 +28,8 @@
   --ms-snap-page: #e20074;
   --ms-danger: #b91c1c;
   --ms-danger-soft: rgba(185, 28, 28, 0.1);
+  --ms-presence: #15803d;
+  --ms-presence-soft: rgba(21, 128, 61, 0.12);
   --ms-stage: #c4ccd8;
   --ms-stage-inner: #d2dae6;
   --ms-checker-a: #e8ecf1;
@@ -92,6 +94,8 @@
   --ms-snap-page: #ff2d95;
   --ms-danger: #f87171;
   --ms-danger-soft: rgba(248, 113, 113, 0.12);
+  --ms-presence: #4ade80;
+  --ms-presence-soft: rgba(74, 222, 128, 0.14);
   --ms-stage: #0e1218;
   --ms-stage-inner: #161b24;
   --ms-checker-a: #1c222c;

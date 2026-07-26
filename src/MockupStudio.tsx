@@ -31,9 +31,11 @@ import {
   readSnapEnabled,
   readSnapMargin,
   snapPosition,
+  SNAP_PX,
   stepViewZoom,
   viewZoomLabel,
   type AlignMode,
+  type SnapGuideLine,
   type SnapGuides,
   type ViewZoom,
 } from './artboardSnap';
@@ -106,6 +108,7 @@ import {
 } from './keybindings';
 import { storageGet, storageSet } from './storage';
 import { useKeybindings } from './useKeybindings';
+import { usePresence } from './usePresence';
 import { useTheme } from './useTheme';
 
 const LIBRARY_W_KEY = 'pixelMockup.libraryWidth';
@@ -113,6 +116,84 @@ const LIBRARY_W_LEGACY_KEY = 'mockupStudio.libraryWidth';
 const LIBRARY_W_DEFAULT = 320;
 const LIBRARY_COLLAPSED_KEY = 'pixelMockup.libraryCollapsed';
 const LIBRARY_COLLAPSED_LEGACY_KEY = 'mockupStudio.libraryCollapsed';
+
+/** How long a magenta (page) guide stays "glued" after it latches. */
+const STICKY_SNAP_MS = 1000;
+/** Pointer may drift this far from a latched page guide before it releases. */
+const SNAP_RELEASE_PX = SNAP_PX * 2.5;
+
+type StickyAxis = { guidePos: number; origin: number; until: number };
+
+/** Smallest gap between any anchor (start/center/end) and a guide line. */
+function axisDistanceToGuide(
+  origin: number,
+  size: number,
+  guidePos: number,
+): number {
+  return Math.min(
+    Math.abs(origin - guidePos),
+    Math.abs(origin + size / 2 - guidePos),
+    Math.abs(origin + size - guidePos),
+  );
+}
+
+/**
+ * Sticky page-guide resolution for one axis. A magenta guide stays latched for
+ * ~1s so the device glues to it instead of drifting off on the first pixel.
+ */
+function resolveStickyAxis(
+  sticky: StickyAxis | null,
+  snappedOrigin: number,
+  guide: SnapGuideLine | null,
+  proposedOrigin: number,
+  size: number,
+  now: number,
+): { origin: number; guide: SnapGuideLine | null; sticky: StickyAxis | null } {
+  if (guide && guide.kind === 'page') {
+    return {
+      origin: snappedOrigin,
+      guide,
+      sticky: { guidePos: guide.pos, origin: snappedOrigin, until: now + STICKY_SNAP_MS },
+    };
+  }
+  if (
+    sticky &&
+    now < sticky.until &&
+    axisDistanceToGuide(proposedOrigin, size, sticky.guidePos) <= SNAP_RELEASE_PX
+  ) {
+    return {
+      origin: sticky.origin,
+      guide: { pos: sticky.guidePos, kind: 'page' },
+      sticky,
+    };
+  }
+  return { origin: snappedOrigin, guide, sticky: null };
+}
+
+/** Shift a placed group so its bounding-box center sits at the artboard center. */
+function centerGroupOnArtboard(
+  items: { x: number; y: number; displayWidth: number; displayHeight: number }[],
+  artboardW: number,
+  artboardH: number,
+): void {
+  if (items.length === 0) return;
+  let minX = Infinity;
+  let minY = Infinity;
+  let maxX = -Infinity;
+  let maxY = -Infinity;
+  for (const it of items) {
+    minX = Math.min(minX, it.x);
+    minY = Math.min(minY, it.y);
+    maxX = Math.max(maxX, it.x + it.displayWidth);
+    maxY = Math.max(maxY, it.y + it.displayHeight);
+  }
+  const shiftX = artboardW / 2 - (minX + maxX) / 2;
+  const shiftY = artboardH / 2 - (minY + maxY) / 2;
+  for (const it of items) {
+    it.x += shiftX;
+    it.y += shiftY;
+  }
+}
 
 function readLibraryCollapsed(): boolean {
   try {
@@ -300,6 +381,7 @@ function persistLibraryWidth(w: number) {
 export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
   const platform = useMemo(() => detectPlatform(), []);
   const { theme, toggleTheme } = useTheme();
+  const activeUsers = usePresence();
   const [bindings, setBindings] = useState<BindingMap>(() =>
     loadBindingsForPlatform(platform),
   );
@@ -384,6 +466,8 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
   );
   const statusTimer = useRef<number | null>(null);
   const lastSnapLatchKey = useRef('');
+  const stickyXRef = useRef<StickyAxis | null>(null);
+  const stickyYRef = useRef<StickyAxis | null>(null);
   const undoStackRef = useRef<CanvasItem[][]>([]);
   const canvasItemsRef = useRef(canvasItems);
   canvasItemsRef.current = canvasItems;
@@ -699,6 +783,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
           zIndex: slot.zIndex ?? i,
         });
       }
+      centerGroupOnArtboard(placed, artboardW, artboardH);
       pushUndo();
       setCanvasItems(reindexZ(byZ(placed)));
       setSelectedIds([]);
@@ -769,6 +854,8 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
       const found = canvasItemsRef.current.find((i) => i.instanceId === id);
       if (found) origins[id] = { x: found.x, y: found.y };
     }
+    stickyXRef.current = null;
+    stickyYRef.current = null;
     setDragInfo({
       id: item.instanceId,
       offsetX: logical.x - item.x,
@@ -830,6 +917,8 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     if (!snapEnabled) {
       setSnapGuides(NO_GUIDES);
       lastSnapLatchKey.current = '';
+      stickyXRef.current = null;
+      stickyYRef.current = null;
       setCanvasItems((prev) =>
         prev.map((item) => {
           if (!groupSet.has(item.instanceId)) return item;
@@ -865,14 +954,41 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
       },
       snapMargin,
     );
-    const snapDx = x - originPrimary.x;
-    const snapDy = y - originPrimary.y;
-    const latchKey = snapGuidesLatchKey(guides);
+
+    // Keep magenta page guides "sticky" for ~1s so the device stays glued.
+    const now = performance.now();
+    const rx = resolveStickyAxis(
+      stickyXRef.current,
+      x,
+      guides.vertical[0] ?? null,
+      proposedPrimary.x,
+      primary.displayWidth,
+      now,
+    );
+    const ry = resolveStickyAxis(
+      stickyYRef.current,
+      y,
+      guides.horizontal[0] ?? null,
+      proposedPrimary.y,
+      primary.displayHeight,
+      now,
+    );
+    stickyXRef.current = rx.sticky;
+    stickyYRef.current = ry.sticky;
+
+    const stuckGuides: SnapGuides = {
+      vertical: rx.guide ? [rx.guide] : [],
+      horizontal: ry.guide ? [ry.guide] : [],
+    };
+
+    const snapDx = rx.origin - originPrimary.x;
+    const snapDy = ry.origin - originPrimary.y;
+    const latchKey = snapGuidesLatchKey(stuckGuides);
     if (latchKey && latchKey !== lastSnapLatchKey.current) {
       pulseSnapHaptic();
     }
     lastSnapLatchKey.current = latchKey;
-    setSnapGuides(guides);
+    setSnapGuides(stuckGuides);
     setCanvasItems((prev) =>
       prev.map((item) => {
         if (!groupSet.has(item.instanceId)) return item;
@@ -894,6 +1010,8 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     });
     setSnapGuides(NO_GUIDES);
     lastSnapLatchKey.current = '';
+    stickyXRef.current = null;
+    stickyYRef.current = null;
   };
 
   const tryLayerAction = (kind: 'forward' | 'back') => {
@@ -1493,6 +1611,10 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
         setLayoutsMenuOpen(false);
         setMoreToolsOpen(false);
         setContextMenu(null);
+        setLibraryCollapsed((collapsed) => {
+          if (!collapsed) persistLibraryCollapsed(true);
+          return true;
+        });
       }
     };
     const onPointerDown = (e: PointerEvent) => {
@@ -1617,6 +1739,15 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
         ) {
           closeChromeMenus();
         }
+        if (
+          devicesDrawerOpen &&
+          !t.closest('.ms-library') &&
+          !t.closest('.ms-rail-devices') &&
+          !t.closest('.ms-mobile-dock')
+        ) {
+          setLibraryCollapsed(true);
+          persistLibraryCollapsed(true);
+        }
       }}
     >
       <TopCommandBar
@@ -1642,6 +1773,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
         downloadMenuOpen={exportMenuOpen}
         onDownloadMenuOpenChange={setExportMenuOpen}
         downloadMenuRef={downloadMenuRef}
+        activeUsers={activeUsers}
       />
 
       <div className="ms-body">
@@ -1673,18 +1805,6 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
           onOpenShortcuts={() => setShortcutsOpen(true)}
           layoutsRef={layoutsMenuRef}
           moreRef={moreMenuRef}
-        />
-
-        <button
-          type="button"
-          className={`ms-library-backdrop${devicesDrawerOpen ? ' is-open' : ''}`}
-          onClick={() => {
-            setLibraryCollapsed(true);
-            persistLibraryCollapsed(true);
-          }}
-          aria-label="Close device library"
-          aria-hidden={!devicesDrawerOpen}
-          tabIndex={devicesDrawerOpen ? 0 : -1}
         />
 
         <LibraryPanel

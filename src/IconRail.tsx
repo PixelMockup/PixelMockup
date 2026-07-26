@@ -74,11 +74,18 @@ export default function IconRail({
     <nav className="ms-icon-rail" aria-label="Studio tools">
       <button
         type="button"
-        className={`ms-rail-btn${devicesOpen ? ' is-active' : ''}`}
+        className={`ms-rail-btn ms-rail-devices${devicesOpen ? ' is-active' : ''}`}
         aria-pressed={devicesOpen}
+        aria-expanded={devicesOpen}
+        aria-haspopup="dialog"
+        aria-controls="ms-device-library"
         aria-label={devicesOpen ? 'Hide devices' : 'Devices'}
         title="Devices"
-        onClick={onToggleDevices}
+        onClick={() => {
+          onToggleDevices();
+          onLayoutsOpenChange(false);
+          onMoreOpenChange(false);
+        }}
       >
         <Smartphone size={20} strokeWidth={1.5} aria-hidden />
       </button>
@@ -95,6 +102,7 @@ export default function IconRail({
           onClick={() => {
             onLayoutsOpenChange(!layoutsOpen);
             onMoreOpenChange(false);
+            if (devicesOpen) onToggleDevices();
           }}
         >
           <LayoutTemplate size={20} strokeWidth={1.5} aria-hidden />
@@ -131,6 +139,7 @@ export default function IconRail({
           onClick={() => {
             onMoreOpenChange(!moreOpen);
             onLayoutsOpenChange(false);
+            if (devicesOpen) onToggleDevices();
           }}
         >
           <SlidersHorizontal size={20} strokeWidth={1.5} aria-hidden />
