@@ -1630,13 +1630,16 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
           moreRef={moreMenuRef}
         />
 
-        <div
+        <button
+          type="button"
           className={`ms-library-backdrop${devicesDrawerOpen ? ' is-open' : ''}`}
           onClick={() => {
             setLibraryCollapsed(true);
             persistLibraryCollapsed(true);
           }}
+          aria-label="Close device library"
           aria-hidden={!devicesDrawerOpen}
+          tabIndex={devicesDrawerOpen ? 0 : -1}
         />
 
         <LibraryPanel

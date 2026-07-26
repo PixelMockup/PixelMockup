@@ -527,10 +527,16 @@
 
 /* —— Library (drawer) —— */
 .ms-library-backdrop {
+  appearance: none;
   display: block;
   position: absolute;
   inset: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
   background: var(--ms-overlay);
+  font: inherit;
+  cursor: pointer;
   z-index: 40;
   opacity: 0;
   pointer-events: none;
