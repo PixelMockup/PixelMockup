@@ -71,14 +71,17 @@ import {
 } from './captureWebsite';
 import {
   getWebsiteViewport,
+  normalizeWebsiteUrl,
   websiteHostname,
 } from './websiteUrl';
 import WebsiteScreen from './WebsiteScreen';
-import WebsiteUrlBar from './WebsiteUrlBar';
+import EmptyHero from './EmptyHero';
+import IconRail from './IconRail';
+import SelectionInspector from './SelectionInspector';
+import TopCommandBar from './TopCommandBar';
 import {
   getLayoutPreset,
   indexLibraryByCatalog,
-  LAYOUT_PRESETS,
   resolvePresetDevices,
   resolveSlotPosition,
 } from './layoutPresets';
@@ -89,40 +92,42 @@ import LibraryPanel, {
   LIBRARY_W_MAX,
   LIBRARY_W_MIN,
 } from './LibraryPanel';
-import { formatDeviceDisplayName, matchesSearchQuery, sortBySearchRelevance } from './deviceMeta';
+import {
+  formatDeviceDisplayName,
+  matchesSearchQuery,
+  sortBySearchRelevance,
+} from './deviceMeta';
 import {
   detectPlatform,
-  formatChordForDisplay,
   isMacPlatform,
   loadBindingsForPlatform,
   type BindingMap,
 } from './keybindings';
-import StudioToolbar from './StudioToolbar';
 import { storageGet, storageSet } from './storage';
 import { useKeybindings } from './useKeybindings';
 import { useTheme } from './useTheme';
 
 const LIBRARY_W_KEY = 'pixelMockup.libraryWidth';
 const LIBRARY_W_LEGACY_KEY = 'mockupStudio.libraryWidth';
-const LIBRARY_W_DEFAULT = 520;
-const COACH_KEY = 'pixelMockup.coachDismissed';
-const COACH_LEGACY_KEY = 'mockupStudio.coachDismissed';
+const LIBRARY_W_DEFAULT = 320;
 const LIBRARY_COLLAPSED_KEY = 'pixelMockup.libraryCollapsed';
 const LIBRARY_COLLAPSED_LEGACY_KEY = 'mockupStudio.libraryCollapsed';
 
-function readCoachDismissed(): boolean {
+function readLibraryCollapsed(): boolean {
   try {
-    return storageGet(COACH_KEY, COACH_LEGACY_KEY) === '1';
+    const raw = storageGet(LIBRARY_COLLAPSED_KEY, LIBRARY_COLLAPSED_LEGACY_KEY);
+    if (raw === '0') return false;
+    return true;
   } catch {
-    return false;
+    return true;
   }
 }
 
-function readLibraryCollapsed(): boolean {
+function persistLibraryCollapsed(collapsed: boolean) {
   try {
-    return storageGet(LIBRARY_COLLAPSED_KEY, LIBRARY_COLLAPSED_LEGACY_KEY) === '1';
+    storageSet(LIBRARY_COLLAPSED_KEY, collapsed ? '1' : '0');
   } catch {
-    return false;
+    // ignore
   }
 }
 
@@ -269,22 +274,23 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     loadBindingsForPlatform(platform),
   );
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
-  const [libraryOpen, setLibraryOpen] = useState(false);
   const [libraryWidth, setLibraryWidth] = useState(readLibraryWidth);
   const [viewZoom, setViewZoom] = useState<ViewZoom>('fit');
   const [snapGuides, setSnapGuides] = useState<SnapGuides>(NO_GUIDES);
   const [snapEnabled, setSnapEnabled] = useState(readSnapEnabled);
   const [snapMargin] = useState(readSnapMargin);
   const [exportMenuOpen, setExportMenuOpen] = useState(false);
-  const [toolsSheetOpen, setToolsSheetOpen] = useState(false);
+  const [layoutsMenuOpen, setLayoutsMenuOpen] = useState(false);
   const [moreToolsOpen, setMoreToolsOpen] = useState(false);
   const [libraryCollapsed, setLibraryCollapsed] = useState(readLibraryCollapsed);
-  const [showCoach, setShowCoach] = useState(() => !readCoachDismissed());
   const [placingPath, setPlacingPath] = useState<string | null>(null);
   const [layerHint, setLayerHint] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
   /** Global website shown on all devices without a per-device screen image. */
   const [websiteUrl, setWebsiteUrl] = useState<string | null>(null);
+  const [websiteUrlDraft, setWebsiteUrlDraft] = useState('');
+  const [capturingHint, setCapturingHint] = useState<string | null>(null);
+  const [softEmptyDownload, setSoftEmptyDownload] = useState(false);
 
   const [canvasItems, setCanvasItems] = useState<CanvasItem[]>([]);
   /** Last id is primary (context / layer target). */
@@ -312,7 +318,8 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
   const [clipboardRev, setClipboardRev] = useState(0);
   const selectedIdsRef = useRef(selectedIds);
   selectedIdsRef.current = selectedIds;
-  const [categoryFilter, setCategoryFilter] = useState<string | null>(null);
+  const [categoryFilter, setCategoryFilter] = useState<string | null>('phones');
+  const searchInputRef = useRef<HTMLInputElement>(null);
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [selectedProduct, setSelectedProduct] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -321,8 +328,8 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
   const [exportResolution, setExportResolution] =
     useState<ExportResolution>('best');
   const [exportBgMode, setExportBgMode] = useState<ExportBgMode>('transparent');
-  const [exportBgColor, setExportBgColor] = useState('#ffffff');
-  const [exportBgImageSrc, setExportBgImageSrc] = useState<string | null>(null);
+  const [exportBgColor] = useState('#ffffff');
+  const [exportBgImageSrc] = useState<string | null>(null);
   const [sizeScaleId, setSizeScaleId] = useState<SizeScaleId>(
     readStoredSizeScaleId,
   );
@@ -339,6 +346,9 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const screenFileInputRef = useRef<HTMLInputElement>(null);
+  const downloadMenuRef = useRef<HTMLDivElement>(null);
+  const layoutsMenuRef = useRef<HTMLDivElement>(null);
+  const moreMenuRef = useRef<HTMLDivElement>(null);
   const resizeDragRef = useRef<{ startX: number; startW: number } | null>(
     null,
   );
@@ -390,7 +400,8 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
       return;
     }
     if (categoryFilter == null || !categories.includes(categoryFilter)) {
-      setCategoryFilter(categories[0]);
+      const phones = categories.find((c) => c.toLowerCase() === 'phones');
+      setCategoryFilter(phones ?? categories[0]);
     }
   }, [categories, categoryFilter]);
 
@@ -612,29 +623,28 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
       setCanvasItems((prev) => [...prev, canvasItem]);
       setSelectedIds([canvasItem.instanceId]);
       announce(`Added ${formatDeviceDisplayName(item.name)}`);
-      if (window.matchMedia('(max-width: 1024px)').matches) {
-        setLibraryOpen(false);
-      }
+      setLibraryCollapsed(true);
+      persistLibraryCollapsed(true);
     } finally {
       setPlacingPath(null);
     }
   };
 
-  const applyLayoutPreset = async (presetId: string) => {
+  const applyLayoutPreset = async (presetId: string): Promise<boolean> => {
     const preset = getLayoutPreset(presetId);
-    if (!preset) return;
+    if (!preset) return false;
     if (canvasItemsRef.current.length > 0) {
       const ok = window.confirm(
         `Replace the artboard with “${preset.label}”? This cannot be undone from the preset itself — use Undo after if needed.`,
       );
-      if (!ok) return;
+      if (!ok) return false;
     }
     setPlacingPath(preset.id);
     try {
       const resolved = resolvePresetDevices(preset, libraryByCatalog);
       if (resolved.length === 0) {
         announce('Preset assets are missing from the library.');
-        return;
+        return false;
       }
       const placed: CanvasItem[] = [];
       for (let i = 0; i < resolved.length; i++) {
@@ -662,7 +672,10 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
       pushUndo();
       setCanvasItems(reindexZ(byZ(placed)));
       setSelectedIds([]);
+      setLibraryCollapsed(true);
+      persistLibraryCollapsed(true);
       announce(`Applied ${preset.label}`);
+      return true;
     } finally {
       setPlacingPath(null);
     }
@@ -1061,7 +1074,19 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
   };
 
   const requestScreenImage = () => {
-    if (selectedIdsRef.current.length === 0) return;
+    // Prefer selection; otherwise target devices that still need a photo.
+    let ids = selectedIdsRef.current;
+    if (ids.length === 0) {
+      ids = canvasItemsRef.current
+        .filter((i) => i.screenImageSrc == null)
+        .map((i) => i.instanceId);
+      if (ids.length === 0) {
+        ids = canvasItemsRef.current.map((i) => i.instanceId);
+      }
+      if (ids.length === 0) return;
+      setSelectedIds(ids);
+      selectedIdsRef.current = ids;
+    }
     screenFileInputRef.current?.click();
   };
 
@@ -1179,27 +1204,6 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     announce('Screen image removed');
   };
 
-  const nudgeScreenZoom = (delta: number) => {
-    const ids = new Set(selectedIdsRef.current);
-    const targets = canvasItemsRef.current.filter(
-      (i) => ids.has(i.instanceId) && i.screenImageSrc != null,
-    );
-    if (targets.length === 0) return;
-    pushUndo();
-    let nextZoom = 1;
-    setCanvasItems((prev) =>
-      prev.map((item) => {
-        if (!ids.has(item.instanceId) || item.screenImageSrc == null) {
-          return item;
-        }
-        const zoom = clampScreenZoom(item.screenZoom + delta);
-        nextZoom = zoom;
-        return { ...item, screenZoom: zoom };
-      }),
-    );
-    announce(`Zoom ${Math.round(nextZoom * 100)}%`);
-  };
-
   const resetScreenFraming = () => {
     const ids = new Set(selectedIdsRef.current);
     const hasAny = canvasItemsRef.current.some(
@@ -1262,21 +1266,78 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
   };
 
+  const emptyDownloadConfirmRef = useRef(false);
+
   const applyWebsiteUrl = (url: string) => {
     clearWebsiteCaptureCache();
     setWebsiteUrl(url);
+    setWebsiteUrlDraft(url);
+    const n = canvasItemsRef.current.length;
+    setCapturingHint(
+      `Updating ${n} screen${n === 1 ? '' : 's'}…`,
+    );
+    window.setTimeout(() => setCapturingHint(null), 4000);
     announce(`Website applied: ${websiteHostname(url)}`);
   };
 
+  const tryApplyWebsiteUrl = (raw: string) => {
+    const normalized = normalizeWebsiteUrl(raw);
+    if (!normalized) {
+      announce('Enter a valid http(s) URL');
+      return;
+    }
+    applyWebsiteUrl(normalized);
+  };
+
+  const showOnDevices = async (url: string) => {
+    const ok = await applyLayoutPreset('apple-lineup');
+    if (!ok) return;
+    applyWebsiteUrl(url);
+  };
+
   const clearWebsiteUrl = () => {
-    if (!websiteUrl) return;
+    if (!websiteUrl && !websiteUrlDraft.trim()) return;
     clearWebsiteCaptureCache();
     setWebsiteUrl(null);
+    setWebsiteUrlDraft('');
+    setCapturingHint(null);
     announce('Website cleared');
+  };
+
+  const setSelectedScreenZoom = (zoom: number) => {
+    const ids = new Set(selectedIdsRef.current);
+    const targets = canvasItemsRef.current.filter(
+      (i) => ids.has(i.instanceId) && i.screenImageSrc != null,
+    );
+    if (targets.length === 0) return;
+    pushUndo();
+    const next = clampScreenZoom(zoom);
+    setCanvasItems((prev) =>
+      prev.map((item) =>
+        ids.has(item.instanceId) && item.screenImageSrc != null
+          ? { ...item, screenZoom: next }
+          : item,
+      ),
+    );
   };
 
   const downloadCanvas = async () => {
     if (canvasItems.length === 0 || isExporting) return;
+    const screensFilledNow = canvasItems.some(
+      (i) => i.screenImageSrc != null || websiteUrl != null,
+    );
+    if (!screensFilledNow && !emptyDownloadConfirmRef.current) {
+      emptyDownloadConfirmRef.current = true;
+      setSoftEmptyDownload(true);
+      announce('Screens are empty — click Download again to continue');
+      window.setTimeout(() => {
+        emptyDownloadConfirmRef.current = false;
+        setSoftEmptyDownload(false);
+      }, 4000);
+      return;
+    }
+    emptyDownloadConfirmRef.current = false;
+    setSoftEmptyDownload(false);
     setIsExporting(true);
     setSelectedIds([]);
     setExportMenuOpen(false);
@@ -1300,7 +1361,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
 
       let websiteShots = new Map<string, string>();
       if (websiteJobs.length > 0) {
-        announce('Capturing website for export…');
+        announce('Capturing website for download…');
         try {
           websiteShots = await captureWebsiteScreenshotsCached(websiteJobs);
         } catch (err) {
@@ -1395,7 +1456,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setExportMenuOpen(false);
-        setToolsSheetOpen(false);
+        setLayoutsMenuOpen(false);
         setMoreToolsOpen(false);
         setContextMenu(null);
       }
@@ -1442,51 +1503,23 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
       copy: copySelected,
       paste: pasteClipboard,
     },
-    { platform, enabled: !shortcutsOpen && !toolsSheetOpen },
+    { platform, enabled: !shortcutsOpen },
   );
-
-  const modHint = formatChordForDisplay('mod+shift+s', platform);
-  const forwardTitle = !hasSelection
-    ? 'Select a device first'
-    : !canBringForward
-      ? 'Already at front'
-      : formatChordForDisplay(']', platform);
-  const backTitle = !hasSelection
-    ? 'Select a device first'
-    : !canPushBackward
-      ? 'Already at back'
-      : formatChordForDisplay('[', platform);
-  const toFrontTitle = !hasSelection
-    ? 'Select a device first'
-    : !canBringToFront
-      ? 'Already at front'
-      : formatChordForDisplay('mod+]', platform);
-  const toBackTitle = !hasSelection
-    ? 'Select a device first'
-    : !canSendToBack
-      ? 'Already at back'
-      : formatChordForDisplay('mod+[', platform);
-
-  const dismissCoach = () => {
-    setShowCoach(false);
-    try {
-      storageSet(COACH_KEY, '1');
-    } catch {
-      // ignore
-    }
-  };
 
   const toggleLibraryCollapsed = () => {
     setLibraryCollapsed((v) => {
       const next = !v;
-      try {
-        storageSet(LIBRARY_COLLAPSED_KEY, next ? '1' : '0');
-      } catch {
-        // ignore
-      }
-      if (!next) setLibraryOpen(true);
+      persistLibraryCollapsed(next);
       return next;
     });
+  };
+
+  const devicesDrawerOpen = !libraryCollapsed;
+
+  const openDevicesPicker = () => {
+    setLibraryCollapsed(false);
+    persistLibraryCollapsed(false);
+    queueMicrotask(() => searchInputRef.current?.focus());
   };
 
   const openContextMenu = (
@@ -1525,88 +1558,100 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     return undefined;
   };
 
+  const primaryPhotoZoom =
+    primaryId == null
+      ? 1
+      : (canvasItems.find((i) => i.instanceId === primaryId)?.screenZoom ?? 1);
+
+  const closeChromeMenus = () => {
+    setExportMenuOpen(false);
+    setLayoutsMenuOpen(false);
+    setMoreToolsOpen(false);
+  };
+
   return (
     <div
-      className={`ms-app${libraryCollapsed ? ' ms-app--library-collapsed' : ''}`}
+      className={`ms-app${libraryCollapsed ? ' ms-app--library-collapsed' : ''}${canvasItems.length === 0 ? ' ms-app--empty' : ''}`}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
       onClick={(e) => {
         const t = e.target as HTMLElement;
-        if (!t.closest('.ms-export-wrap')) setExportMenuOpen(false);
+        if (
+          !t.closest('.ms-download-cluster') &&
+          !t.closest('.ms-rail-menu-wrap')
+        ) {
+          closeChromeMenus();
+        }
       }}
     >
-      <header className="ms-topbar">
-        <h1 className="ms-brand">Pixel Mockup</h1>
-        <div className="ms-topbar-spacer" />
-        <div className="ms-topbar-actions">
-          <button
-            type="button"
-            className="ms-btn ms-btn--ghost ms-library-collapse"
-            onClick={toggleLibraryCollapsed}
-            aria-pressed={libraryCollapsed}
-            title={
-              libraryCollapsed ? 'Show device library' : 'Hide device library'
-            }
-            aria-label={
-              libraryCollapsed ? 'Show device library' : 'Hide device library'
-            }
-          >
-            {libraryCollapsed ? 'Show library' : 'Hide library'}
-          </button>
-          <button
-            type="button"
-            className="ms-btn ms-btn--icon ms-library-toggle"
-            onClick={() => {
-              setLibraryCollapsed(false);
-              setLibraryOpen(true);
-            }}
-            aria-expanded={libraryOpen}
-            aria-controls="ms-device-library"
-            aria-label="Open device library"
-          >
-            <span className="ms-burger" aria-hidden="true">
-              <span />
-              <span />
-              <span />
-            </span>
-          </button>
-          <button
-            type="button"
-            className="ms-btn ms-btn--icon"
-            onClick={toggleTheme}
-            aria-pressed={theme === 'dark'}
-            aria-label={
-              theme === 'dark' ? 'Dark mode active' : 'Light mode active'
-            }
-            title={
-              theme === 'dark'
-                ? 'Dark mode (click for light)'
-                : 'Light mode (click for dark)'
-            }
-          >
-            {theme === 'dark' ? 'Dark' : 'Light'}
-          </button>
-          <button
-            type="button"
-            className="ms-btn"
-            onClick={() => setShortcutsOpen(true)}
-            title={formatChordForDisplay('mod+/', platform)}
-          >
-            Shortcuts
-          </button>
-        </div>
-      </header>
+      <TopCommandBar
+        hasDevices={canvasItems.length > 0}
+        websiteUrlDraft={websiteUrlDraft}
+        onWebsiteUrlDraftChange={setWebsiteUrlDraft}
+        onApplyUrl={tryApplyWebsiteUrl}
+        onClearUrl={clearWebsiteUrl}
+        websiteUrlActive={websiteUrl != null}
+        captureBusy={capturingHint != null}
+        captureCount={canvasItems.length}
+        downloading={isExporting}
+        softEmptyDownload={softEmptyDownload}
+        exportFormat={exportFormat}
+        exportResolution={exportResolution}
+        exportTransparentBg={exportBgMode === 'transparent'}
+        onExportFormat={setExportFormat}
+        onExportResolution={setExportResolution}
+        onExportTransparentBg={(v) =>
+          setExportBgMode(v ? 'transparent' : 'color')
+        }
+        onDownload={() => void downloadCanvas()}
+        downloadMenuOpen={exportMenuOpen}
+        onDownloadMenuOpenChange={setExportMenuOpen}
+        downloadMenuRef={downloadMenuRef}
+      />
 
       <div className="ms-body">
+        <IconRail
+          devicesOpen={devicesDrawerOpen}
+          onToggleDevices={toggleLibraryCollapsed}
+          layoutsOpen={layoutsMenuOpen}
+          onLayoutsOpenChange={setLayoutsMenuOpen}
+          moreOpen={moreToolsOpen}
+          onMoreOpenChange={setMoreToolsOpen}
+          placing={placingPath != null}
+          onApplyPreset={(id) => void applyLayoutPreset(id)}
+          artboardFormatId={artboardFormatId}
+          onArtboardFormat={changeArtboardFormat}
+          sizeScaleId={sizeScaleId}
+          onSizeScale={changeSizeScale}
+          snapEnabled={snapEnabled}
+          onSnapEnabled={(v) => {
+            if (v === snapEnabled) return;
+            toggleSnap();
+          }}
+          onAlignH={() => alignSelected('center')}
+          onAlignV={() => alignSelected('middle')}
+          onBringForward={bringForward}
+          onSendBackward={pushBackward}
+          canReorder={canBringForward || canPushBackward}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          onOpenShortcuts={() => setShortcutsOpen(true)}
+          layoutsRef={layoutsMenuRef}
+          moreRef={moreMenuRef}
+        />
+
         <div
-          className={`ms-library-backdrop${libraryOpen ? ' is-open' : ''}`}
-          onClick={() => setLibraryOpen(false)}
-          aria-hidden={!libraryOpen}
+          className={`ms-library-backdrop${devicesDrawerOpen ? ' is-open' : ''}`}
+          onClick={() => {
+            setLibraryCollapsed(true);
+            persistLibraryCollapsed(true);
+          }}
+          aria-hidden={!devicesDrawerOpen}
         />
 
         <LibraryPanel
-          open={libraryOpen}
+          open={devicesDrawerOpen}
           width={libraryWidth}
           categories={categories}
           effectiveCategory={effectiveCategory}
@@ -1619,7 +1664,11 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
           filteredLibrary={filteredLibrary}
           placingPath={placingPath}
           searchIsGlobal={searchIsGlobal}
-          onClose={() => setLibraryOpen(false)}
+          searchInputRef={searchInputRef}
+          onClose={() => {
+            setLibraryCollapsed(true);
+            persistLibraryCollapsed(true);
+          }}
           onCategoryChange={(c) => {
             setCategoryFilter(c);
             setSelectedProduct(null);
@@ -1650,128 +1699,34 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
         />
 
         <div className="ms-workspace">
-          {showCoach && (
-            <div className="ms-coach" role="status">
-              <span>
-                Pick a device from the library, arrange on the artboard, then
-                Export → Download.
-              </span>
-              <button
-                type="button"
-                className="ms-btn ms-btn--ghost"
-                onClick={dismissCoach}
-              >
-                Got it
-              </button>
-            </div>
-          )}
-          <StudioToolbar
-            hasSelection={hasSelection}
-            selectionHasScreenImage={selectionHasScreenImage}
-            canBringForward={canBringForward}
-            canPushBackward={canPushBackward}
-            canBringToFront={canBringToFront}
-            canSendToBack={canSendToBack}
-            canvasEmpty={canvasItems.length === 0}
-            isExporting={isExporting}
-            exportFormat={exportFormat}
-            exportResolution={exportResolution}
-            exportMenuOpen={exportMenuOpen}
-            toolsSheetOpen={toolsSheetOpen}
-            moreToolsOpen={moreToolsOpen}
-            sizeScaleId={sizeScaleId}
-            artboardFormatId={artboardFormatId}
-            artboardWidth={artboardW}
-            artboardHeight={artboardH}
-            snapEnabled={snapEnabled}
-            exportBgMode={exportBgMode}
-            exportBgColor={exportBgColor}
-            exportBgImageName={
-              exportBgImageSrc ? 'Image selected' : null
-            }
-            layoutPresets={LAYOUT_PRESETS.map((p) => ({
-              id: p.id,
-              label: p.label,
-            }))}
-            forwardTitle={forwardTitle}
-            backTitle={backTitle}
-            toFrontTitle={toFrontTitle}
-            toBackTitle={toBackTitle}
-            modHint={modHint}
-            duplicateTitle={formatChordForDisplay('mod+d', platform)}
-            deleteTitle={`${formatChordForDisplay('delete', platform)} / ${formatChordForDisplay('backspace', platform)}`}
-            layerHint={layerHint}
-            statusMessage={statusMessage}
-            onAlign={alignSelected}
-            onBringForward={bringForward}
-            onPushBackward={pushBackward}
-            onBringToFront={bringToFront}
-            onSendToBack={sendToBack}
+          <SelectionInspector
+            open={hasSelection}
+            canEditPhoto={selectionHasScreenImage}
+            photoZoom={primaryPhotoZoom}
+            onPhotoZoom={setSelectedScreenZoom}
+            onResetPhotoFraming={resetScreenFraming}
+            onUploadPhoto={requestScreenImage}
             onDuplicate={duplicateSelected}
             onDelete={deleteSelected}
-            onAddScreenImage={requestScreenImage}
-            onRemoveScreenImage={removeScreenImage}
-            onZoomScreenIn={() => nudgeScreenZoom(0.25)}
-            onZoomScreenOut={() => nudgeScreenZoom(-0.25)}
-            onResetScreenFraming={resetScreenFraming}
-            onSizeScale={changeSizeScale}
-            onArtboardFormat={changeArtboardFormat}
-            onToggleSnap={toggleSnap}
-            onApplyPreset={(id) => void applyLayoutPreset(id)}
-            onExportFormat={setExportFormat}
-            onExportResolution={setExportResolution}
-            onExportBgMode={setExportBgMode}
-            onExportBgColor={setExportBgColor}
-            onExportBgImage={(file) => {
-              if (exportBgImageSrc) URL.revokeObjectURL(exportBgImageSrc);
-              if (!file) {
-                setExportBgImageSrc(null);
-                return;
-              }
-              const url = URL.createObjectURL(file);
-              setExportBgImageSrc(url);
-              setExportBgMode('image');
-            }}
-            onToggleExportMenu={() => setExportMenuOpen((v) => !v)}
-            onDownload={() => void downloadCanvas()}
-            onToggleToolsSheet={() => setToolsSheetOpen((v) => !v)}
-            onToggleMoreTools={() => setMoreToolsOpen((v) => !v)}
-            onDismissLayerHint={() => setLayerHint(null)}
-          />
-
-          <WebsiteUrlBar
-            websiteUrl={websiteUrl}
-            onApply={applyWebsiteUrl}
-            onClear={clearWebsiteUrl}
+            onBringForward={bringForward}
+            onSendBackward={pushBackward}
+            canReorder={canBringForward || canPushBackward}
           />
 
           <div className="ms-stage">
-            {canvasItems.length === 0 && (
-              <div className="ms-stage-empty" aria-live="polite">
-                <p className="ms-stage-empty-title">
-                  Add a device from the library
-                </p>
-                <p className="ms-stage-empty-sub">
-                  Search or filter, then click or drag a device onto the
-                  artboard.
-                </p>
-                <button
-                  type="button"
-                  className="ms-btn ms-btn--primary ms-stage-empty-cta"
-                  onClick={() => {
-                    setLibraryCollapsed(false);
-                    setLibraryOpen(true);
-                  }}
-                >
-                  Open library
-                </button>
-              </div>
-            )}
+            {canvasItems.length === 0 ? (
+              <EmptyHero
+                busy={placingPath != null}
+                onShowOnDevices={(url) => void showOnDevices(url)}
+                onStartLayoutOnly={() => void applyLayoutPreset('apple-lineup')}
+                onBrowseDevices={openDevicesPicker}
+              />
+            ) : null}
 
             <div
               className="ms-view-zoom"
               role="group"
-              aria-label="Artboard zoom"
+              aria-label="Canvas zoom"
             >
               <button
                 type="button"
@@ -2050,6 +2005,62 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
           if (file) void applyScreenImageFile(file);
         }}
       />
+
+      {layerHint ? (
+        <div className="ms-hint-bar" role="status">
+          <span>{layerHint}</span>
+          <button
+            type="button"
+            className="ms-btn ms-btn--ghost"
+            onClick={() => setLayerHint(null)}
+          >
+            Dismiss
+          </button>
+        </div>
+      ) : null}
+
+      {statusMessage ? (
+        <div className="ms-toast" role="status">
+          {statusMessage}
+        </div>
+      ) : null}
+
+      <div className="ms-a11y-live" aria-live="polite">
+        {statusMessage}
+      </div>
+
+      <nav className="ms-mobile-dock" aria-label="Quick actions">
+        <button
+          type="button"
+          className="ms-mobile-dock__btn"
+          aria-label="Devices"
+          onClick={openDevicesPicker}
+        >
+          Devices
+        </button>
+        {canvasItems.length > 0 ? (
+          <button
+            type="button"
+            className="ms-mobile-dock__btn"
+            aria-label="Website URL"
+            onClick={() => {
+              document.getElementById('ms-url-command-input')?.focus();
+            }}
+          >
+            URL
+          </button>
+        ) : null}
+        {canvasItems.length > 0 ? (
+          <button
+            type="button"
+            className="ms-mobile-dock__btn ms-mobile-dock__btn--accent"
+            disabled={isExporting}
+            onClick={() => void downloadCanvas()}
+          >
+            Download
+          </button>
+        ) : null}
+      </nav>
 
       <KeybindingsPanel
         open={shortcutsOpen}

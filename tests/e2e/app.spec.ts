@@ -1,15 +1,19 @@
 import { test, expect, type Page } from '@playwright/test';
 
 async function ensureLibraryOpen(page: Page) {
-  const toggle = page.getByRole('banner').getByRole('button', {
-    name: /device library/i,
-  });
-  if (await toggle.count()) {
-    const label = await toggle.getAttribute('aria-label');
-    if (label?.toLowerCase().includes('show')) {
-      await toggle.click();
-    }
+  const library = page.getByRole('complementary', { name: /^Devices$/i });
+  if (await library.isVisible().catch(() => false)) {
+    return;
   }
+  const rail = page.getByRole('navigation', { name: /Studio tools/i });
+  const devices = rail.getByRole('button', { name: /Devices|Hide devices/i });
+  if (await devices.count()) {
+    await devices.click();
+    await expect(library).toBeVisible();
+    return;
+  }
+  await page.getByRole('button', { name: /^Browse devices$/i }).click();
+  await expect(library).toBeVisible();
 }
 
 async function placeFirstPhone(page: Page) {
@@ -17,7 +21,7 @@ async function placeFirstPhone(page: Page) {
   const search = page.getByRole('searchbox', { name: /Search devices/i });
   await search.fill('iPhone 11 Black');
   const device = page
-    .getByRole('complementary', { name: /Device library/i })
+    .getByRole('complementary', { name: /^Devices$/i })
     .getByRole('button', { name: /iPhone 11 Black/i })
     .first();
   await expect(device).toBeVisible({ timeout: 20_000 });
@@ -28,28 +32,37 @@ async function placeFirstPhone(page: Page) {
 }
 
 test.describe('Pixel Mockup app shell', () => {
-  test('loads brand chrome and library guidance', async ({ page }) => {
+  test('loads brand chrome and empty hero CTA', async ({ page }) => {
     await page.goto('/');
     await expect(page).toHaveTitle(/Pixel Mockup/i);
     await expect(page.getByRole('heading', { name: /Pixel Mockup/i })).toBeVisible();
-    await ensureLibraryOpen(page);
-    await expect(page.getByRole('complementary', { name: /Device library/i })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /Show on devices/i }),
+    ).toBeVisible();
+    await expect(
+      page.getByText(/Show your website on real devices/i),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('textbox', { name: /Website URL/i }).first(),
+    ).toBeVisible();
   });
 
-  test('opens and closes export menu after placing a device', async ({ page }) => {
+  test('opens download options after placing a device', async ({ page }) => {
     await page.goto('/');
     await placeFirstPhone(page);
-    const exportBtn = page.getByRole('button', { name: /^Export$/i }).first();
-    await expect(exportBtn).toBeEnabled({ timeout: 20_000 });
-    await exportBtn.click();
-    await expect(page.getByRole('dialog', { name: 'Export options' }).first()).toBeVisible();
+    const downloadBtn = page.getByRole('button', { name: /^Download$/i }).first();
+    await expect(downloadBtn).toBeEnabled({ timeout: 20_000 });
+    await page.getByRole('button', { name: /Download options/i }).first().click();
+    await expect(page.getByRole('menu').first()).toBeVisible();
     await page.keyboard.press('Escape');
-    await expect(page.getByRole('dialog', { name: 'Export options' })).toHaveCount(0);
   });
 
   test('opens shortcuts panel', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('banner').getByRole('button', { name: /Shortcuts/i }).click();
+    await page
+      .getByRole('navigation', { name: /Studio tools/i })
+      .getByRole('button', { name: /^Shortcuts$/i })
+      .click();
     await expect(page.getByRole('dialog', { name: /Keyboard shortcuts/i })).toBeVisible();
     await page.getByRole('button', { name: /^Close$/i }).click();
     await expect(page.getByRole('dialog', { name: /Keyboard shortcuts/i })).toHaveCount(0);
@@ -57,7 +70,9 @@ test.describe('Pixel Mockup app shell', () => {
 
   test('toggles theme', async ({ page }) => {
     await page.goto('/');
-    const theme = page.getByRole('banner').getByRole('button', { name: /mode active/i });
+    const theme = page
+      .getByRole('navigation', { name: /Studio tools/i })
+      .getByRole('button', { name: /Dark mode|Light mode/i });
     await theme.click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', /dark|light/);
   });
@@ -67,6 +82,9 @@ test.describe('Pixel Mockup app shell', () => {
     await page.goto('/');
     await expect(page.locator('#root')).toBeVisible();
     await expect(page.getByRole('heading', { name: /Pixel Mockup/i })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: /Show on devices|Start layout only/i }).first(),
+    ).toBeVisible();
   });
 
   test('handles offline interactions without crash', async ({ page, context }) => {

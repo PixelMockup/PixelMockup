@@ -12,13 +12,13 @@ import type { ExportBgMode } from './exportMockup';
 
 interface StudioToolbarProps {
   hasSelection: boolean;
-  /** Any selected device already has a screen image. */
   selectionHasScreenImage: boolean;
   canBringForward: boolean;
   canPushBackward: boolean;
   canBringToFront: boolean;
   canSendToBack: boolean;
   canvasEmpty: boolean;
+  screensFilled: boolean;
   isExporting: boolean;
   exportFormat: ExportFormat;
   exportResolution: ExportResolution;
@@ -59,6 +59,7 @@ interface StudioToolbarProps {
   onResetScreenFraming: () => void;
   onToggleSnap: () => void;
   onApplyPreset: (id: string) => void;
+  onStartAppleLineup: () => void;
   onExportFormat: (f: ExportFormat) => void;
   onExportResolution: (r: ExportResolution) => void;
   onExportBgMode: (m: ExportBgMode) => void;
@@ -69,21 +70,22 @@ interface StudioToolbarProps {
   onToggleToolsSheet: () => void;
   onToggleMoreTools: () => void;
   onDismissLayerHint: () => void;
+  onOpenDevices: () => void;
 }
 
-function exportPreviewLabel(
+function downloadPreviewLabel(
   artboardW: number,
   artboardH: number,
   resolution: ExportResolution,
 ): string {
   if (resolution === 'best') {
-    return `Best · artboard ${artboardW}×${artboardH} (scales up to source)`;
+    return `Best · canvas ${artboardW}×${artboardH}`;
   }
   const long = RESOLUTION_PRESETS[resolution];
   const scale = long / Math.max(artboardW, artboardH);
   const w = Math.round(artboardW * scale);
   const h = Math.round(artboardH * scale);
-  return `Export ≈ ${w}×${h}px`;
+  return `≈ ${w}×${h}px`;
 }
 
 export default function StudioToolbar({
@@ -94,6 +96,7 @@ export default function StudioToolbar({
   canBringToFront,
   canSendToBack,
   canvasEmpty,
+  screensFilled,
   isExporting,
   exportFormat,
   exportResolution,
@@ -134,6 +137,7 @@ export default function StudioToolbar({
   onResetScreenFraming,
   onToggleSnap,
   onApplyPreset,
+  onStartAppleLineup,
   onExportFormat,
   onExportResolution,
   onExportBgMode,
@@ -144,14 +148,81 @@ export default function StudioToolbar({
   onToggleToolsSheet,
   onToggleMoreTools,
   onDismissLayerHint,
+  onOpenDevices,
 }: StudioToolbarProps) {
-  const secondaryTools = (
-    <>
-      <div
-        className="ms-toolbar-group"
-        role="group"
-        aria-label="Canvas format"
+  const showPower = !canvasEmpty;
+
+  const editCluster = hasSelection ? (
+    <div className="ms-toolbar-group" role="group" aria-label="Edit selection">
+      <span className="ms-toolbar-label">Edit</span>
+      <button
+        type="button"
+        className="ms-btn"
+        onClick={onAddScreenImage}
+        title="Upload a photo onto selected devices"
       >
+        {selectionHasScreenImage ? 'Replace photo' : 'Upload photo'}
+      </button>
+      {selectionHasScreenImage ? (
+        <>
+          <button
+            type="button"
+            className="ms-btn"
+            onClick={onRemoveScreenImage}
+            title="Remove photo from selected devices"
+          >
+            Remove photo
+          </button>
+          <button
+            type="button"
+            className="ms-btn"
+            onClick={onZoomScreenOut}
+            title="Zoom out photo"
+            aria-label="Zoom out photo"
+          >
+            −
+          </button>
+          <button
+            type="button"
+            className="ms-btn"
+            onClick={onZoomScreenIn}
+            title="Zoom in photo"
+            aria-label="Zoom in photo"
+          >
+            +
+          </button>
+          <button
+            type="button"
+            className="ms-btn"
+            onClick={onResetScreenFraming}
+            title="Reset photo framing"
+          >
+            Reset
+          </button>
+        </>
+      ) : null}
+      <button
+        type="button"
+        className="ms-btn"
+        onClick={onDuplicate}
+        title={duplicateTitle}
+      >
+        Duplicate
+      </button>
+      <button
+        type="button"
+        className="ms-btn ms-btn--danger"
+        onClick={onDelete}
+        title={deleteTitle}
+      >
+        Delete
+      </button>
+    </div>
+  ) : null;
+
+  const moreToolsBody = (
+    <>
+      <div className="ms-toolbar-group" role="group" aria-label="Canvas format">
         <span className="ms-toolbar-label">Canvas</span>
         <label className="ms-field ms-field--inline ms-field--toolbar">
           <select
@@ -160,8 +231,8 @@ export default function StudioToolbar({
             onChange={(e) =>
               onArtboardFormat(e.target.value as ArtboardFormatId)
             }
-            title="Artboard aspect ratio"
-            aria-label="Artboard format"
+            title="Canvas aspect ratio"
+            aria-label="Canvas format"
           >
             {ARTBOARD_FORMATS.map((fmt) => (
               <option key={fmt.id} value={fmt.id} title={fmt.hint}>
@@ -175,8 +246,8 @@ export default function StudioToolbar({
       <div
         className="ms-toolbar-group"
         role="group"
-        aria-label="Device size on artboard"
-        title="Device size vs real-world mm scale (quality unchanged)"
+        aria-label="Device size"
+        title="Device size vs real-world mm scale"
       >
         <span className="ms-toolbar-label">Size</span>
         {SIZE_SCALE_PRESETS.map((preset) => (
@@ -186,28 +257,24 @@ export default function StudioToolbar({
             className="ms-btn"
             aria-pressed={sizeScaleId === preset.id}
             onClick={() => onSizeScale(preset.id)}
-            title={`${preset.label} size — Actual = real-world mm scale`}
+            title={`${preset.label} size`}
           >
             {preset.label}
           </button>
         ))}
       </div>
 
-      <div
-        className="ms-toolbar-group"
-        role="group"
-        aria-label="Snap guides"
-      >
-        <span className="ms-toolbar-label">Guides</span>
+      <div className="ms-toolbar-group" role="group" aria-label="Snap to edges">
+        <span className="ms-toolbar-label">Snap</span>
         <button
           type="button"
           className="ms-btn"
           aria-pressed={snapEnabled}
           onClick={onToggleSnap}
-          title="Snap to page guides (magenta) and other devices. Haptic feedback when supported by the browser."
-          aria-label="Toggle snap to guides"
+          title="Snap to edges and other devices"
+          aria-label="Toggle snap to edges"
         >
-          Snap
+          {snapEnabled ? 'On' : 'Off'}
         </button>
       </div>
 
@@ -218,8 +285,7 @@ export default function StudioToolbar({
           className="ms-btn"
           onClick={() => onAlign('center')}
           disabled={!hasSelection}
-          aria-label="Align horizontal center"
-          title="Center horizontally on artboard"
+          title="Center horizontally"
         >
           Center
         </button>
@@ -228,8 +294,7 @@ export default function StudioToolbar({
           className="ms-btn"
           onClick={() => onAlign('middle')}
           disabled={!hasSelection}
-          aria-label="Align vertical middle"
-          title="Middle vertically on artboard"
+          title="Middle vertically"
         >
           Middle
         </button>
@@ -238,77 +303,20 @@ export default function StudioToolbar({
           className="ms-btn"
           onClick={() => onAlign('bottom')}
           disabled={!hasSelection}
-          aria-label="Align to bottom"
-          title="Align to artboard bottom"
+          title="Align to bottom"
         >
           Bottom
         </button>
       </div>
 
-      <div className="ms-toolbar-group" role="group" aria-label="Arrange">
-        <span className="ms-toolbar-label">Arrange</span>
-      <div className="ms-toolbar-group" role="group" aria-label="Screen image">
-        <span className="ms-toolbar-label">Screen</span>
-        <button
-          type="button"
-          className="ms-btn"
-          onClick={onAddScreenImage}
-          disabled={!hasSelection}
-          title={
-            hasSelection
-              ? 'Show an image on the selected device screens'
-              : 'Select a device first'
-          }
-        >
-          {selectionHasScreenImage ? 'Replace image' : 'Add image'}
-        </button>
-        <button
-          type="button"
-          className="ms-btn"
-          onClick={onRemoveScreenImage}
-          disabled={!selectionHasScreenImage}
-          title="Remove screen image from selected devices"
-        >
-          Remove
-        </button>
-        <button
-          type="button"
-          className="ms-btn"
-          onClick={onZoomScreenOut}
-          disabled={!selectionHasScreenImage}
-          title="Zoom out screen image"
-          aria-label="Zoom out screen image"
-        >
-          −
-        </button>
-        <button
-          type="button"
-          className="ms-btn"
-          onClick={onZoomScreenIn}
-          disabled={!selectionHasScreenImage}
-          title="Zoom in screen image"
-          aria-label="Zoom in screen image"
-        >
-          +
-        </button>
-        <button
-          type="button"
-          className="ms-btn"
-          onClick={onResetScreenFraming}
-          disabled={!selectionHasScreenImage}
-          title="Reset screen image framing"
-        >
-          Reset
-        </button>
-      </div>
-
+      <div className="ms-toolbar-group" role="group" aria-label="Layer order">
+        <span className="ms-toolbar-label">Layers</span>
         <button
           type="button"
           className="ms-btn"
           onClick={onBringForward}
           disabled={!canBringForward}
           title={forwardTitle}
-          aria-label="Bring forward"
         >
           Forward
         </button>
@@ -318,7 +326,6 @@ export default function StudioToolbar({
           onClick={onPushBackward}
           disabled={!canPushBackward}
           title={backTitle}
-          aria-label="Send backward"
         >
           Back
         </button>
@@ -328,7 +335,6 @@ export default function StudioToolbar({
           onClick={onBringToFront}
           disabled={!canBringToFront}
           title={toFrontTitle}
-          aria-label="Bring to front"
         >
           Front
         </button>
@@ -338,75 +344,78 @@ export default function StudioToolbar({
           onClick={onSendToBack}
           disabled={!canSendToBack}
           title={toBackTitle}
-          aria-label="Send to back"
         >
           To back
-        </button>
-        <button
-          type="button"
-          className="ms-btn"
-          onClick={onDuplicate}
-          disabled={!hasSelection}
-          title={duplicateTitle}
-        >
-          Duplicate
-        </button>
-        <button
-          type="button"
-          className="ms-btn ms-btn--danger"
-          onClick={onDelete}
-          disabled={!hasSelection}
-          title={deleteTitle}
-        >
-          Delete
         </button>
       </div>
     </>
   );
 
-  const presetsGroup = (
-    <div
-      className="ms-toolbar-group"
-      role="group"
-      aria-label="Layout presets"
-    >
-      <span className="ms-toolbar-label">Presets</span>
-      {layoutPresets.map((preset) => (
-        <button
-          key={preset.id}
-          type="button"
-          className="ms-btn"
-          onClick={() => onApplyPreset(preset.id)}
-          title={`Apply ${preset.label} layout (replaces artboard)`}
+  const layoutsMenu = showPower ? (
+    <div className="ms-toolbar-group" role="group" aria-label="Layouts">
+      <span className="ms-toolbar-label">Layouts</span>
+      <label className="ms-field ms-field--inline ms-field--toolbar">
+        <select
+          className="ms-select"
+          defaultValue=""
+          aria-label="Apply a layout"
+          onChange={(e) => {
+            const id = e.target.value;
+            if (id) onApplyPreset(id);
+            e.target.value = '';
+          }}
         >
-          {preset.label}
-        </button>
-      ))}
+          <option value="" disabled>
+            Choose layout…
+          </option>
+          {layoutPresets.map((preset) => (
+            <option key={preset.id} value={preset.id}>
+              {preset.label}
+            </option>
+          ))}
+        </select>
+      </label>
     </div>
-  );
+  ) : null;
 
-  const exportBlock = (
+  const downloadBlock = (
     <div className="ms-toolbar-group ms-toolbar-group--export">
       <div className="ms-export-wrap">
         <button
           type="button"
-          className="ms-btn ms-btn--primary"
+          className={[
+            'ms-btn',
+            'ms-btn--primary',
+            screensFilled && !canvasEmpty ? 'ms-btn--download-ready' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+          onClick={onDownload}
+          disabled={canvasEmpty || isExporting}
+          title={modHint}
+        >
+          {isExporting ? 'Downloading…' : 'Download'}
+        </button>
+        <button
+          type="button"
+          className="ms-btn ms-btn--ghost ms-download-options"
           aria-expanded={exportMenuOpen}
           aria-haspopup="dialog"
           onClick={onToggleExportMenu}
           disabled={canvasEmpty || isExporting}
-          title={modHint}
+          title="Download options"
+          aria-label="Download options"
         >
-          {isExporting ? 'Exporting…' : 'Export'}
+          ⋯
         </button>
         {exportMenuOpen && (
           <div
             className="ms-export-menu"
             role="dialog"
-            aria-label="Export options"
+            aria-label="Download options"
           >
             <p className="ms-export-preview">
-              {exportPreviewLabel(
+              {downloadPreviewLabel(
                 artboardWidth,
                 artboardHeight,
                 exportResolution,
@@ -448,7 +457,6 @@ export default function StudioToolbar({
                   className="ms-btn"
                   aria-pressed={exportBgMode === 'transparent'}
                   onClick={() => onExportBgMode('transparent')}
-                  title="Transparent (PNG); JPG uses color"
                 >
                   None
                 </button>
@@ -479,7 +487,7 @@ export default function StudioToolbar({
                     className="ms-color"
                     value={exportBgColor}
                     onChange={(e) => onExportBgColor(e.target.value)}
-                    aria-label="Export background color"
+                    aria-label="Download background color"
                   />
                 </label>
               )}
@@ -499,9 +507,7 @@ export default function StudioToolbar({
                     />
                   </label>
                   {exportBgImageName && (
-                    <span className="ms-export-bg-file">
-                      {exportBgImageName}
-                    </span>
+                    <span className="ms-export-bg-file">{exportBgImageName}</span>
                   )}
                   {exportBgImageName && (
                     <button
@@ -515,62 +521,74 @@ export default function StudioToolbar({
                 </div>
               )}
             </fieldset>
-            <button
-              type="button"
-              className="ms-btn ms-btn--primary ms-export-download"
-              onClick={onDownload}
-              disabled={canvasEmpty || isExporting}
-              title={modHint}
-            >
-              {isExporting ? 'Exporting…' : 'Download'}
-            </button>
           </div>
         )}
       </div>
     </div>
   );
 
-  const primaryDesktop = (
-    <>
-      {presetsGroup}
-      <button
-        type="button"
-        className="ms-btn"
-        aria-expanded={moreToolsOpen}
-        onClick={onToggleMoreTools}
-      >
-        More
-      </button>
-    </>
-  );
-
   return (
     <>
       <div className="ms-toolbar ms-toolbar--desktop">
-        {primaryDesktop}
-        {moreToolsOpen && (
+        {canvasEmpty ? (
+          <button
+            type="button"
+            className="ms-btn"
+            onClick={onOpenDevices}
+            title="Browse devices"
+          >
+            Devices
+          </button>
+        ) : (
+          <>
+            {layoutsMenu}
+            {editCluster}
+            <button
+              type="button"
+              className="ms-btn"
+              aria-expanded={moreToolsOpen}
+              onClick={onToggleMoreTools}
+            >
+              More tools
+            </button>
+          </>
+        )}
+        {moreToolsOpen && showPower && (
           <div className="ms-toolbar-more" role="region" aria-label="More tools">
-            {secondaryTools}
+            {moreToolsBody}
           </div>
         )}
         <div className="ms-toolbar-spacer" />
-        {exportBlock}
+        {downloadBlock}
       </div>
 
       <div className="ms-toolbar ms-toolbar--mobile">
-        <button
-          type="button"
-          className="ms-btn"
-          aria-expanded={toolsSheetOpen}
-          onClick={onToggleToolsSheet}
-        >
-          Tools
+        <button type="button" className="ms-btn" onClick={onOpenDevices}>
+          Devices
         </button>
+        {canvasEmpty ? (
+          <button
+            type="button"
+            className="ms-btn ms-btn--primary"
+            onClick={onStartAppleLineup}
+          >
+            Start layout
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="ms-btn"
+            aria-expanded={toolsSheetOpen}
+            onClick={onToggleToolsSheet}
+          >
+            Tools
+          </button>
+        )}
         <div className="ms-toolbar-spacer" />
-        {exportBlock}
+        {downloadBlock}
       </div>
 
-      {toolsSheetOpen && (
+      {toolsSheetOpen && showPower && (
         <div className="ms-tools-sheet" role="dialog" aria-label="Canvas tools">
           <div className="ms-tools-sheet-header">
             <span>Tools</span>
@@ -584,8 +602,9 @@ export default function StudioToolbar({
             </button>
           </div>
           <div className="ms-tools-sheet-body">
-            {presetsGroup}
-            {secondaryTools}
+            {layoutsMenu}
+            {editCluster}
+            {moreToolsBody}
           </div>
         </div>
       )}

@@ -1,13 +1,13 @@
 :root {
   --ms-ink: #1b2430;
   --ms-muted: #5b6675;
-  --ms-bg: #eef2f6;
+  --ms-bg: #e8eef4;
   --ms-bg-wash: radial-gradient(
     120% 80% at 10% -10%,
-    #e4ecf5 0%,
+    #dfe8f2 0%,
     transparent 55%
   ),
-    radial-gradient(90% 60% at 100% 0%, #dce8e6 0%, transparent 45%),
+    radial-gradient(90% 60% at 100% 0%, #d8e6e3 0%, transparent 45%),
     var(--ms-bg);
   --ms-surface: #f7f9fc;
   --ms-surface-raised: #ffffff;
@@ -20,18 +20,27 @@
   --ms-snap-page: #e20074;
   --ms-danger: #b91c1c;
   --ms-danger-soft: rgba(185, 28, 28, 0.1);
-  --ms-stage: #c8d0db;
-  --ms-stage-inner: #d5dde8;
+  --ms-stage: #c4ccd8;
+  --ms-stage-inner: #d2dae6;
   --ms-checker-a: #e8ecf1;
   --ms-checker-b: #f4f6f9;
   --ms-shadow: 0 1px 2px rgba(27, 36, 48, 0.06),
     0 8px 24px rgba(27, 36, 48, 0.08);
   --ms-overlay: rgba(27, 36, 48, 0.4);
   --ms-focus: 0 0 0 2px var(--ms-surface-raised), 0 0 0 4px var(--ms-accent);
-  --ms-radius: 10px;
-  --ms-radius-sm: 6px;
-  --ms-topbar-h: 52px;
-  --ms-library-w: 520px;
+  --ms-radius: 12px;
+  --ms-radius-sm: 8px;
+  --ms-space-1: 4px;
+  --ms-space-2: 8px;
+  --ms-space-3: 12px;
+  --ms-space-4: 16px;
+  --ms-space-5: 20px;
+  --ms-space-6: 24px;
+  --ms-space-7: 28px;
+  --ms-space-8: 32px;
+  --ms-topbar-h: 48px;
+  --ms-rail-w: 48px;
+  --ms-library-w: 320px;
   --ms-font: 'Outfit', system-ui, sans-serif;
   --ms-display: 'Fraunces', Georgia, serif;
   --ms-mono: ui-monospace, 'SF Mono', Consolas, monospace;
@@ -45,7 +54,7 @@
   font-size: 15px;
   line-height: 1.45;
   color: var(--ms-ink);
-  background: var(--ms-bg);
+  background: var(--ms-stage);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -98,38 +107,34 @@ body {
 }
 
 #root {
-  width: 100%;
-  max-width: 100%;
-  margin: 0;
-  min-height: 100svh;
-  height: 100svh;
-  height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-h1,
-h2,
-h3 {
-  font-family: var(--ms-font);
-  font-weight: 600;
-  color: var(--ms-ink);
-  margin: 0;
+  height: 100%;
+  min-height: 0;
 }
 
 button,
 input,
-select {
+select,
+textarea {
   font: inherit;
   color: inherit;
 }
 
-button:focus-visible,
-input:focus-visible,
-select:focus-visible,
-.ms-chip:focus-visible,
-.ms-device-tile:focus-visible {
+button {
+  cursor: pointer;
+}
+
+:focus-visible {
   outline: none;
   box-shadow: var(--ms-focus);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

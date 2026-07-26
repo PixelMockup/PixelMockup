@@ -11,7 +11,10 @@ test('multiple tabs stay independent without crashing', async ({ browser }) => {
   await expect(pageA.getByRole('heading', { name: /Pixel Mockup/i })).toBeVisible();
   await expect(pageB.getByRole('heading', { name: /Pixel Mockup/i })).toBeVisible();
 
-  await pageA.getByRole('banner').getByRole('button', { name: /mode active/i }).click();
+  await pageA
+    .getByRole('navigation', { name: /Studio tools/i })
+    .getByRole('button', { name: /Dark mode|Light mode/i })
+    .click();
   await expect(pageA.locator('html')).toHaveAttribute('data-theme', /dark|light/);
   await expect(pageB.locator('#root')).toBeVisible();
 

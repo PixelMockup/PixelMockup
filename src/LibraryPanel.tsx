@@ -1,3 +1,4 @@
+import { useState, type RefObject } from 'react';
 import type { DeviceItem } from './App';
 import { formatDeviceDisplayName } from './deviceMeta';
 
@@ -23,6 +24,7 @@ interface LibraryPanelProps {
   filteredLibrary: { category: string; items: DeviceItem[] }[];
   placingPath: string | null;
   searchIsGlobal: boolean;
+  searchInputRef?: RefObject<HTMLInputElement | null>;
   onClose: () => void;
   onCategoryChange: (category: string) => void;
   onBrandAll: () => void;
@@ -35,6 +37,27 @@ interface LibraryPanelProps {
   onResizePointerDown: (e: React.PointerEvent) => void;
   onResizePointerMove: (e: React.PointerEvent) => void;
   onResizePointerUp: () => void;
+}
+
+function FilterChip({
+  label,
+  active,
+  onClick,
+}: {
+  label: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      className="ms-chip"
+      onClick={onClick}
+      aria-pressed={active}
+    >
+      {label}
+    </button>
+  );
 }
 
 export default function LibraryPanel({
@@ -51,6 +74,7 @@ export default function LibraryPanel({
   filteredLibrary,
   placingPath,
   searchIsGlobal,
+  searchInputRef,
   onClose,
   onCategoryChange,
   onBrandAll,
@@ -64,6 +88,7 @@ export default function LibraryPanel({
   onResizePointerMove,
   onResizePointerUp,
 }: LibraryPanelProps) {
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const preview = availableProducts.slice(0, PRODUCT_CHIP_PREVIEW);
   const hiddenCount = Math.max(0, availableProducts.length - PRODUCT_CHIP_PREVIEW);
   const showMore = availableProducts.length > PRODUCT_CHIP_PREVIEW;
@@ -74,19 +99,31 @@ export default function LibraryPanel({
     <aside
       id="ms-device-library"
       className={`ms-library${open ? ' is-open' : ''}`}
-      aria-label="Device library"
+      aria-label="Devices"
       style={{ width }}
     >
       <div className="ms-library-header">
-        <h2 className="ms-library-title">Device Library</h2>
+        <h2 className="ms-library-title">Devices</h2>
         <button
           type="button"
           className="ms-btn ms-btn--ghost ms-library-close"
           onClick={onClose}
-          aria-label="Close library"
+          aria-label="Close devices"
         >
           Close
         </button>
+      </div>
+
+      <div className="ms-filter-block ms-filter-block--search">
+        <input
+          ref={searchInputRef}
+          className="ms-search"
+          type="search"
+          placeholder="Search devices (e.g. iphone)…"
+          value={searchQuery}
+          onChange={(e) => onSearchChange(e.target.value)}
+          aria-label="Search devices"
+        />
       </div>
 
       {categories.length > 0 && (
@@ -109,72 +146,88 @@ export default function LibraryPanel({
       )}
 
       <div className="ms-filter-block">
-        <div className="ms-filter-label">Brand</div>
-        <div className="ms-chip-row">
-          <FilterChip label="All" active={brandAll} onClick={onBrandAll} />
-          {availableBrands.map((brand) => (
-            <FilterChip
-              key={brand}
-              label={brand}
-              active={!brandAll && selectedBrand === brand}
-              onClick={() => onSelectBrand(brand)}
-            />
-          ))}
-        </div>
+        <button
+          type="button"
+          className="ms-btn ms-btn--ghost ms-filters-toggle"
+          aria-expanded={filtersOpen}
+          onClick={() => setFiltersOpen((v) => !v)}
+        >
+          {filtersOpen ? 'Hide filters' : 'Filters'}
+          {hasActiveFilters && !filtersOpen ? ' · on' : ''}
+        </button>
+        {hasActiveFilters && (
+          <button
+            type="button"
+            className="ms-btn ms-btn--ghost"
+            onClick={onClearFilters}
+          >
+            Clear
+          </button>
+        )}
       </div>
 
-      <div className="ms-filter-block ms-filter-block--products">
-        <div className="ms-filter-label">Product</div>
-        <div className="ms-chip-row">
-          <FilterChip
-            label="All"
-            active={selectedProductValid == null}
-            onClick={onProductAll}
-          />
-          {preview.map((product) => (
-            <FilterChip
-              key={product}
-              label={product}
-              active={selectedProductValid === product}
-              onClick={() => onSelectProduct(product)}
-            />
-          ))}
-          {showMore && (
-            <details className="ms-product-more">
-              <summary className="ms-chip ms-chip--more">
-                More… (+{hiddenCount})
-              </summary>
-              <div
-                className="ms-product-popover"
-                role="dialog"
-                aria-label="More products"
-              >
-                <div className="ms-chip-row">
-                  {availableProducts.slice(PRODUCT_CHIP_PREVIEW).map((product) => (
-                    <FilterChip
-                      key={product}
-                      label={product}
-                      active={selectedProductValid === product}
-                      onClick={() => onSelectProduct(product)}
-                    />
-                  ))}
-                </div>
-              </div>
-            </details>
-          )}
-        </div>
-      </div>
+      {filtersOpen && (
+        <>
+          <div className="ms-filter-block">
+            <div className="ms-filter-label">Brand</div>
+            <div className="ms-chip-row">
+              <FilterChip label="All" active={brandAll} onClick={onBrandAll} />
+              {availableBrands.map((brand) => (
+                <FilterChip
+                  key={brand}
+                  label={brand}
+                  active={!brandAll && selectedBrand === brand}
+                  onClick={() => onSelectBrand(brand)}
+                />
+              ))}
+            </div>
+          </div>
 
-      <div className="ms-filter-block">
-        <input
-          className="ms-search"
-          type="search"
-          placeholder="Search all devices (e.g. macbook air)…"
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          aria-label="Search devices"
-        />
-      </div>
+          <div className="ms-filter-block ms-filter-block--products">
+            <div className="ms-filter-label">Product</div>
+            <div className="ms-chip-row">
+              <FilterChip
+                label="All"
+                active={selectedProductValid == null}
+                onClick={onProductAll}
+              />
+              {preview.map((product) => (
+                <FilterChip
+                  key={product}
+                  label={product}
+                  active={selectedProductValid === product}
+                  onClick={() => onSelectProduct(product)}
+                />
+              ))}
+              {showMore && (
+                <details className="ms-product-more">
+                  <summary className="ms-chip ms-chip--more">
+                    More… (+{hiddenCount})
+                  </summary>
+                  <div
+                    className="ms-product-popover"
+                    role="dialog"
+                    aria-label="More products"
+                  >
+                    <div className="ms-chip-row">
+                      {availableProducts
+                        .slice(PRODUCT_CHIP_PREVIEW)
+                        .map((product) => (
+                          <FilterChip
+                            key={product}
+                            label={product}
+                            active={selectedProductValid === product}
+                            onClick={() => onSelectProduct(product)}
+                          />
+                        ))}
+                    </div>
+                  </div>
+                </details>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       <div className="ms-library-results">
         {filteredLibrary.length === 0 ? (
@@ -206,7 +259,7 @@ export default function LibraryPanel({
                       disabled={placingPath != null}
                       aria-busy={placing}
                       aria-label={label}
-                      title={`${label} — click or drag to artboard`}
+                      title={`${label} — click or drag onto the canvas`}
                       draggable={placingPath == null}
                       onDragStart={(e) => {
                         e.dataTransfer.setData(LIBRARY_DRAG_MIME, item.path);
@@ -230,7 +283,7 @@ export default function LibraryPanel({
         className="ms-library-resizer"
         role="separator"
         aria-orientation="vertical"
-        aria-label="Resize device library"
+        aria-label="Resize devices panel"
         aria-valuemin={LIBRARY_W_MIN}
         aria-valuemax={LIBRARY_W_MAX}
         aria-valuenow={Math.round(width)}
@@ -242,26 +295,5 @@ export default function LibraryPanel({
         <span className="ms-library-resizer-grip" aria-hidden="true" />
       </div>
     </aside>
-  );
-}
-
-function FilterChip({
-  label,
-  active,
-  onClick,
-}: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      className="ms-chip"
-      onClick={onClick}
-      aria-pressed={active}
-    >
-      {label}
-    </button>
   );
 }
