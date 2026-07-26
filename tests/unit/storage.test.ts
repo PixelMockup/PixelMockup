@@ -25,12 +25,15 @@ describe('storageGet / storageSet', () => {
     expect(localStorage.getItem('pixelMockup.theme')).toBe('light');
   });
 
-  it('does not migrate disallowed legacy theme values', () => {
+  it('does not migrate or return disallowed legacy theme values', () => {
     localStorage.setItem('mockupStudio.theme', '<script>alert(1)</script>');
-    expect(storageGet('pixelMockup.theme', 'mockupStudio.theme')).toBe(
-      '<script>alert(1)</script>',
-    );
+    expect(storageGet('pixelMockup.theme', 'mockupStudio.theme')).toBeNull();
     expect(localStorage.getItem('pixelMockup.theme')).toBeNull();
+  });
+
+  it('returns null for poisoned values already under the new key', () => {
+    localStorage.setItem('pixelMockup.theme', 'neon');
+    expect(storageGet('pixelMockup.theme', 'mockupStudio.theme')).toBeNull();
   });
 
   it('prefers new key over legacy', () => {
@@ -39,21 +42,20 @@ describe('storageGet / storageSet', () => {
     expect(storageGet('pixelMockup.theme', 'mockupStudio.theme')).toBe('dark');
   });
 
-  it('stores empty string values for unknown pixelMockup keys', () => {
+  it('stores empty string values for unknown pixelMockup keys are rejected', () => {
     storageSet('pixelMockup.x', '');
-    expect(localStorage.getItem('pixelMockup.x')).toBe('');
-    expect(storageGet('pixelMockup.x', 'legacy.x')).toBe('');
+    expect(localStorage.getItem('pixelMockup.x')).toBeNull();
   });
 
-  it('stores unicode and emoji for unknown pixelMockup keys', () => {
+  it('rejects unicode values for unknown pixelMockup keys', () => {
     storageSet('pixelMockup.x', 'こんにちは🎨');
-    expect(storageGet('pixelMockup.x', 'legacy.x')).toBe('こんにちは🎨');
+    expect(localStorage.getItem('pixelMockup.x')).toBeNull();
   });
 
-  it('stores very long values for unknown pixelMockup keys', () => {
+  it('rejects long values for unknown pixelMockup keys', () => {
     const long = 'a'.repeat(50_000);
     storageSet('pixelMockup.x', long);
-    expect(storageGet('pixelMockup.x', 'legacy.x')).toBe(long);
+    expect(localStorage.getItem('pixelMockup.x')).toBeNull();
   });
 
   it('rejects disallowed theme values', () => {

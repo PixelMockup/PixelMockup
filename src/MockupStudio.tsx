@@ -225,6 +225,42 @@ function readFileAsDataUrl(file: File): Promise<string> {
   });
 }
 
+const ALLOWED_IMAGE_TYPES = ['image/png', 'image/jpeg', 'image/webp'] as const;
+
+/** True when the first bytes match PNG / JPEG / WebP signatures. */
+async function looksLikeAllowedImage(file: File): Promise<boolean> {
+  const header = new Uint8Array(await file.slice(0, 12).arrayBuffer());
+  if (header.length < 3) return false;
+  // PNG: 89 50 4E 47
+  if (
+    header[0] === 0x89 &&
+    header[1] === 0x50 &&
+    header[2] === 0x4e &&
+    header[3] === 0x47
+  ) {
+    return true;
+  }
+  // JPEG: FF D8 FF
+  if (header[0] === 0xff && header[1] === 0xd8 && header[2] === 0xff) {
+    return true;
+  }
+  // WebP: RIFF....WEBP
+  if (
+    header.length >= 12 &&
+    header[0] === 0x52 &&
+    header[1] === 0x49 &&
+    header[2] === 0x46 &&
+    header[3] === 0x46 &&
+    header[8] === 0x57 &&
+    header[9] === 0x45 &&
+    header[10] === 0x42 &&
+    header[11] === 0x50
+  ) {
+    return true;
+  }
+  return false;
+}
+
 function clientToLogical(
   clientX: number,
   clientY: number,
@@ -1087,12 +1123,16 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
   const applyScreenImageFile = async (file: File) => {
     const ids = selectedIdsRef.current;
     if (ids.length === 0) return;
-    if (!file.type.startsWith('image/')) {
-      announce('Choose an image file');
+    if (!(ALLOWED_IMAGE_TYPES as readonly string[]).includes(file.type)) {
+      announce('Choose a PNG, JPEG, or WebP image');
       return;
     }
     if (file.size > 25 * 1024 * 1024) {
       announce('Image too large (max 25 MB)');
+      return;
+    }
+    if (!(await looksLikeAllowedImage(file))) {
+      announce('File contents are not a valid PNG, JPEG, or WebP image');
       return;
     }
     let dataUrl: string;
@@ -1992,7 +2032,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
       <input
         ref={screenFileInputRef}
         type="file"
-        accept="image/*"
+        accept="image/png,image/jpeg,image/webp"
         className="ms-screen-file-input"
         aria-label="Choose a screen image for selected devices"
         tabIndex={-1}

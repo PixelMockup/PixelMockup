@@ -1,15 +1,20 @@
 import { existsSync } from 'node:fs';
+import { lookup } from 'node:dns/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Plugin } from 'vite';
 import { chromium, type Browser } from 'playwright';
 import { CAPTURE_WEBSITE_PATH } from '../src/capturePath.js';
-import { normalizeWebsiteUrl } from '../src/websiteUrl.js';
+import { isBlockedAddress, normalizeWebsiteUrl } from '../src/websiteUrl.js';
 
 type CaptureBody = {
   url?: string;
   width?: number;
   height?: number;
 };
+
+const MAX_VIEWPORT = 4096;
+const MAX_BODY_BYTES = 64 * 1024;
+const MAX_IN_FLIGHT = 2;
 
 /** Common Google Chrome / Chromium locations across distros. */
 const CHROME_CANDIDATES = [
@@ -28,18 +33,29 @@ function resolveChromePath(): string | null {
   return null;
 }
 
+function allowPrivateHosts(): boolean {
+  return process.env.PIXEL_MOCKUP_ALLOW_PRIVATE_HOSTS === '1';
+}
+
+function disableSandbox(): boolean {
+  return process.env.PIXEL_MOCKUP_DISABLE_SANDBOX === '1';
+}
+
 let browserPromise: Promise<Browser> | null = null;
+let inFlight = 0;
 
 async function getBrowser(): Promise<Browser> {
   if (!browserPromise) {
     const executablePath = resolveChromePath();
+    const args = ['--disable-dev-shm-usage'];
+    if (disableSandbox()) args.unshift('--no-sandbox');
     browserPromise = chromium
       .launch({
         headless: true,
         // Prefer the system browser (Fedora RPM etc.); fall back to any
         // Playwright-managed Chromium if no system install is found.
         ...(executablePath ? { executablePath } : {}),
-        args: ['--no-sandbox', '--disable-dev-shm-usage'],
+        args,
       })
       .catch((err) => {
         // Reset so a later request can retry (e.g. after installing Chrome).
@@ -55,6 +71,25 @@ async function getBrowser(): Promise<Browser> {
   return browserPromise;
 }
 
+async function assertPublicHost(url: string): Promise<void> {
+  if (allowPrivateHosts()) return;
+  const { hostname } = new URL(url);
+  if (isBlockedAddress(hostname)) {
+    throw new Error('blocked host');
+  }
+  const addrs = await lookup(hostname, { all: true });
+  if (addrs.length === 0 || addrs.some((a) => isBlockedAddress(a.address))) {
+    throw new Error('blocked host');
+  }
+}
+
+function clampViewport(n: number): number | null {
+  if (!Number.isFinite(n)) return null;
+  const rounded = Math.round(n);
+  if (rounded < 1 || rounded > MAX_VIEWPORT) return null;
+  return rounded;
+}
+
 async function captureWebsite(
   url: string,
   width: number,
@@ -64,10 +99,7 @@ async function captureWebsite(
   // Fresh context with a desktop UA so responsive shells (sidebars) match a
   // real laptop browser instead of headless-Chrome defaults.
   const context = await browser.newContext({
-    viewport: {
-      width: Math.max(1, Math.round(width)),
-      height: Math.max(1, Math.round(height)),
-    },
+    viewport: { width, height },
     deviceScaleFactor: 1,
     isMobile: false,
     hasTouch: false,
@@ -76,6 +108,21 @@ async function captureWebsite(
   });
   const page = await context.newPage();
   try {
+    // Re-check every request (including redirects) against the SSRF denylist.
+    await page.route('**/*', async (route) => {
+      const reqUrl = route.request().url();
+      if (!/^https?:/i.test(reqUrl)) {
+        await route.continue();
+        return;
+      }
+      try {
+        await assertPublicHost(reqUrl);
+        await route.continue();
+      } catch {
+        await route.abort('blockedbyclient');
+      }
+    });
+
     // networkidle can hang on sites with long-poll/analytics; fall back to
     // domcontentloaded so SPAs still render, then give the app time to paint.
     try {
@@ -83,7 +130,9 @@ async function captureWebsite(
     } catch {
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 25_000 });
     }
-    // Let fonts / late layout settle, then best-effort dismiss a modal/tour.
+    // Final URL must still be public (covers edge cases after navigation).
+    await assertPublicHost(page.url());
+    // Let fonts / late layout settle, then best-effort dismiss a modal/cookie.
     await page.waitForTimeout(900);
     await page.keyboard.press('Escape').catch(() => undefined);
     await page.waitForTimeout(250);
@@ -96,8 +145,28 @@ async function captureWebsite(
 function readJsonBody(req: IncomingMessage): Promise<CaptureBody> {
   return new Promise((resolve, reject) => {
     const chunks: Buffer[] = [];
-    req.on('data', (c) => chunks.push(Buffer.isBuffer(c) ? c : Buffer.from(c)));
+    let total = 0;
+    let settled = false;
+
+    const fail = (err: Error) => {
+      if (settled) return;
+      settled = true;
+      req.destroy();
+      reject(err);
+    };
+
+    req.on('data', (c) => {
+      const buf = Buffer.isBuffer(c) ? c : Buffer.from(c);
+      total += buf.length;
+      if (total > MAX_BODY_BYTES) {
+        fail(new Error('body too large'));
+        return;
+      }
+      chunks.push(buf);
+    });
     req.on('end', () => {
+      if (settled) return;
+      settled = true;
       try {
         const raw = Buffer.concat(chunks).toString('utf8') || '{}';
         resolve(JSON.parse(raw) as CaptureBody);
@@ -107,6 +176,29 @@ function readJsonBody(req: IncomingMessage): Promise<CaptureBody> {
     });
     req.on('error', reject);
   });
+}
+
+function respondJson(
+  res: ServerResponse,
+  status: number,
+  body: Record<string, unknown>,
+): void {
+  res.statusCode = status;
+  res.setHeader('Content-Type', 'application/json');
+  res.end(JSON.stringify(body));
+}
+
+function isSameOrigin(req: IncomingMessage): boolean {
+  const origin = req.headers.origin;
+  if (!origin) return false;
+  const host = req.headers.host;
+  if (!host) return false;
+  try {
+    const o = new URL(origin);
+    return o.host === host;
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -130,37 +222,52 @@ export function websiteCapturePlugin(): Plugin {
         next();
         return;
       }
+
+      const contentType = req.headers['content-type'] ?? '';
+      if (!contentType.toLowerCase().startsWith('application/json')) {
+        respondJson(res, 415, { error: 'application/json required' });
+        return;
+      }
+      if (!isSameOrigin(req)) {
+        respondJson(res, 403, { error: 'forbidden origin' });
+        return;
+      }
+      if (inFlight >= MAX_IN_FLIGHT) {
+        respondJson(res, 429, { error: 'too many captures' });
+        return;
+      }
+
+      inFlight += 1;
       try {
         const body = await readJsonBody(req);
         const rawUrl = typeof body.url === 'string' ? body.url : '';
         const url = normalizeWebsiteUrl(rawUrl);
-        const width = Number(body.width);
-        const height = Number(body.height);
+        const width = clampViewport(Number(body.width));
+        const height = clampViewport(Number(body.height));
         if (!url) {
-          res.statusCode = 400;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ error: 'invalid or non-http(s) url' }));
+          respondJson(res, 400, { error: 'invalid or non-http(s) url' });
           return;
         }
-        if (!Number.isFinite(width) || !Number.isFinite(height)) {
-          res.statusCode = 400;
-          res.setHeader('Content-Type', 'application/json');
-          res.end(JSON.stringify({ error: 'width and height required' }));
+        if (width == null || height == null) {
+          respondJson(res, 400, {
+            error: `width and height required (1–${MAX_VIEWPORT})`,
+          });
+          return;
+        }
+        try {
+          await assertPublicHost(url);
+        } catch {
+          respondJson(res, 400, { error: 'blocked host' });
           return;
         }
         const png = await captureWebsite(url, width, height);
         const dataUrl = `data:image/png;base64,${png.toString('base64')}`;
-        res.statusCode = 200;
-        res.setHeader('Content-Type', 'application/json');
-        res.end(JSON.stringify({ dataUrl }));
+        respondJson(res, 200, { dataUrl });
       } catch (err) {
-        res.statusCode = 500;
-        res.setHeader('Content-Type', 'application/json');
-        res.end(
-          JSON.stringify({
-            error: err instanceof Error ? err.message : 'capture failed',
-          }),
-        );
+        console.error('[website-capture]', err);
+        respondJson(res, 500, { error: 'capture failed' });
+      } finally {
+        inFlight -= 1;
       }
     });
   };

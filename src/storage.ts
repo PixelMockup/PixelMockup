@@ -135,25 +135,26 @@ export function validateStorageValue(key: string, value: string): string | null 
     case 'pixelMockup.keybindings.v1':
       return validateKeybindingsJson(raw);
     default:
-      // Unknown pixelMockup.* / mockupStudio.* keys: length-capped + control-stripped only.
-      return raw;
+      // Deny-by-default: unknown keys under the prefix are not persisted.
+      return null;
   }
 }
 
 export function storageGet(newKey: string, legacyKey: string): string | null {
   const next = localStorage.getItem(newKey);
-  if (next != null) return next;
+  if (next != null) {
+    return validateStorageValue(newKey, next);
+  }
   const legacy = localStorage.getItem(legacyKey);
   if (legacy != null) {
+    const safe = validateStorageValue(newKey, legacy);
+    if (safe == null) return null;
     try {
-      const safe = validateStorageValue(newKey, legacy);
-      if (safe != null) {
-        localStorage.setItem(newKey, safe);
-      }
+      localStorage.setItem(newKey, safe);
     } catch {
       /* ignore quota */
     }
-    return legacy;
+    return safe;
   }
   return null;
 }

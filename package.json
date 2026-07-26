@@ -16,6 +16,7 @@
     "test:ui": "vitest --ui",
     "test:a11y": "vitest run tests/accessibility",
     "test:perf": "lhci autorun --config=./lighthouserc.cjs",
+    "audit:prod": "npm audit --omit=dev",
     "postinstall": "playwright install chromium || true"
   },
   "dependencies": {

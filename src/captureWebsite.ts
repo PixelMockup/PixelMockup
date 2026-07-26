@@ -56,6 +56,9 @@ async function requestCapture(
   if (!res.ok || !data.dataUrl) {
     throw new Error(describeCaptureError(new Error(data.error || 'capture failed')));
   }
+  if (!/^data:image\/png;base64,/.test(data.dataUrl)) {
+    throw new Error(describeCaptureError(new Error('invalid capture payload')));
+  }
   return data.dataUrl;
 }
 

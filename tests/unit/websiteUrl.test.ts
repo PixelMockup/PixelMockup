@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   coverScaleForViewport,
   getWebsiteViewport,
+  isBlockedAddress,
   isValidWebsiteUrl,
   normalizeWebsiteUrl,
   websiteHostname,
@@ -18,12 +19,40 @@ describe('normalizeWebsiteUrl', () => {
     expect(normalizeWebsiteUrl('example.com')).toBe('https://example.com/');
   });
 
-  it('rejects empty, whitespace, and bad schemes', () => {
+  it('rejects empty, whitespace, bad schemes, credentials, and private hosts', () => {
     expect(normalizeWebsiteUrl('')).toBeNull();
     expect(normalizeWebsiteUrl('   ')).toBeNull();
     expect(normalizeWebsiteUrl('example .com')).toBeNull();
     expect(normalizeWebsiteUrl('javascript:alert(1)')).toBeNull();
     expect(normalizeWebsiteUrl('ftp://example.com')).toBeNull();
+    expect(normalizeWebsiteUrl('http://user:pass@example.com')).toBeNull();
+    expect(normalizeWebsiteUrl('http://127.0.0.1/')).toBeNull();
+    expect(normalizeWebsiteUrl('http://localhost/')).toBeNull();
+    expect(normalizeWebsiteUrl('http://169.254.169.254/latest/meta-data/')).toBeNull();
+    expect(normalizeWebsiteUrl('http://10.1.2.3/')).toBeNull();
+    expect(normalizeWebsiteUrl('http://192.168.1.1/')).toBeNull();
+    expect(normalizeWebsiteUrl('http://172.16.0.1/')).toBeNull();
+    expect(normalizeWebsiteUrl('http://[::1]/')).toBeNull();
+  });
+
+  it('isBlockedAddress covers private and metadata ranges', () => {
+    expect(isBlockedAddress('127.0.0.1')).toBe(true);
+    expect(isBlockedAddress('169.254.169.254')).toBe(true);
+    expect(isBlockedAddress('10.1.2.3')).toBe(true);
+    expect(isBlockedAddress('192.168.1.1')).toBe(true);
+    expect(isBlockedAddress('::1')).toBe(true);
+    expect(isBlockedAddress('::ffff:127.0.0.1')).toBe(true);
+    expect(isBlockedAddress('::ffff:7f00:1')).toBe(true);
+    expect(isBlockedAddress('::ffff:a9fe:a9fe')).toBe(true);
+    expect(isBlockedAddress('::ffff:0a00:1')).toBe(true);
+    expect(isBlockedAddress('::ffff:c0a8:1')).toBe(true);
+    expect(isBlockedAddress('example.com')).toBe(false);
+    expect(isBlockedAddress('::ffff:0808:0808')).toBe(false); // 8.8.8.8
+  });
+
+  it('rejects mapped IPv6 literals in URLs', () => {
+    expect(normalizeWebsiteUrl('http://[::ffff:7f00:1]/')).toBeNull();
+    expect(normalizeWebsiteUrl('http://[::ffff:a9fe:a9fe]/')).toBeNull();
   });
 
   it('isValidWebsiteUrl mirrors normalize', () => {
