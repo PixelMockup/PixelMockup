@@ -1,10 +1,18 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import KeybindingsPanel from '../../src/KeybindingsPanel';
 import { defaultBindingsFor } from '../../src/keybindings';
 
 describe('KeybindingsPanel', () => {
+  beforeEach(() => {
+    HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
+      this.open = true;
+    });
+    HTMLDialogElement.prototype.close = vi.fn(function (this: HTMLDialogElement) {
+      this.open = false;
+    });
+  });
   it('renders nothing when closed', () => {
     const { container } = render(
       <KeybindingsPanel

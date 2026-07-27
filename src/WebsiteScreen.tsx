@@ -64,7 +64,7 @@ export default function WebsiteScreen({
   return (
     <div className="ms-canvas-item__website">
       <output className="ms-canvas-item__website-hint">
-        {state.status === 'loading' ? 'Loading site...' : state.message}
+        {state.status === 'loading' ? 'Loading site…' : state.message}
       </output>
     </div>
   );

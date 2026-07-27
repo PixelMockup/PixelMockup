@@ -37,10 +37,7 @@ describe('exportMockup helpers', () => {
     const placement = getFullBleedScreenPlacement(
       1920,
       1080,
-      120,
-      80,
-      640,
-      480,
+      { x: 120, y: 80, width: 640, height: 480 },
     );
 
     expect(placement.destination).toEqual({
@@ -59,13 +56,8 @@ describe('exportMockup helpers', () => {
     const { crop } = getFullBleedScreenPlacement(
       1200,
       800,
-      0,
-      0,
-      400,
-      700,
-      1,
-      -1,
-      2,
+      { x: 0, y: 0, width: 400, height: 700 },
+      { panX: 1, panY: -1, zoom: 2 },
     );
 
     expect(crop.x).toBeGreaterThanOrEqual(0);

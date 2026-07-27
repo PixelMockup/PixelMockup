@@ -267,10 +267,10 @@ const SHARED: Record<string, string> = {
   ctrl: 'Ctrl',
   meta: '⌘',
   escape: 'Esc',
-  arrowup: '⇧',
-  arrowdown: '⇩',
-  arrowleft: '⇦',
-  arrowright: '⇨',
+  arrowup: '↑',
+  arrowdown: '↓',
+  arrowleft: '←',
+  arrowright: '→',
 };
 
 const MAC: Record<string, string> = {

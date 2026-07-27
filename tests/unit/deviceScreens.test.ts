@@ -99,10 +99,7 @@ describe('getClippedScreenPlacement', () => {
     const placement = getClippedScreenPlacement(
       1920,
       1080,
-      40,
-      60,
-      320,
-      640,
+      { x: 40, y: 60, width: 320, height: 640 },
     );
     expect(placement.destination).toEqual({
       x: 40,

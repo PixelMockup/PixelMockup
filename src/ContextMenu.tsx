@@ -63,7 +63,7 @@ function Item({
 }
 
 function Sep() {
-  return <hr><div className="ms-ctx-sep" /></hr>;
+  return <hr className="ms-ctx-sep" />;
 }
 
 export default function ContextMenu({

@@ -1,10 +1,19 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, beforeEach } from 'vitest';
 import { render } from '@testing-library/react';
 import axe from 'axe-core';
 import ContextMenu from '../../src/ContextMenu';
 import KeybindingsPanel from '../../src/KeybindingsPanel';
 import { defaultBindingsFor } from '../../src/keybindings';
 import { vi } from 'vitest';
+
+beforeEach(() => {
+  HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
+    this.open = true;
+  });
+  HTMLDialogElement.prototype.close = vi.fn(function (this: HTMLDialogElement) {
+    this.open = false;
+  });
+});
 
 async function expectNoSeriousViolations(container: HTMLElement) {
   const results = await axe.run(container, {

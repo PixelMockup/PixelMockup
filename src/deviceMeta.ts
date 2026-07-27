@@ -69,6 +69,7 @@ export function normalizeDeviceText(input: string): string {
     .replace(/-\d+$/g, '')
     .replace(/[_/]+/g, ' ')
     .replaceAll('//', ' ')
+    .replaceAll('//', ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
