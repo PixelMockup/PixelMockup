@@ -8,7 +8,11 @@ import {
   type ExportFormat,
   type ExportResolution,
 } from './deviceScale';
-import { coverCropRectWithFraming } from './deviceScreenBounds';
+import {
+  coverCropRectWithFraming,
+  DEFAULT_SCREEN_FRAMING,
+  type ScreenFraming,
+} from './deviceScreenBounds';
 import { mapScreenRectToDisplay } from './deviceScreens';
 import {
   getImageContentBounds,
@@ -67,21 +71,17 @@ export interface ExportResult {
 export function getClippedScreenPlacement(
   srcWidth: number,
   srcHeight: number,
-  destX: number,
-  destY: number,
-  destW: number,
-  destH: number,
-  panX: number = 0,
-  panY: number = 0,
-  zoom: number = 1,
+  destination: { x: number; y: number; width: number; height: number },
+  framing: ScreenFraming = DEFAULT_SCREEN_FRAMING,
 ) {
   return {
-    crop: coverCropRectWithFraming(srcWidth, srcHeight, destW, destH, {
-      panX,
-      panY,
-      zoom,
-    }),
-    destination: { x: destX, y: destY, width: destW, height: destH },
+    crop: coverCropRectWithFraming(
+      srcWidth,
+      srcHeight,
+      destination.width,
+      destination.height,
+      framing,),
+    destination,
   };
 }
 
@@ -92,25 +92,10 @@ export function getClippedScreenPlacement(
 export function getFullBleedScreenPlacement(
   srcWidth: number,
   srcHeight: number,
-  dx: number,
-  dy: number,
-  dw: number,
-  dh: number,
-  panX: number = 0,
-  panY: number = 0,
-  zoom: number = 1,
+  destination: { x: number; y: number; width: number; height: number },
+  framing: ScreenFraming = DEFAULT_SCREEN_FRAMING,
 ) {
-  return getClippedScreenPlacement(
-    srcWidth,
-    srcHeight,
-    dx,
-    dy,
-    dw,
-    dh,
-    panX,
-    panY,
-    zoom,
-  );
+  return getClippedScreenPlacement(srcWidth, srcHeight, destination, framing);
 }
 
 function roundRectPath(
@@ -316,13 +301,12 @@ export async function exportMockup(
       const { crop, destination } = getClippedScreenPlacement(
         item.screenImg.naturalWidth,
         item.screenImg.naturalHeight,
-        mapped.x,
-        mapped.y,
-        mapped.width,
-        mapped.height,
-        item.screenPanX ?? 0,
-        item.screenPanY ?? 0,
-        item.screenZoom ?? 1,
+        mapped,
+        {
+          panX: item.screenPanX ?? 0,
+          panY: item.screenPanY ?? 0,
+          zoom: item.screenZoom ?? 1,
+        },
       );
       ctx.save();
       ctx.beginPath();

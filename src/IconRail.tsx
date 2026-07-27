@@ -69,7 +69,7 @@ export default function IconRail({
   onOpenShortcuts,
   layoutsRef,
   moreRef,
-}: Props) {
+}: Readonly<Props>) {
   return (
     <nav className="ms-icon-rail" aria-label="Studio tools">
       <button

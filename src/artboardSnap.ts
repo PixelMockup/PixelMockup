@@ -8,6 +8,7 @@ const SNAP_MARGIN_LEGACY_KEY = 'mockupStudio.snapMargin';
 export const DEFAULT_SNAP_MARGIN = 40;
 export const SNAP_MARGIN_MIN = 0;
 export const SNAP_MARGIN_MAX = 200;
+export const DEFAULT_ARTBOARD: ArtboardSize = { width: 1280, height: 720 };
 
 /** Page = artboard geometry (magenta); sibling = other devices (accent). */
 export type SnapGuideKind = 'page' | 'sibling';
@@ -125,7 +126,7 @@ export function snapPosition(
   x: number,
   y: number,
   siblings: PositionedBox[] = [],
-  board: ArtboardSize = { width: 1280, height: 720 },
+  board: ArtboardSize = DEFAULT_ARTBOARD,
   margin: number = DEFAULT_SNAP_MARGIN,
 ): { x: number; y: number; guides: SnapGuides } {
   const m = clampSnapMargin(margin);
@@ -175,7 +176,7 @@ export function persistSnapMargin(margin: number) {
 export function alignBox(
   item: SizeBox & { x: number; y: number },
   mode: AlignMode,
-  board: ArtboardSize = { width: 1280, height: 720 },
+  board: ArtboardSize = DEFAULT_ARTBOARD,
 ): { x: number; y: number } {
   if (mode === 'center') {
     return { x: (board.width - item.displayWidth) / 2, y: item.y };
@@ -229,7 +230,7 @@ export const VIEW_ZOOM_STEPS: ViewZoom[] = ['fit', 0.5, 1, 1.5];
 
 export function artboardWidthCss(
   zoom: ViewZoom,
-  board: ArtboardSize = { width: 1280, height: 720 },
+  board: ArtboardSize = DEFAULT_ARTBOARD,
 ): string {
   const aspectFit = `calc(100cqh * ${board.width} / ${board.height})`;
   if (zoom === 'fit') {
@@ -249,7 +250,7 @@ export function stepViewZoom(current: ViewZoom, dir: -1 | 1): ViewZoom {
   const i = VIEW_ZOOM_STEPS.indexOf(current);
   const next = Math.min(
     VIEW_ZOOM_STEPS.length - 1,
-    Math.max(0, (i < 0 ? 0 : i) + dir),
+    Math.max(0, Math.max(0, i) + dir),
   );
   return VIEW_ZOOM_STEPS[next];
 }

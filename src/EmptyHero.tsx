@@ -1,4 +1,4 @@
-import { useId, useState, type FormEvent } from 'react';
+import { useId, useState, type SubmitEvent } from 'react';
 import { normalizeWebsiteUrl } from './websiteUrl';
 
 type Props = {
@@ -16,12 +16,12 @@ export default function EmptyHero({
   onStartLayoutOnly,
   onBrowseDevices,
   busy = false,
-}: Props) {
+}: Readonly<Props>) {
   const inputId = useId();
   const [draft, setDraft] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const submit = (e: FormEvent) => {
+  const submit = (e: SubmitEvent<HTMLFormElement>) => {
     e.preventDefault();
     const normalized = normalizeWebsiteUrl(draft);
     if (!normalized) {

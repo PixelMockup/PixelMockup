@@ -17,7 +17,8 @@ function readStoredTheme(): ThemeId {
 }
 
 function applyTheme(theme: ThemeId) {
-  document.documentElement.setAttribute('data-theme', theme);
+  const safe = theme === 'dark' ? 'dark' : 'light';
+  document.documentElement.dataset.theme = safe;
 }
 
 /** Apply stored theme before first paint helpers (call once at boot). */
@@ -28,7 +29,7 @@ export function initTheme(): ThemeId {
 }
 
 export function useTheme() {
-  const [theme, setThemeState] = useState<ThemeId>(() => initTheme());
+  const [theme, setTheme] = useState<ThemeId>(() => initTheme());
 
   useEffect(() => {
     applyTheme(theme);
@@ -41,9 +42,8 @@ export function useTheme() {
     }
   }, [theme]);
 
-  const setTheme = (next: ThemeId) => setThemeState(next);
   const toggleTheme = () =>
-    setThemeState((prev) => (prev === 'light' ? 'dark' : 'light'));
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));
 
   return { theme, setTheme, toggleTheme };
 }

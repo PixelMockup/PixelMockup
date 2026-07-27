@@ -17,7 +17,7 @@ export const CATEGORY_ORDER = [
   'displays',
 ] as const;
 
-export type DeviceCategory = (typeof CATEGORY_ORDER)[number] | string;
+export type DeviceCategory = (typeof CATEGORY_ORDER)[number] | (string & {});
 
 /** Default 16:9 editing / export artboard (logical pixels). Prefer active format. */
 export const ARTBOARD_WIDTH = 1280;

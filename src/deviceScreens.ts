@@ -61,6 +61,18 @@ export function screenClipInsetCss(
   };
 }
 
+/** Prefer item metadata, else catalog map. */
+export function resolveItemScreen(item: {
+  catalogFile: string;
+  screenBounds: ContentBounds | null;
+  screenRx: number;
+}): DeviceScreenRect | null {
+  if (item.screenBounds) {
+    return { ...item.screenBounds, rx: item.screenRx };
+  }
+  return getCatalogScreenRect(item.catalogFile);
+}
+
 /**
  * Map native screen rect into display-space coordinates (artboard / export).
  */

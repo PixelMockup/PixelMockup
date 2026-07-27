@@ -2,22 +2,22 @@ import { Download, Ellipsis, X } from 'lucide-react';
 import BrandMark from './BrandMark';
 import type { ExportFormat, ExportResolution } from './deviceScale';
 
-const EXPORT_FORMATS: readonly ExportFormat[] = ['png', 'jpg'];
-const EXPORT_RESOLUTIONS: readonly ExportResolution[] = [
+const EXPORT_FORMATS = new Set<ExportFormat>(['png', 'jpg']);
+const EXPORT_RESOLUTIONS = new Set<ExportResolution>([
   'best',
   '1440p',
   '1080p',
   '720p',
-];
+]);
 
 function parseExportFormat(value: string): ExportFormat | null {
-  return EXPORT_FORMATS.includes(value as ExportFormat)
+  return EXPORT_FORMATS.has(value as ExportFormat)
     ? (value as ExportFormat)
     : null;
 }
 
 function parseExportResolution(value: string): ExportResolution | null {
-  return EXPORT_RESOLUTIONS.includes(value as ExportResolution)
+  return EXPORT_RESOLUTIONS.has(value as ExportResolution)
     ? (value as ExportResolution)
     : null;
 }
@@ -47,6 +47,12 @@ type Props = {
   activeUsers: number | null;
 };
 
+function downloadLable(downloading: boolean, softEmptyDownload: boolean): string {
+  if (downloading) return 'Downloading...';
+  if (softEmptyDownload) return 'Download anyway';
+  return 'Download';
+}
+
 export default function TopCommandBar({
   hasDevices,
   websiteUrlDraft,
@@ -69,7 +75,7 @@ export default function TopCommandBar({
   onDownloadMenuOpenChange,
   downloadMenuRef,
   activeUsers,
-}: Props) {
+}: Readonly<Props>) {
   return (
     <header className="ms-top-command">
       <BrandMark />
@@ -152,11 +158,7 @@ export default function TopCommandBar({
               onClick={onDownload}
             >
               <Download size={16} strokeWidth={1.75} aria-hidden />
-              {downloading
-                ? 'Downloading…'
-                : softEmptyDownload
-                  ? 'Download anyway'
-                  : 'Download'}
+              {downloadLable(downloading, softEmptyDownload)}
             </button>
             <button
               type="button"
@@ -205,7 +207,7 @@ export default function TopCommandBar({
                     checked={exportTransparentBg && exportFormat !== 'jpg'}
                     disabled={exportFormat === 'jpg'}
                     onChange={(e) => onExportTransparentBg(e.target.checked)}
-                  />
+                  /> {''}
                   Transparent background
                 </label>
               </div>

@@ -3,7 +3,6 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
 } from 'react';
 import type { DeviceItem } from './App';
 import {
@@ -24,7 +23,6 @@ import {
 } from './deviceScale';
 import {
   alignBox,
-  artboardWidthCss,
   clampItemToArtboard,
   NO_GUIDES,
   persistSnapEnabled,
@@ -55,12 +53,10 @@ import {
   clampScreenZoom,
   getDeviceScreenInfo,
   getPunchedDeviceSrc,
-  screenObjectPosition,
 } from './deviceScreenBounds';
 import {
   getCatalogScreenRect,
-  screenClipInsetCss,
-  type DeviceScreenRect,
+  resolveItemScreen,
 } from './deviceScreens';
 import {
   getImageContentBounds,
@@ -77,7 +73,6 @@ import {
   normalizeWebsiteUrl,
   websiteHostname,
 } from './websiteUrl';
-import WebsiteScreen from './WebsiteScreen';
 import EmptyHero from './EmptyHero';
 import IconRail from './IconRail';
 import SelectionInspector from './SelectionInspector';
@@ -91,7 +86,6 @@ import {
 import KeybindingsPanel from './KeybindingsPanel';
 import ContextMenu, { type ContextMenuState } from './ContextMenu';
 import LibraryPanel, {
-  LIBRARY_DRAG_MIME,
   LIBRARY_W_MAX,
   LIBRARY_W_MIN,
 } from './LibraryPanel';
@@ -110,6 +104,10 @@ import { storageGet, storageSet } from './storage';
 import { useKeybindings } from './useKeybindings';
 import { usePresence } from './usePresence';
 import { useTheme } from './useTheme';
+import MobileDock from './MobileDock';
+import StatusShell from './StatusShell';
+import ArtboardCanvas from './ArtboardCanvas';
+import { clientToLogical } from './clientToLogical';
 
 const LIBRARY_W_KEY = 'pixelMockup.libraryWidth';
 const LIBRARY_W_LEGACY_KEY = 'mockupStudio.libraryWidth';
@@ -149,7 +147,7 @@ function resolveStickyAxis(
   size: number,
   now: number,
 ): { origin: number; guide: SnapGuideLine | null; sticky: StickyAxis | null } {
-  if (guide && guide.kind === 'page') {
+  if (guide?.kind === 'page') {
     return {
       origin: snappedOrigin,
       guide,
@@ -220,7 +218,7 @@ interface MockupStudioProps {
   groupedLibrary: Record<string, DeviceItem[]>;
 }
 
-interface CanvasItem extends DeviceItem {
+export interface CanvasItem extends DeviceItem {
   instanceId: string;
   x: number;
   y: number;
@@ -254,48 +252,6 @@ type ClipboardPayload = {
     }
   >;
 };
-
-function contentCropImgStyle(
-  bounds: ContentBounds,
-  nativeWidth: number,
-  nativeHeight: number,
-): CSSProperties {
-  const w = Math.max(1, bounds.width);
-  const h = Math.max(1, bounds.height);
-  return {
-    width: `${(nativeWidth / w) * 100}%`,
-    height: `${(nativeHeight / h) * 100}%`,
-    left: `${(-bounds.x / w) * 100}%`,
-    top: `${(-bounds.y / h) * 100}%`,
-  };
-}
-
-/** Screen rect positioned relative to the visible (content-cropped) frame. */
-function screenLayerStyle(
-  screen: ContentBounds,
-  content: ContentBounds,
-): CSSProperties {
-  const w = Math.max(1, content.width);
-  const h = Math.max(1, content.height);
-  return {
-    left: `${((screen.x - content.x) / w) * 100}%`,
-    top: `${((screen.y - content.y) / h) * 100}%`,
-    width: `${(screen.width / w) * 100}%`,
-    height: `${(screen.height / h) * 100}%`,
-  };
-}
-
-/** Prefer item metadata, else catalog map. */
-function resolveItemScreen(item: {
-  catalogFile: string;
-  screenBounds: ContentBounds | null;
-  screenRx: number;
-}): DeviceScreenRect | null {
-  if (item.screenBounds) {
-    return { ...item.screenBounds, rx: item.screenRx };
-  }
-  return getCatalogScreenRect(item.catalogFile);
-}
 
 function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -342,20 +298,6 @@ async function looksLikeAllowedImage(file: File): Promise<boolean> {
   return false;
 }
 
-function clientToLogical(
-  clientX: number,
-  clientY: number,
-  rect: DOMRect,
-  boardW: number,
-  boardH: number,
-): { x: number; y: number } {
-  if (rect.width <= 0 || rect.height <= 0) return { x: 0, y: 0 };
-  return {
-    x: ((clientX - rect.left) / rect.width) * boardW,
-    y: ((clientY - rect.top) / rect.height) * boardH,
-  };
-}
-
 function readLibraryWidth(): number {
   try {
     const n = Number(storageGet(LIBRARY_W_KEY, LIBRARY_W_LEGACY_KEY));
@@ -378,7 +320,49 @@ function persistLibraryWidth(w: number) {
   }
 }
 
-export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
+function buildFilteredLibrary(
+  brandFilteredDevices: DeviceItem[],
+  selectedProductValid: string | null,
+  searchQuery: string,
+  searchIsGlobal: boolean,
+  effectiveCategory: string | null,
+) {
+  let items = brandFilteredDevices.filter((item) => {
+    if (
+      selectedProductValid != null &&
+      item.productFamily !== selectedProductValid
+    ) {
+      return false;
+    }
+    return matchesSearchQuery(item, searchQuery);
+  });
+  items = sortBySearchRelevance(items, searchQuery);
+  if (items.length === 0) return [];
+
+  if (searchIsGlobal) {
+    const byCat = new Map<string, DeviceItem[]>();
+    for (const item of items) {
+      const list = byCat.get(item.category) ?? [];
+      list.push(item);
+      byCat.set(item.category, list);
+    }
+    const ordered = [
+      ...CATEGORY_ORDER.filter((c) => byCat.has(c)),
+      ...[...byCat.keys()].filter(
+        (c) => !(CATEGORY_ORDER as readonly string[]).includes(c),
+      ),
+    ];
+    return ordered.map((category) => ({
+      category,
+      items: byCat.get(category)!,
+    }));
+  }
+
+  if (!effectiveCategory) return [];
+  return [{ category: effectiveCategory, items }];
+}
+
+export default function MockupStudio({ groupedLibrary }: Readonly<MockupStudioProps>) {
   const platform = useMemo(() => detectPlatform(), []);
   const { theme, toggleTheme } = useTheme();
   const activeUsers = usePresence();
@@ -499,7 +483,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     const ordered = CATEGORY_ORDER.filter((c) => present.has(c));
     const extras = Object.keys(groupedLibrary)
       .filter((c) => !CATEGORY_ORDER.includes(c as (typeof CATEGORY_ORDER)[number]))
-      .sort();
+      .sort((a, b) => a.localeCompare(b));
     return [...ordered, ...extras];
   }, [groupedLibrary]);
 
@@ -570,50 +554,26 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     }
   }, [availableProducts, selectedProduct]);
 
-  const filteredLibrary = useMemo(() => {
-    let items = brandFilteredDevices.filter((item) => {
-      if (
-        selectedProductValid != null &&
-        item.productFamily !== selectedProductValid
-      ) {
-        return false;
-      }
-      return matchesSearchQuery(item, searchQuery);
-    });
-    items = sortBySearchRelevance(items, searchQuery);
-    if (items.length === 0) return [];
-
-    if (searchIsGlobal) {
-      const byCat = new Map<string, DeviceItem[]>();
-      for (const item of items) {
-        const list = byCat.get(item.category) ?? [];
-        list.push(item);
-        byCat.set(item.category, list);
-      }
-      const ordered = [
-        ...CATEGORY_ORDER.filter((c) => byCat.has(c)),
-        ...[...byCat.keys()].filter(
-          (c) => !(CATEGORY_ORDER as readonly string[]).includes(c),
-        ),
-      ];
-      return ordered.map((category) => ({
-        category,
-        items: byCat.get(category)!,
-      }));
-    }
-
-    if (!effectiveCategory) return [];
-    return [{ category: effectiveCategory, items }];
-  }, [
-    brandFilteredDevices,
-    selectedProductValid,
-    searchQuery,
-    searchIsGlobal,
-    effectiveCategory,
-  ]);
+  const filteredLibrary = useMemo(
+    () =>
+      buildFilteredLibrary(
+        brandFilteredDevices,
+        selectedProductValid,
+        searchQuery,
+        searchIsGlobal,
+        effectiveCategory,
+      ),
+    [
+      brandFilteredDevices,
+      selectedProductValid,
+      searchQuery,
+      searchIsGlobal,
+      effectiveCategory,
+    ],
+  );
 
   const primaryId =
-    selectedIds.length > 0 ? selectedIds[selectedIds.length - 1]! : null;
+    selectedIds.length > 0 ? selectedIds.at(- 1)! : null;
   const selectedIdSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const hasSelection = selectedIds.length > 0;
   const selectionHasScreenImage = useMemo(
@@ -796,6 +756,32 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     }
   };
 
+  function selectionAfterPointerDown(
+    selectedIds: string[],
+    itemId: string,
+    items: CanvasItem[],
+    mod: boolean,
+    shiftKey: boolean,
+  ): string[] | null {
+    if (mod) {
+      return selectedIds.includes(itemId)
+        ? selectedIds.filter((id) => id !== itemId)
+        : [...selectedIds, itemId];
+    }
+    if (shiftKey && selectedIds.length > 0) {
+      const sorted = byZ(items);
+      const primary = selectedIds.at(-1)!;
+      const a = sorted.findIndex((i) => i.instanceId === primary);
+      const b = sorted.findIndex((i) => i.instanceId === itemId);
+      if (a < 0 || b < 0) return null;
+      const lo = Math.min(a, b);
+      const hi = Math.max(a, b);
+      const range = sorted.slice(lo, hi + 1).map((i) => i.instanceId);
+      return [...range.filter((id) => id !== itemId), itemId];
+    }
+    return null; // caller keeps current selection / single-select path
+  }
+
   const handlePointerDown = (e: React.PointerEvent, item: CanvasItem) => {
     e.preventDefault();
     e.stopPropagation();
@@ -810,35 +796,21 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
       artboardW,
       artboardH,
     );
-    const mac = isMacPlatform(platform);
-    const mod = mac ? e.metaKey : e.ctrlKey;
+    const mod = isMacPlatform(platform) ? e.metaKey : e.ctrlKey;
+
+    const adjusted = selectionAfterPointerDown(
+      selectedIdsRef.current,
+      item.instanceId,
+      canvasItemsRef.current,
+      mod,
+      e.shiftKey,
+    );
 
     let nextSelected = selectedIdsRef.current;
-    if (mod) {
-      if (nextSelected.includes(item.instanceId)) {
-        nextSelected = nextSelected.filter((id) => id !== item.instanceId);
-      } else {
-        nextSelected = [...nextSelected, item.instanceId];
-      }
+    if (adjusted) {
+      nextSelected = adjusted;
       setSelectedIds(nextSelected);
-      return;
-    }
-    if (e.shiftKey && nextSelected.length > 0) {
-      const sorted = byZ(canvasItemsRef.current);
-      const primary = nextSelected[nextSelected.length - 1]!;
-      const a = sorted.findIndex((i) => i.instanceId === primary);
-      const b = sorted.findIndex((i) => i.instanceId === item.instanceId);
-      if (a >= 0 && b >= 0) {
-        const lo = Math.min(a, b);
-        const hi = Math.max(a, b);
-        const range = sorted.slice(lo, hi + 1).map((i) => i.instanceId);
-        nextSelected = [
-          ...range.filter((id) => id !== item.instanceId),
-          item.instanceId,
-        ];
-        setSelectedIds(nextSelected);
-        return;
-      }
+      if (mod || e.shiftKey) return;
     }
 
     if (!nextSelected.includes(item.instanceId)) {
@@ -849,11 +821,13 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     const groupIds = nextSelected.includes(item.instanceId)
       ? [...nextSelected]
       : [item.instanceId];
+
     const origins: Record<string, { x: number; y: number }> = {};
     for (const id of groupIds) {
       const found = canvasItemsRef.current.find((i) => i.instanceId === id);
       if (found) origins[id] = { x: found.x, y: found.y };
     }
+
     stickyXRef.current = null;
     stickyYRef.current = null;
     setDragInfo({
@@ -882,10 +856,10 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
         prev.map((item) =>
           item.instanceId === screenDrag.id
             ? {
-                ...item,
-                screenPanX: clampScreenPan(item.screenPanX + dPanX),
-                screenPanY: clampScreenPan(item.screenPanY + dPanY),
-              }
+              ...item,
+              screenPanX: clampScreenPan(item.screenPanX + dPanX),
+              screenPanY: clampScreenPan(item.screenPanY + dPanY),
+            }
             : item,
         ),
       );
@@ -1133,13 +1107,13 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
         return { ...item, ...next };
       }),
     );
-    announce(
-      mode === 'center'
-        ? 'Centered'
-        : mode === 'middle'
-          ? 'Aligned to middle'
-          : 'Aligned to bottom',
-    );
+    const ALIGN_ANNOUNCE: Record<AlignMode, string> = {
+      center: 'Centered',
+      middle: 'Aligned to middle',
+      bottom: 'Aligned to bottom',
+    };
+
+    announce(ALIGN_ANNOUNCE[mode]);
   };
 
   const duplicateSelected = () => {
@@ -1341,15 +1315,15 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
       prev.map((item) =>
         ids.has(item.instanceId) && item.screenImageSrc != null
           ? {
-              ...item,
-              screenImageSrc: null,
-              screenBounds: null,
-              screenRx: 0,
-              punchedSrc: null,
-              screenPanX: 0,
-              screenPanY: 0,
-              screenZoom: 1,
-            }
+            ...item,
+            screenImageSrc: null,
+            screenBounds: null,
+            screenRx: 0,
+            punchedSrc: null,
+            screenPanX: 0,
+            screenPanY: 0,
+            screenZoom: 1,
+          }
           : item,
       ),
     );
@@ -1496,19 +1470,19 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
     try {
       const websiteJobs = websiteUrl
         ? canvasItems
-            .filter((item) => !item.screenImageSrc)
-            .map((item) => {
-              const viewport = getWebsiteViewport(
-                item.category,
-                item.catalogFile,
-              );
-              return {
-                key: item.instanceId,
-                url: websiteUrl,
-                width: viewport.width,
-                height: viewport.height,
-              };
-            })
+          .filter((item) => !item.screenImageSrc)
+          .map((item) => {
+            const viewport = getWebsiteViewport(
+              item.category,
+              item.catalogFile,
+            );
+            return {
+              key: item.instanceId,
+              url: websiteUrl,
+              width: viewport.width,
+              height: viewport.height,
+            };
+          })
         : [];
 
       let websiteShots = new Map<string, string>();
@@ -1607,9 +1581,7 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setExportMenuOpen(false);
-        setLayoutsMenuOpen(false);
-        setMoreToolsOpen(false);
+        closeChromeMenus();
         setContextMenu(null);
         setLibraryCollapsed((collapsed) => {
           if (!collapsed) persistLibraryCollapsed(true);
@@ -1617,17 +1589,36 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
         });
       }
     };
+
     const onPointerDown = (e: PointerEvent) => {
       const t = e.target as HTMLElement;
+
       if (!t.closest('.ms-ctx')) setContextMenu(null);
+
+      if (
+        !t.closest('.ms-download-cluster') &&
+        !t.closest('.ms-rail-menu-wrap')
+      ) { closeChromeMenus(); }
+
+      if (
+        !libraryCollapsed &&
+        !t.closest('.ms-library') &&
+        !t.closest('.ms-rail-devices') &&
+        !t.closest('.ms-mobile-dock')
+      ) {
+        setLibraryCollapsed(true);
+        persistLibraryCollapsed(true);
+      }
     };
+
     window.addEventListener('keydown', onKey);
     window.addEventListener('pointerdown', onPointerDown);
+
     return () => {
       window.removeEventListener('keydown', onKey);
       window.removeEventListener('pointerdown', onPointerDown);
     };
-  }, []);
+  }, [libraryCollapsed]);
 
   useKeybindings(
     bindings,
@@ -1731,24 +1722,6 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerLeave={handlePointerUp}
-      onClick={(e) => {
-        const t = e.target as HTMLElement;
-        if (
-          !t.closest('.ms-download-cluster') &&
-          !t.closest('.ms-rail-menu-wrap')
-        ) {
-          closeChromeMenus();
-        }
-        if (
-          devicesDrawerOpen &&
-          !t.closest('.ms-library') &&
-          !t.closest('.ms-rail-devices') &&
-          !t.closest('.ms-mobile-dock')
-        ) {
-          setLibraryCollapsed(true);
-          persistLibraryCollapsed(true);
-        }
-      }}
     >
       <TopCommandBar
         hasDevices={canvasItems.length > 0}
@@ -1880,9 +1853,8 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
               />
             ) : null}
 
-            <div
+            <fieldset
               className="ms-view-zoom"
-              role="group"
               aria-label="Canvas zoom"
             >
               <button
@@ -1916,308 +1888,49 @@ export default function MockupStudio({ groupedLibrary }: MockupStudioProps) {
               >
                 +
               </button>
-            </div>
+            </fieldset>
 
-            <div
-              ref={canvasRef}
-              className="ms-artboard"
-              style={{
-                width: artboardWidthCss(viewZoom, {
-                  width: artboardW,
-                  height: artboardH,
-                }),
-                aspectRatio: `${artboardW} / ${artboardH}`,
-              }}
-              onClick={(e) => {
-                if (e.target === canvasRef.current) setSelectedIds([]);
-              }}
-              onContextMenu={(e) => {
-                e.preventDefault();
-                const t = e.target as HTMLElement;
-                if (t.closest('.ms-canvas-item')) return;
-                openContextMenu(e, 'artboard');
-              }}
-              onDragOver={(e) => {
-                if (
-                  e.dataTransfer.types.includes(LIBRARY_DRAG_MIME) ||
-                  e.dataTransfer.types.includes('text/plain')
-                ) {
-                  e.preventDefault();
-                  e.dataTransfer.dropEffect = 'copy';
-                }
-              }}
-              onDrop={(e) => {
-                e.preventDefault();
-                const path =
-                  e.dataTransfer.getData(LIBRARY_DRAG_MIME) ||
-                  e.dataTransfer.getData('text/plain');
-                const device = findDeviceByPath(path);
-                if (!device || !canvasRef.current) return;
-                const rect = canvasRef.current.getBoundingClientRect();
-                const logical = clientToLogical(
-                  e.clientX,
-                  e.clientY,
-                  rect,
-                  artboardW,
-                  artboardH,
-                );
-                void handleAddAndSelect(device, {
-                  x: logical.x,
-                  y: logical.y,
-                });
-              }}
-            >
-              {(snapGuides.vertical.length > 0 ||
-                snapGuides.horizontal.length > 0) && (
-                <div className="ms-snap-guides" aria-hidden="true">
-                  {snapGuides.vertical.map((g) => (
-                    <div
-                      key={`v-${g.kind}-${g.pos}`}
-                      className={[
-                        'ms-snap-guide',
-                        'ms-snap-guide--v',
-                        g.kind === 'page'
-                          ? 'ms-snap-guide--page'
-                          : 'ms-snap-guide--sibling',
-                      ].join(' ')}
-                      style={{ left: `${(g.pos / artboardW) * 100}%` }}
-                    />
-                  ))}
-                  {snapGuides.horizontal.map((g) => (
-                    <div
-                      key={`h-${g.kind}-${g.pos}`}
-                      className={[
-                        'ms-snap-guide',
-                        'ms-snap-guide--h',
-                        g.kind === 'page'
-                          ? 'ms-snap-guide--page'
-                          : 'ms-snap-guide--sibling',
-                      ].join(' ')}
-                      style={{ top: `${(g.pos / artboardH) * 100}%` }}
-                    />
-                  ))}
-                </div>
-              )}
-              {canvasItems.map((item) => {
-                const displayName = formatDeviceDisplayName(item.name);
-                const isSelected = selectedIdSet.has(item.instanceId);
-                const showCaption =
-                  isSelected || hoveredId === item.instanceId;
-                return (
-                <div
-                  key={item.instanceId}
-                  role="img"
-                  aria-label={displayName}
-                  title={displayName}
-                  onPointerDown={(e) => handlePointerDown(e, item)}
-                  onContextMenu={(e) => openContextMenu(e, 'device', item)}
-                  onPointerEnter={() => setHoveredId(item.instanceId)}
-                  onPointerLeave={() =>
-                    setHoveredId((id) =>
-                      id === item.instanceId ? null : id,
-                    )
-                  }
-                  className={[
-                    'ms-canvas-item',
-                    isSelected ? 'ms-canvas-item--selected' : '',
-                    dragInfo.groupIds.includes(item.instanceId)
-                      ? 'ms-canvas-item--grabbing'
-                      : 'ms-canvas-item--grab',
-                    showCaption ? 'ms-canvas-item--caption' : '',
-                  ]
-                    .filter(Boolean)
-                    .join(' ')}
-                  style={{
-                    left: `${(item.x / artboardW) * 100}%`,
-                    top: `${(item.y / artboardH) * 100}%`,
-                    width: `${(item.displayWidth / artboardW) * 100}%`,
-                    height: `${(item.displayHeight / artboardH) * 100}%`,
-                    zIndex:
-                      showCaption && isSelected
-                        ? item.zIndex + 1000
-                        : showCaption
-                          ? item.zIndex + 100
-                          : item.zIndex,
-                  }}
-                >
-                  <div className="ms-canvas-item__frame">
-                    {(() => {
-                      const screen = resolveItemScreen(item);
-                      if (item.screenImageSrc && screen) {
-                        return (
-                          <>
-                            <div
-                              className="ms-canvas-item__screen"
-                              style={screenClipInsetCss(
-                                screen,
-                                item.contentBounds,
-                              )}
-                            >
-                              <img
-                                src={item.screenImageSrc}
-                                alt=""
-                                draggable={false}
-                                className="ms-canvas-item__screen-img"
-                                style={{
-                                  objectPosition: (() => {
-                                    const p = screenObjectPosition(
-                                      item.screenPanX,
-                                      item.screenPanY,
-                                    );
-                                    return `${p.x}% ${p.y}%`;
-                                  })(),
-                                  transform: `scale(${item.screenZoom})`,
-                                }}
-                              />
-                            </div>
-                            {isSelected ? (
-                              <div
-                                className={[
-                                  'ms-canvas-item__screen-hit',
-                                  screenDrag?.id === item.instanceId
-                                    ? 'ms-canvas-item__screen-hit--panning'
-                                    : '',
-                                ]
-                                  .filter(Boolean)
-                                  .join(' ')}
-                                style={screenLayerStyle(
-                                  screen,
-                                  item.contentBounds,
-                                )}
-                                onPointerDown={(e) =>
-                                  handleScreenPointerDown(e, item)
-                                }
-                              />
-                            ) : null}
-                          </>
-                        );
-                      }
-                      if (websiteUrl && screen) {
-                        const viewport = getWebsiteViewport(
-                          item.category,
-                          item.catalogFile,
-                        );
-                        const rxPct =
-                          screen.width > 0
-                            ? (screen.rx / screen.width) * 100
-                            : 0;
-                        return (
-                          <div
-                            className="ms-canvas-item__screen ms-canvas-item__screen--website"
-                            style={{
-                              ...screenLayerStyle(screen, item.contentBounds),
-                              borderRadius:
-                                screen.rx > 0 ? `${rxPct}%` : undefined,
-                            }}
-                          >
-                            <WebsiteScreen
-                              url={websiteUrl}
-                              viewport={viewport}
-                              title={`Website on ${displayName}`}
-                            />
-                          </div>
-                        );
-                      }
-                      return null;
-                    })()}
-                    <img
-                      src={
-                        item.screenImageSrc && item.punchedSrc
-                          ? item.punchedSrc
-                          : item.src
-                      }
-                      alt=""
-                      draggable={false}
-                      className="ms-canvas-item__img"
-                      style={contentCropImgStyle(
-                        item.contentBounds,
-                        item.nativeWidth,
-                        item.nativeHeight,
-                      )}
-                    />
-                  </div>
-                  {showCaption && (
-                    <span className="ms-canvas-item__caption" aria-hidden="true">
-                      {displayName}
-                    </span>
-                  )}
-                </div>
-                );
-              })}
-            </div>
+            <ArtboardCanvas
+              canvasRef={canvasRef}
+              viewZoom={viewZoom}
+              artboardW={artboardW}
+              artboardH={artboardH}
+              snapGuides={snapGuides}
+              canvasItems={canvasItems}
+              selectedIdSet={selectedIdSet}
+              hoveredId={hoveredId}
+              dragInfo={dragInfo}
+              screenDrag={screenDrag}
+              websiteUrl={websiteUrl}
+              setSelectedIds={setSelectedIds}
+              setHoveredId={setHoveredId}
+              openContextMenu={openContextMenu}
+              handlePointerDown={handlePointerDown}
+              handleScreenPointerDown={handleScreenPointerDown}
+              handleAddAndSelect={handleAddAndSelect}
+              findDeviceByPath={findDeviceByPath}
+            />
           </div>
         </div>
       </div>
 
-      <input
-        ref={screenFileInputRef}
-        type="file"
-        accept="image/png,image/jpeg,image/webp"
-        className="ms-screen-file-input"
-        aria-label="Choose a screen image for selected devices"
-        tabIndex={-1}
-        onChange={(e) => {
-          const file = e.target.files?.[0] ?? null;
-          e.target.value = '';
-          if (file) void applyScreenImageFile(file);
-        }}
+      <StatusShell
+        screenFileInputRef={screenFileInputRef}
+        applyScreenImageFile={applyScreenImageFile}
+        layerHint={layerHint}
+        setLayerHint={setLayerHint}
+        statusMessage={statusMessage}
       />
 
-      {layerHint ? (
-        <div className="ms-hint-bar" role="status">
-          <span>{layerHint}</span>
-          <button
-            type="button"
-            className="ms-btn ms-btn--ghost"
-            onClick={() => setLayerHint(null)}
-          >
-            Dismiss
-          </button>
-        </div>
-      ) : null}
-
-      {statusMessage ? (
-        <div className="ms-toast" role="status">
-          {statusMessage}
-        </div>
-      ) : null}
-
-      <div className="ms-a11y-live" aria-live="polite">
-        {statusMessage}
-      </div>
-
-      <nav className="ms-mobile-dock" aria-label="Quick actions">
-        <button
-          type="button"
-          className="ms-mobile-dock__btn"
-          aria-label="Devices"
-          onClick={openDevicesPicker}
-        >
-          Devices
-        </button>
-        {canvasItems.length > 0 ? (
-          <button
-            type="button"
-            className="ms-mobile-dock__btn"
-            aria-label="Website URL"
-            onClick={() => {
-              document.getElementById('ms-url-command-input')?.focus();
-            }}
-          >
-            URL
-          </button>
-        ) : null}
-        {canvasItems.length > 0 ? (
-          <button
-            type="button"
-            className="ms-mobile-dock__btn ms-mobile-dock__btn--accent"
-            disabled={isExporting}
-            onClick={() => void downloadCanvas()}
-          >
-            Download
-          </button>
-        ) : null}
-      </nav>
+      <MobileDock
+        hasDevices={canvasItems.length > 0}
+        isExporting={isExporting}
+        onDevices={openDevicesPicker}
+        onUrlFocus={() =>
+          document.getElementById('ms-url-command-input')?.focus()
+        }
+        onDownload={() => void downloadCanvas()}
+      />
 
       <KeybindingsPanel
         open={shortcutsOpen}

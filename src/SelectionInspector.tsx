@@ -32,7 +32,7 @@ export default function SelectionInspector({
   onBringForward,
   onSendBackward,
   canReorder,
-}: Props) {
+}: Readonly<Props>) {
   if (!open) return null;
 
   return (

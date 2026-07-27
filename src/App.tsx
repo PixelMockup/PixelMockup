@@ -38,7 +38,7 @@ for (const d of deviceDimensions.devices as DimEntry[]) {
 function catalogKeyFromGlobPath(path: string): string {
   // ./assets/device_library/phones/Foo.svg → phones/Foo.svg
   const marker = '/device_library/';
-  const idx = path.replace(/\\/g, '/').indexOf(marker);
+  const idx = path.replaceAll('\\', '/').indexOf(marker);
   if (idx >= 0) return path.slice(idx + marker.length);
   const parts = path.split('/');
   const file = parts.pop() ?? '';
@@ -50,7 +50,7 @@ const groupByCategory = Object.entries(device_library).reduce<
   Record<string, DeviceItem[]>
 >((acc, [path, src]) => {
   const pathParts = path.split('/');
-  const category = pathParts[pathParts.length - 2] ?? 'uncategorized';
+  const category = pathParts.at(- 2) ?? 'uncategorized';
   const fileName = pathParts.pop()?.replace('.svg', '');
   const catalogFile = catalogKeyFromGlobPath(path);
   const dim = dimByFile.get(catalogFile);

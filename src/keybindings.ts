@@ -245,7 +245,7 @@ export function eventToChord(
 }
 
 function normalizeKey(key: string): string {
-  const k = key.length === 1 ? key.toLowerCase() : key.toLowerCase();
+  const k = key.toLowerCase();
   if (k === ' ') return 'space';
   if (k === 'esc') return 'escape';
   if (k === 'arrowleft' || k === 'arrowright' || k === 'arrowup' || k === 'arrowdown') {
@@ -263,31 +263,50 @@ function normalizeKey(key: string): string {
   return k;
 }
 
+const SHARED: Record<string, string> = {
+  ctrl: 'Ctrl',
+  meta: '⌘',
+  escape: 'Esc',
+  arrowup: '⇧',
+  arrowdown: '⇩',
+  arrowleft: '⇦',
+  arrowright: '⇨',
+};
+
+const MAC: Record<string, string> = {
+  mod: '⌘',
+  shift: '⇧',
+  alt: '⌥',
+  backspace: '⌫',
+  delete: '⌦',
+  ' ': 'Space',
+  space: 'Space',
+};
+
+const OTHER: Record<string, string> = {
+  mod: 'Ctrl',
+  shift: 'Shift',
+  alt: 'Alt',
+  backspace: 'Backspace',
+  delete: 'Delete',
+  ' ': 'Space',
+  space: 'Space',
+}
+
+function formatChordPart(part: string, mac: boolean): string {
+  const labels = (mac ? MAC : OTHER)[part] ?? SHARED[part];
+  if (labels) return labels;
+  return part.length === 1 ? part.toUpperCase() : part;
+}
+
 /** Format chord for UI (⌘S vs Ctrl+S). */
 export function formatChordForDisplay(
   chord: string,
   platform: PlatformId = detectPlatform(),
 ): string {
   const mac = isMacPlatform(platform);
-  const parts = chord.split('+').filter(Boolean);
-  const out: string[] = [];
-  for (const p of parts) {
-    if (p === 'mod') out.push(mac ? '⌘' : 'Ctrl');
-    else if (p === 'shift') out.push(mac ? '⇧' : 'Shift');
-    else if (p === 'alt') out.push(mac ? '⌥' : 'Alt');
-    else if (p === 'ctrl') out.push('Ctrl');
-    else if (p === 'meta') out.push('⌘');
-    else if (p === 'arrowleft') out.push('←');
-    else if (p === 'arrowright') out.push('→');
-    else if (p === 'arrowup') out.push('↑');
-    else if (p === 'arrowdown') out.push('↓');
-    else if (p === 'escape') out.push('Esc');
-    else if (p === 'backspace') out.push(mac ? '⌫' : 'Backspace');
-    else if (p === 'delete') out.push(mac ? '⌦' : 'Delete');
-    else if (p === ' ') out.push('Space');
-    else out.push(p.length === 1 ? p.toUpperCase() : p);
-  }
-  return mac ? out.join('') : out.join('+');
+  const parts = chord.split('+').filter(Boolean).map((p) => formatChordPart(p, mac));
+  return mac ? parts.join('') : parts.join('+');
 }
 
 export function formatBindingsForDisplay(

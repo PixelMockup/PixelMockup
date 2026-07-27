@@ -62,13 +62,13 @@ function isBlockedIpv6(hostname: string): boolean {
     return true; // fe80::/10 link-local
   }
   // IPv4-mapped IPv6: ::ffff:a.b.c.d (dotted)
-  const dotted = h.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/i);
+  const dotted = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/i.exec(h);
   if (dotted) {
     const octets = parseIpv4(dotted[1]);
     return octets != null && isBlockedIpv4(octets);
   }
   // IPv4-mapped IPv6: ::ffff:XXXX:YYYY (hex)
-  const hex = h.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i);
+  const hex = /^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i.exec(h);
   if (hex) {
     const hi = Number.parseInt(hex[1], 16);
     const lo = Number.parseInt(hex[2], 16);

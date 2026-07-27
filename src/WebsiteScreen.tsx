@@ -24,7 +24,7 @@ export default function WebsiteScreen({
   url,
   viewport,
   title,
-}: WebsiteScreenProps) {
+}: Readonly<WebsiteScreenProps>) {
   const [state, setState] = useState<ScreenState>({ status: 'loading' });
 
   const latestRef = useRef(0);
@@ -49,24 +49,23 @@ export default function WebsiteScreen({
     return () => window.clearTimeout(timer);
   }, [url, viewport.width, viewport.height]);
 
-  return (
-    <div className="ms-canvas-item__website">
-      {state.status === 'ready' ? (
+  if (state.status === 'ready') {
+    return (
+      <div className="ms-canvas-item__website">
         <img
           src={state.src}
           alt={title}
           draggable={false}
-          className="ms-canvas-item__website-img"
-        />
-      ) : state.status === 'loading' ? (
-        <div className="ms-canvas-item__website-hint" role="status">
-          Loading site…
-        </div>
-      ) : (
-        <div className="ms-canvas-item__website-hint" role="status">
-          {state.message}
-        </div>
-      )}
+          className="ms-canvas-item__website-img" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="ms-canvas-item__website">
+      <output className="ms-canvas-item__website-hint">
+        {state.status === 'loading' ? 'Loading site...' : state.message}
+      </output>
     </div>
   );
 }

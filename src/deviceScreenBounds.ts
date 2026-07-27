@@ -1,3 +1,5 @@
+type LimitBox = { minX: number; minY: number; maxR: number; maxB: number };
+
 /**
  * Detect a device's screen region (large near-white rectangle inside the
  * chassis) and build a "punched" frame bitmap whose screen pixels are
@@ -67,6 +69,74 @@ export function largestWhiteRect(
   );
 }
 
+function resolveLimit(
+  width: number,
+  height: number,
+  limit?: ContentBounds,
+): LimitBox | null {
+  const minX = Math.max(0, limit?.x ?? 0);
+  const minY = Math.max(0, limit?.y ?? 0);
+  const maxR = Math.min(width, limit ? limit.x + limit.width : width);
+  const maxB = Math.min(height, limit ? limit.y + limit.height : height);
+  if (maxR <= minX || maxB <= minY) return null;
+  return { minX: minX, minY: minY, maxR: maxR, maxB: maxB };
+}
+
+function updateHeightsRow(
+  heights: Int32Array,
+  px: Uint8ClampedArray,
+  width: number,
+  y: number,
+  box: LimitBox,
+  pred: (px: Uint8ClampedArray, i: number) => boolean,
+): void {
+  const row = y * width;
+  const rowInLimit = y >= box.minY && y < box.maxB;
+  for (let x = 0; x < width; x++) {
+    const inLimit = rowInLimit && x >= box.minX && x < box.maxR;
+    heights[x] = inLimit && pred(px, (row + x) * 4) ? heights[x] + 1 : 0;
+  }
+}
+
+function considerRect(
+  best: { rect: ContentBounds | null; area: number },
+  left: number,
+  top: number,
+  rectW: number,
+  rectH: number,
+): void {
+  const area = rectW * rectH;
+  if (area <= best.area) return;
+  best.area = area;
+  best.rect = {
+    x: left,
+    y: top,
+    width: rectW,
+    height: rectH,
+  };
+}
+
+/** Process one histogram row with the monotonic stack. */
+function updateBestFromHeights(
+  heights: Int32Array,
+  width: number,
+  y: number,
+  stack: number[],
+  best: { rect: ContentBounds | null; area: number },
+): void {
+  stack.length = 0;
+  for (let x = 0; x <= width; x++) {
+    const h = x < width ? heights[x] : 0;
+    while (stack.length > 0 && heights[stack.at(-1)!] >= h) {
+      const top = stack.pop()!;
+      const rectH = heights[top];
+      const left = stack.length > 0 ? stack.at(-1)! + 1 : 0;
+      considerRect(best, left, y - rectH + 1, x - left, rectH);
+    }
+    stack.push(x);
+  }
+}
+
 /**
  * Largest axis-aligned rectangle of transparent / near-transparent pixels
  * inside an optional limit (typically contentBounds). Used for library
@@ -96,49 +166,18 @@ function largestRectWhere(
 ): ContentBounds | null {
   if (width <= 0 || height <= 0) return null;
 
-  const minX = Math.max(0, limit?.x ?? 0);
-  const minY = Math.max(0, limit?.y ?? 0);
-  const maxR = Math.min(width, limit ? limit.x + limit.width : width);
-  const maxB = Math.min(height, limit ? limit.y + limit.height : height);
-  if (maxR <= minX || maxB <= minY) return null;
+  const box = resolveLimit(width, height, limit);
+  if (!box) return null;
 
   const heights = new Int32Array(width);
-  let best: ContentBounds | null = null;
-  let bestArea = 0;
-
   const stack: number[] = [];
+  const best = { rect: null as ContentBounds | null, area: 0 };
+
   for (let y = 0; y < height; y++) {
-    const row = y * width;
-    const rowInLimit = y >= minY && y < maxB;
-    for (let x = 0; x < width; x++) {
-      const inLimit = rowInLimit && x >= minX && x < maxR;
-      heights[x] = inLimit && pred(px, (row + x) * 4) ? heights[x] + 1 : 0;
-    }
-
-    stack.length = 0;
-    for (let x = 0; x <= width; x++) {
-      const h = x < width ? heights[x] : 0;
-      while (stack.length > 0 && heights[stack[stack.length - 1]] >= h) {
-        const top = stack.pop()!;
-        const rectH = heights[top];
-        const left = stack.length > 0 ? stack[stack.length - 1] + 1 : 0;
-        const rectW = x - left;
-        const area = rectH * rectW;
-        if (area > bestArea) {
-          bestArea = area;
-          best = {
-            x: left,
-            y: y - rectH + 1,
-            width: rectW,
-            height: rectH,
-          };
-        }
-      }
-      stack.push(x);
-    }
+    updateHeightsRow(heights, px, width, y, box, pred);
+    updateBestFromHeights(heights, width, y, stack, best);
   }
-
-  return best;
+  return best.rect;
 }
 
 /**
@@ -152,10 +191,11 @@ function expandRectWhile(
   stripOk: (x0: number, y0: number, x1: number, y1: number) => boolean,
   limit?: ContentBounds,
 ): ContentBounds {
-  const minX = Math.max(0, limit?.x ?? 0);
-  const minY = Math.max(0, limit?.y ?? 0);
-  const maxR = Math.min(width, limit ? limit.x + limit.width : width);
-  const maxB = Math.min(height, limit ? limit.y + limit.height : height);
+  const bounds = limit ?? { x: 0, y: 0, width, height };
+  const minX = Math.max(0, bounds.x);
+  const minY = Math.max(0, bounds.y);
+  const maxR = Math.min(width, bounds.x + bounds.width);
+  const maxB = Math.min(height, bounds.y + bounds.height);
 
   // Start inside the limit so we never claim chassis outside content.
   let x = Math.max(minX, rect.x);

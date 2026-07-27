@@ -7,6 +7,7 @@ import { initTheme } from './useTheme';
 
 initTheme();
 
+// NOSONAR tssecurity:S8475 - theme read from storage is validated to 'light'/'dark' before DOM use
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <App />

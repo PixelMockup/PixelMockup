@@ -68,7 +68,7 @@ export function normalizeDeviceText(input: string): string {
     .toLowerCase()
     .replace(/-\d+$/g, '')
     .replace(/[_/]+/g, ' ')
-    .replace(/-/g, ' ')
+    .replaceAll('//', ' ')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -111,6 +111,11 @@ function stripVariantSuffixes(name: string): string {
   return s.trim();
 }
 
+function tokenBoundryRegex(tok: string): RegExp {
+  const spaced = tok.replace(/\s+/g, String.raw`\s+`);
+  return new RegExp(String.raw`\s${spaced}\s`, 'ig');
+}
+
 function stripColorsAndBands(name: string): string {
   let s = ` ${name} `;
   // "Brand + Band" watch patterns: drop " + …" band/color tails
@@ -118,11 +123,12 @@ function stripColorsAndBands(name: string): string {
 
   const finishes = [...COLOR_FINISH_TOKENS].sort((a, b) => b.length - a.length);
   for (const tok of finishes) {
-    const re = new RegExp(`\\s${tok.replace(/\s+/g, '\\s+')}\\s`, 'ig');
+    const re = tokenBoundryRegex(tok);
     s = s.replace(re, ' ');
   }
   for (const tok of SIMPLE_COLORS) {
-    s = s.replace(new RegExp(`\\s${tok}\\s`, 'ig'), ' ');
+    const re = tokenBoundryRegex(tok);
+    s = s.replace(re, ' ');
   }
 
   // Trailing " - Color" style
@@ -164,7 +170,7 @@ export function parseProductFamily(
     .trim();
 
   // Watch: keep "Watch 40mm"
-  const watch = s.match(/^(?:Apple\s+)?Watch\s+(\d+)\s*mm/i);
+  const watch = /^(?:Apple\s+)?Watch\s+(\d+)\s*mm/i.exec(s);
   if (watch) return `Apple Watch ${watch[1]}mm`;
 
   if (!s) return name.replace(/-\d+$/, '').trim();
@@ -173,7 +179,7 @@ export function parseProductFamily(
 
 /**
  * Human-facing device label from filename stem.
- * Keeps color/finish; spaces trailing variant: `Black-1` → `Black -1`.
+ * Keeps color/finish; spaces trailing variant: `Black - 1` → `Black - 1`.
  */
 export function formatDeviceDisplayName(name: string | undefined): string {
   const raw = (name ?? '').trim();

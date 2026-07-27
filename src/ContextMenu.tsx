@@ -42,12 +42,12 @@ function Item({
   hint,
   disabled,
   onClick,
-}: {
+}: Readonly<{
   label: string;
   hint?: string;
   disabled?: boolean;
   onClick: () => void;
-}) {
+}>) {
   return (
     <button
       type="button"
@@ -57,13 +57,13 @@ function Item({
       onClick={onClick}
     >
       <span>{label}</span>
-      {hint ? <span className="ms-ctx-hint">{hint}</span> : null}
-    </button>
+      {hint ? <span className="ms-ctx-hint" > {hint}</span> : null}
+    </button >
   );
 }
 
 function Sep() {
-  return <div className="ms-ctx-sep" role="separator" />;
+  return <hr><div className="ms-ctx-sep" /></hr>;
 }
 
 export default function ContextMenu({
@@ -90,7 +90,7 @@ export default function ContextMenu({
   onRemoveScreenImage,
   onResetScreenFraming,
   onClose,
-}: ContextMenuProps) {
+}: Readonly<ContextMenuProps>) {
   const run = (fn: () => void) => () => {
     fn();
     onClose();
@@ -102,6 +102,7 @@ export default function ContextMenu({
     <div
       className="ms-ctx"
       role="menu"
+      tabIndex={-1}
       style={{ left: state.x, top: state.y }}
       onPointerDown={(e) => e.stopPropagation()}
       onContextMenu={(e) => e.preventDefault()}

@@ -44,9 +44,9 @@ function FilterChip({
   active,
   onClick,
 }: {
-  label: string;
-  active: boolean;
-  onClick: () => void;
+  readonly label: string;
+  readonly active: boolean;
+  readonly onClick: () => void;
 }) {
   return (
     <button
@@ -87,7 +87,7 @@ export default function LibraryPanel({
   onResizePointerDown,
   onResizePointerMove,
   onResizePointerUp,
-}: LibraryPanelProps) {
+}: Readonly<LibraryPanelProps>) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const preview = availableProducts.slice(0, PRODUCT_CHIP_PREVIEW);
   const hiddenCount = Math.max(0, availableProducts.length - PRODUCT_CHIP_PREVIEW);
@@ -206,7 +206,6 @@ export default function LibraryPanel({
                   </summary>
                   <div
                     className="ms-product-popover"
-                    role="dialog"
                     aria-label="More products"
                   >
                     <div className="ms-chip-row">

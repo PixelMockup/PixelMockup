@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   ACTION_LABELS,
   ACTION_ORDER,
@@ -30,10 +30,11 @@ export default function KeybindingsPanel({
   bindings,
   onBindingsChange,
   platform = detectPlatform(),
-}: KeybindingsPanelProps) {
+}: Readonly<KeybindingsPanelProps>) {
   const [listeningAction, setListeningAction] = useState<KeyActionId | null>(
     null,
   );
+  const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
     if (!open) setListeningAction(null);
@@ -75,6 +76,16 @@ export default function KeybindingsPanel({
     return () => window.removeEventListener('keydown', onKeyDown, true);
   }, [open, listeningAction, bindings, onBindingsChange, platform]);
 
+  useEffect(() => {
+    const el = dialogRef.current;
+    if (!el) return;
+    if (open) {
+      if (!el.open) el.showModal();
+    } else if (el.open) {
+      el.close();
+    }
+  }, [open]);
+
   if (!open) return null;
 
   const handleReset = () => {
@@ -90,14 +101,12 @@ export default function KeybindingsPanel({
   };
 
   return (
-    <div
+    <dialog
+      ref={dialogRef}
       className="ms-modal-backdrop"
-      role="dialog"
       aria-modal="true"
       aria-label="Keyboard shortcuts"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+      onClose={onClose} // fires for escape
     >
       <div className="ms-modal">
         <div className="ms-modal-header">
@@ -141,7 +150,7 @@ export default function KeybindingsPanel({
                       {listeningAction === id
                         ? '…'
                         : formatBindingsForDisplay(bindings[id] ?? [], platform) ||
-                          '—'}
+                        '—'}
                     </code>
                   </td>
                   <td style={{ whiteSpace: 'nowrap' }}>
@@ -175,7 +184,7 @@ export default function KeybindingsPanel({
           </p>
         </div>
       </div>
-    </div>
+    </dialog>
   );
 }
 
