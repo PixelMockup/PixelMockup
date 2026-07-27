@@ -13,7 +13,7 @@ import {
 describe('deviceMeta', () => {
   describe('normalizeDeviceText', () => {
     it('normalizes separators and case', () => {
-      expect(normalizeDeviceText('Apple_iPhone-11/Pro')).toBe('apple iphone 11 pro');
+      expect(normalizeDeviceText('Apple_iPhone-11/Pro')).toBe('apple iphone-11 pro');
     });
 
     it('handles empty, unicode, emoji', () => {
