@@ -7,6 +7,7 @@ import {
 import type { DeviceItem } from './App';
 import {
   applySizeScale,
+  ARTBOARD_FORMATS,
   CATEGORY_ORDER,
   displayHeightForContent,
   displaySizeFromMm,
@@ -16,6 +17,7 @@ import {
   persistSizeScaleId,
   readStoredArtboardFormatId,
   readStoredSizeScaleId,
+  SIZE_SCALE_PRESETS,
   type ArtboardFormatId,
   type ExportFormat,
   type ExportResolution,
@@ -1008,6 +1010,7 @@ export default function MockupStudio({ groupedLibrary }: Readonly<MockupStudioPr
   const pushBackward = () => tryLayerAction('back');
 
   const changeSizeScale = (nextId: SizeScaleId) => {
+    if (!SIZE_SCALE_PRESETS.some((p) => p.id === nextId)) return;
     if (nextId === sizeScaleId) return;
     const oldFactor = getSizeScalePreset(sizeScaleId).factor;
     const newFactor = getSizeScalePreset(nextId).factor;
@@ -1042,6 +1045,7 @@ export default function MockupStudio({ groupedLibrary }: Readonly<MockupStudioPr
   };
 
   const changeArtboardFormat = (nextId: ArtboardFormatId) => {
+    if (!ARTBOARD_FORMATS.some((p) => p.id === nextId)) return;
     if (nextId === artboardFormatId) return;
     const next = getArtboardFormat(nextId);
     setArtboardFormatId(nextId);
@@ -1069,13 +1073,13 @@ export default function MockupStudio({ groupedLibrary }: Readonly<MockupStudioPr
   };
 
   const bringToFront = () => {
-    if (!primaryId) return;
+    if (!primaryId || !canvasItems.some((i) => i.instanceId === primaryId)) return;
     pushUndo();
     setCanvasItems((prev) => bringToFrontItems(prev, primaryId) ?? prev);
   };
 
   const sendToBack = () => {
-    if (!primaryId) return;
+    if (!primaryId || !canvasItems.some((i) => i.instanceId === primaryId)) return;
     pushUndo();
     setCanvasItems((prev) => sendToBackItems(prev, primaryId) ?? prev);
   };

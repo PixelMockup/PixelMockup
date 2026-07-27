@@ -150,9 +150,12 @@ export default function IconRail({
               <span className="ms-field__label">Canvas size</span>
               <select
                 value={artboardFormatId}
-                onChange={(e) =>
-                  onArtboardFormat(e.target.value as ArtboardFormatId)
-                }
+                onChange={(e) => {
+                  const id = e.target.value as ArtboardFormatId;
+                  if (ARTBOARD_FORMATS.some((p) => p.id === id)) {
+                    onArtboardFormat(id);
+                  }
+                }}
               >
                 {ARTBOARD_FORMATS.map((p) => (
                   <option key={p.id} value={p.id}>
@@ -165,7 +168,12 @@ export default function IconRail({
               <span className="ms-field__label">Device size</span>
               <select
                 value={sizeScaleId}
-                onChange={(e) => onSizeScale(e.target.value as SizeScaleId)}
+                onChange={(e) => {
+                  const id = e.target.value as SizeScaleId;
+                  if (SIZE_SCALE_PRESETS.some((p) => p.id === id)) {
+                    onSizeScale(id);
+                  }
+                }}
               >
                 {SIZE_SCALE_PRESETS.map((p) => (
                   <option key={p.id} value={p.id}>

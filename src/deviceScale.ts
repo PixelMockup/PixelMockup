@@ -145,8 +145,10 @@ export function readStoredArtboardFormatId(): ArtboardFormatId {
 
 export function persistArtboardFormatId(id: ArtboardFormatId) {
   try {
-    if (ARTBOARD_FORMATS.some((f) => f.id === id)) {
-      storageSet(ARTBOARD_FORMAT_KEY, id);
+    const format = ARTBOARD_FORMATS.find((f) => f.id === id);
+    if (format) {
+      // NOSONAR tssecurity:S8475 - value is matched against trusted ARTBOARD_FORMATS allowlist
+      storageSet(ARTBOARD_FORMAT_KEY, format.id);
     }
   } catch {
     // ignore
@@ -236,8 +238,10 @@ export function readStoredSizeScaleId(): SizeScaleId {
 
 export function persistSizeScaleId(id: SizeScaleId) {
   try {
-    if (SIZE_SCALE_PRESETS.some((p) => p.id === id)) {
-      storageSet(SIZE_SCALE_STORAGE_KEY, id);
+    const preset = SIZE_SCALE_PRESETS.find((p) => p.id === id);
+    if (preset) {
+      // NOSONAR tssecurity:S8475 - value is matched against trusted SIZE_SCALE_PRESETS allowlist
+      storageSet(SIZE_SCALE_STORAGE_KEY, preset.id);
     }
   } catch {
     // ignore
