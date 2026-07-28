@@ -1,2 +1,2 @@
-/** Shared path for Vite presence middleware + client heartbeat. */
-export const PRESENCE_PATH = '/__presence';
+/** Shared path for Vite middleware, Vercel serverless, and client heartbeat. */
+export const PRESENCE_PATH = '/api/presence';

@@ -19,5 +19,14 @@
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["vite.config.ts", "scripts/websiteCapturePlugin.ts", "src/capturePath.ts", "src/websiteUrl.ts"]
+  "include": [
+    "vite.config.ts",
+    "scripts/websiteCapturePlugin.ts",
+    "scripts/presencePlugin.ts",
+    "src/capturePath.ts",
+    "src/websiteUrl.ts",
+    "src/presencePath.ts",
+    "src/presenceStore.ts",
+    "api/presence.ts"
+  ]
 }
