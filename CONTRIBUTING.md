@@ -94,11 +94,69 @@ After this:
 
 ## GitHub settings (project owner)
 
-1. **Default branch:** Settings → General → Default branch → **`dev`** → Update.  
+### Default branch
+
+1. Settings → General → Default branch → **`dev`** → Update.  
    This makes forks and clones land on `dev`.
-2. **Delete old `main` (if it still exists):** After default is `dev`, delete the `main` branch (Settings → Branches, or `git push origin --delete main`).
-3. **Protect `dev`:** Require a pull request; require status checks `CI / unit`, `CI / e2e`, and Vercel checks when listed; disallow force pushes and deletions.
-4. **Protect `stable`:** Same required checks; require a pull request; disallow force pushes and deletions; merge only from `dev` via release PRs.
+2. Delete old `main` if it still exists (only after default is `dev`): Settings → Branches, or `git push origin --delete main`.
+
+### Organization (optional)
+
+Recommended org name: **`pixelmockup`** (URL: `https://github.com/pixelmockup`). Fallbacks if taken: `pixel-mockup`, `pixelmockup-hq`, `pixelmockup-org`.
+
+**Enforcement note:** GitHub may show that rulesets are not enforced on a **private** repo until the owner is a **GitHub Team** organization. A **Free** org alone does not unlock that for private repos. Options:
+
+1. Keep the repo private and follow this workflow by policy (no paid plan).
+2. Make the repo **public** so Free rulesets enforce.
+3. Upgrade the org to **Team** later if you need hard enforcement while staying private.
+
+After an org exists, transfer the repo into it, then create the rulesets below under the org repo settings.
+
+### Branch rulesets (`protect-dev` and `protect-stable`)
+
+Use **Settings → Rules → Rulesets → New ruleset → New branch ruleset**. Create **two** rulesets.
+
+#### Ruleset 1 — `protect-dev`
+
+1. **Ruleset Name:** `protect-dev`
+2. **Enforcement status:** `Active`
+3. **Bypass list:** leave empty (or add yourself temporarily while testing)
+4. **Target branches → Add target → Include by name:** `dev`
+5. Enable these **Branch rules** only:
+   - **Restrict deletions**
+   - **Block force pushes**
+   - **Require a pull request before merging** (approvals: `0` solo, or `1` with reviewers)
+   - **Require status checks to pass**, then add:
+     - `CI / unit` (or `unit` as listed)
+     - `CI / e2e` (or `e2e`)
+     - `Vercel` (after it has run at least once)
+     - `Vercel Preview Comments` (after it has run at least once)
+6. Leave unchecked for now: Restrict creations/updates, linear history, signed commits, deployments, code scanning/quality/coverage, Copilot review
+7. Click **Create**
+
+Status checks appear in the search box only after they have run once on the repo. Trigger CI first if a name is missing, then edit the ruleset and add it.
+
+#### Ruleset 2 — `protect-stable`
+
+Same as `protect-dev`, except:
+
+1. **Ruleset Name:** `protect-stable`
+2. **Target branches → Include by name:** `stable`
+3. Same checkboxes and the same four status checks
+
+#### Release-only process for `stable`
+
+Rulesets cannot natively require “PR head must be `dev`”. Enforce by process:
+
+- Everyday work: PR base = `dev`
+- Releases only: PR base = `stable`, head = `dev`
+- Never open `fix/...` / `feat/...` PRs into `stable`
+
+### Verify rulesets
+
+1. Confirm both rulesets are **Active** under Settings → Rules → Rulesets.
+2. Try a direct push to `dev` — should be rejected when enforcement applies.
+3. Open a PR into `dev` — merge should wait on the required checks.
 
 ## Questions?
 
