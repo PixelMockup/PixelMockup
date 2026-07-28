@@ -97,4 +97,51 @@ describe('captureWebsite', () => {
       describeCaptureError(new Error('Failed to launch chromium executable')),
     ).toMatch(/chrome/i);
   });
+
+  it('describeCaptureError explains navigation timeouts', () => {
+    expect(
+      describeCaptureError(
+        new Error('page.goto: Timeout 25000ms exceeded.'),
+      ),
+    ).toMatch(/too long to load|timeout/i);
+    expect(
+      describeCaptureError(
+        new Error('Site took too long to load (timeout). Try another URL.'),
+      ),
+    ).toMatch(/too long to load/i);
+  });
+
+  it('describeCaptureError explains busy / too-many-captures failures', () => {
+    expect(
+      describeCaptureError(new Error('too many captures')),
+    ).toMatch(/busy with other devices/i);
+  });
+
+  it('retries once on 429 too many captures then succeeds', async () => {
+    vi.useFakeTimers();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        json: async () => ({ error: 'too many captures' }),
+      })
+      .mockResolvedValueOnce({
+        ok: true,
+        status: 200,
+        json: async () => ({ dataUrl: 'data:image/png;base64,ok' }),
+      });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const pendingCapture = captureWebsiteScreenshot(
+      'https://example.com/',
+      390,
+      844,
+    );
+    await vi.advanceTimersByTimeAsync(500);
+    const url = await pendingCapture;
+    expect(url).toBe('data:image/png;base64,ok');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    vi.useRealTimers();
+  });
 });

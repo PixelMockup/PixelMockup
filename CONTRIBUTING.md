@@ -45,6 +45,20 @@ npm run test:all
 
 Both must pass before the PR is ready.
 
+## Website capture (local only)
+
+Screenshot capture for “Show on devices” uses Vite middleware + Playwright Chrome. It only works with:
+
+```bash
+npm run dev
+# or
+npm run preview
+```
+
+- Prefer testing with `https://example.com`.
+- Capturing your own Vercel URL (e.g. `pixelmockup.vercel.app`) may time out under headless Chrome even when other sites work.
+- The static Vercel deployment does not expose `/__capture_website` to end users.
+
 ## Required checks before promoting `dev` → `stable`
 
 `stable` is the final release branch. Every check below must be **green on `dev`** (and on the release PR) before you merge into `stable`:
