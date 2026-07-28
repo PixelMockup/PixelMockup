@@ -9,13 +9,24 @@ npm run dev
 
 ## Fork / clone (defaults to `dev`)
 
-This repository’s **default branch is `dev`**. When you fork or clone, you land on `dev` automatically.
+GitHub’s **Default branch must be `dev`** (not `stable`). That controls:
+
+- What `git clone` checks out
+- The fork dialog checkbox (“Copy the `dev` branch only”)
+
+**Owner setup:** Settings → General → Default branch → **`dev`** → Update.  
+Keep Vercel **Production Branch** as `stable` — that is separate from the Git default.
+
+When forking:
+
+- If the checkbox says “Copy the `stable` branch only”, the repo default is still wrong — ask the owner to switch default to `dev`, or **uncheck** the box to copy all branches, then `git checkout dev` after clone.
+- After default is `dev`, leaving “Copy the `dev` branch only” checked is fine for everyday contributors.
 
 ```bash
-git clone git@github.com:ravijaanthony/PixelMockup.git
+git clone git@github.com:PixelMockup/PixelMockup.git
 cd PixelMockup
 npm install
-# You are on `dev` — create a fix/feat branch from here
+# You should be on `dev` — create a fix/feat branch from here
 ```
 
 ## Branches
