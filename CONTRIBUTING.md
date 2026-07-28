@@ -96,7 +96,7 @@ After this:
 
 ### Default branch
 
-1. Settings → General → Default branch → **`dev`** → Update.  
+1. [Settings → General → Default branch](https://github.com/PixelMockup/PixelMockup/settings) → **`dev`** → Update.  
    This makes forks and clones land on `dev`. The fork UI checkbox will then say **“Copy the `dev` branch only”** (it always follows the default branch).
 2. Do **not** set the default branch to `stable`, or new forks will land on production and the checkbox will say “Copy the `stable` branch only.”
 3. Vercel Production Branch stays **`stable`** — Git default and Vercel production are independent.
