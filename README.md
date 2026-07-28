@@ -7,6 +7,39 @@ npm install
 npm run dev
 ```
 
+## Fork / clone (defaults to `dev`)
+
+This repository’s **default branch is `dev`**. When you fork or clone, you land on `dev` automatically.
+
+```bash
+git clone git@github.com:ravijaanthony/PixelMockup.git
+cd PixelMockup
+npm install
+# You are on `dev` — create a fix/feat branch from here
+```
+
+## Branches
+
+| Branch | Role |
+| --- | --- |
+| `dev` | Everyday work. Open bug-fix and feature PRs here. |
+| `stable` | Final release / production. Vercel deploys the live site from here only. Do not push day-to-day work to `stable`. |
+
+Flow: `fix/...` or `feat/...` → PR into **`dev`** → when ready, release PR **`dev` → `stable`**.
+
+## Required checks before promoting to `stable`
+
+`stable` is the final release branch. Do not merge into it until **all** of these checks are green on `dev` (and on the release PR):
+
+1. **CI / unit** — Vitest unit, component, and coverage
+2. **CI / e2e** — Playwright end-to-end tests
+3. **Vercel** — Deployment has completed
+4. **Vercel Preview Comments** — no unresolved feedback
+
+If any check fails, fix it on `dev` first. Never “play with” `stable`.
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full PR workflow and Vercel/GitHub setup.
+
 ## Tests
 
 ```bash
@@ -32,12 +65,3 @@ First-time Playwright setup:
 ```bash
 npx playwright install chromium
 ```
-
-## Branching & Vercel
-
-- `dev` is the default branch for development. New clones land here.
-- Open Pull Requests into `dev` for bug fixes and features.
-- `main` is the production branch. Vercel deploys the live site from `main` only.
-- When `dev` is stable, open a release PR to merge `dev` into `main`.
-
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full workflow.

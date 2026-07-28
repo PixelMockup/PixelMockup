@@ -121,16 +121,17 @@ If `test:all` fails, the change is not done.
 
 ## Branching & release rules
 
-- **Default branch:** `dev` is the shared integration branch. New clones land here.
+- **Default branch:** `dev` is the shared integration branch. New clones and forks land here.
 - **Branch from `dev`:** Always create feature/bug branches from `dev`:
   ```bash
   git checkout dev
   git pull origin dev
   git checkout -b fix/short-description
   ```
-- **Pull Requests:** Open PRs into `dev`. Never push directly to `dev` or `main`.
-- **Production branch:** `main` is reserved for production releases. Vercel deploys the live site from `main` only.
-- **Release flow:** When `dev` is stable, open a release PR from `dev` into `main`. After review and CI, merge it. Vercel will then deploy the production site.
+- **Pull Requests:** Open PRs into `dev`. Never push directly to `dev` or `stable`.
+- **Production branch:** `stable` is the final release branch. Vercel deploys the live site from `stable` only. Do not open everyday feature/fix PRs into `stable`.
+- **Required checks before `dev` → `stable`:** All of these must be green: **CI / unit**, **CI / e2e**, **Vercel** (deployment completed), **Vercel Preview Comments** (no unresolved feedback). Fix failures on `dev` first.
+- **Release flow:** When `dev` is healthy, open a release PR from `dev` into `stable`. After review and checks, merge it. Vercel then deploys production.
 - **Branch naming:** use `fix/...`, `feat/...`, or `chore/...` prefixes.
 
 ## What to do when asked to make a change
