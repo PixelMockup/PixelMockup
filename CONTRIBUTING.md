@@ -16,7 +16,7 @@ This guide explains the Git and Vercel workflow for the project. It is designed 
 
 ```bash
 # Clone (lands on dev because dev is the default branch)
-git clone git@github.com:ravijaanthony/PixelMockup.git
+git clone git@github.com:PixelMockup/PixelMockup.git
 cd PixelMockup
 npm install
 
@@ -74,7 +74,7 @@ After review and all checks pass, merge the PR. Vercel updates production at [pi
 
 Configure one Vercel project for this repo:
 
-1. Open [vercel.com](https://vercel.com) → project for `ravijaanthony/PixelMockup` (or import it if new).
+1. Open [vercel.com](https://vercel.com) → project for `PixelMockup/PixelMockup` (or import it if new).
 2. Framework preset: **Vite**.
 3. Build command: `npm run build`.
 4. Output directory: `dist`.
@@ -96,9 +96,13 @@ After this:
 
 ### Default branch
 
-1. Settings → General → Default branch → **`dev`** → Update.  
-   This makes forks and clones land on `dev`.
-2. Delete old `main` if it still exists (only after default is `dev`): Settings → Branches, or `git push origin --delete main`.
+1. [Settings → General → Default branch](https://github.com/PixelMockup/PixelMockup/settings) → **`dev`** → Update.  
+   This makes forks and clones land on `dev`. The fork UI checkbox will then say **“Copy the `dev` branch only”** (it always follows the default branch).
+2. Do **not** set the default branch to `stable`, or new forks will land on production and the checkbox will say “Copy the `stable` branch only.”
+3. Vercel Production Branch stays **`stable`** — Git default and Vercel production are independent.
+4. Delete old `main` if it still exists (only after default is `dev`): Settings → Branches, or `git push origin --delete main`.
+
+**Fork tip:** Until default is `dev`, forkers should **uncheck** “Copy the `stable` branch only” to get all branches, then `git checkout dev`.
 
 ### Organization (optional)
 
