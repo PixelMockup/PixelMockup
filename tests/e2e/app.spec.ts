@@ -68,6 +68,58 @@ test.describe('Pixel Mockup app shell', () => {
     await expect(page.getByRole('dialog', { name: /Keyboard shortcuts/i })).toHaveCount(0);
   });
 
+  test('closes shortcuts panel with Escape', async ({ page }) => {
+    await page.goto('/');
+    await page
+      .getByRole('navigation', { name: /Studio tools/i })
+      .getByRole('button', { name: /^Shortcuts$/i })
+      .click();
+    await expect(page.getByRole('dialog', { name: /Keyboard shortcuts/i })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('dialog', { name: /Keyboard shortcuts/i })).toHaveCount(0);
+  });
+
+  test('shortcuts panel close button is inside viewport', async ({ page }) => {
+    await page.goto('/');
+    await page
+      .getByRole('navigation', { name: /Studio tools/i })
+      .getByRole('button', { name: /^Shortcuts$/i })
+      .click();
+    const closeBtn = page.getByRole('button', { name: /^Close$/i });
+    await expect(closeBtn).toBeVisible();
+    const box = await closeBtn.boundingBox();
+    expect(box).not.toBeNull();
+    const viewport = page.viewportSize();
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.y).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(viewport!.width);
+    expect(box!.y + box!.height).toBeLessThanOrEqual(viewport!.height);
+  });
+
+  test('shortcuts panel stays usable when resized to mobile viewport', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 });
+    await page.goto('/');
+    await page
+      .getByRole('navigation', { name: /Studio tools/i })
+      .getByRole('button', { name: /^Shortcuts$/i })
+      .click();
+    await expect(page.getByRole('dialog', { name: /Keyboard shortcuts/i })).toBeVisible();
+
+    // Resize to mobile while the dialog is open.
+    await page.setViewportSize({ width: 390, height: 844 });
+    const closeBtn = page.getByRole('button', { name: /^Close$/i });
+    await expect(closeBtn).toBeVisible();
+    const box = await closeBtn.boundingBox();
+    expect(box).not.toBeNull();
+    const viewport = page.viewportSize();
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.y).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(viewport!.width);
+    expect(box!.y + box!.height).toBeLessThanOrEqual(viewport!.height);
+    await closeBtn.click();
+    await expect(page.getByRole('dialog', { name: /Keyboard shortcuts/i })).toHaveCount(0);
+  });
+
   test('toggles theme', async ({ page }) => {
     await page.goto('/');
     const theme = page

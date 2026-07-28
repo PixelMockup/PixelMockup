@@ -1121,15 +1121,27 @@
 .ms-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: var(--ms-overlay);
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  margin: 0;
+  border: none;
+  padding: 16px;
+  padding-top: calc(16px + var(--ms-safe-t));
+  padding-bottom: calc(16px + var(--ms-safe-b));
+  box-sizing: border-box;
+  background: transparent;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 10000;
-  padding: 16px;
-  padding-top: calc(16px + var(--ms-safe-t));
-  padding-bottom: calc(16px + var(--ms-safe-b));
+  overflow: hidden;
   animation: ms-fade-in 160ms ease;
+}
+
+.ms-modal-backdrop::backdrop {
+  background: var(--ms-overlay);
 }
 
 .ms-modal {
