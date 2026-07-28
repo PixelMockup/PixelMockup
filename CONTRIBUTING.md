@@ -16,7 +16,7 @@ This guide explains the Git and Vercel workflow for the project. It is designed 
 
 ```bash
 # Clone (lands on dev because dev is the default branch)
-git clone git@github.com:ravijaanthony/PixelMockup.git
+git clone git@github.com:PixelMockup/PixelMockup.git
 cd PixelMockup
 npm install
 
@@ -74,7 +74,7 @@ After review and all checks pass, merge the PR. Vercel updates production at [pi
 
 Configure one Vercel project for this repo:
 
-1. Open [vercel.com](https://vercel.com) → project for `ravijaanthony/PixelMockup` (or import it if new).
+1. Open [vercel.com](https://vercel.com) → project for `PixelMockup/PixelMockup` (or import it if new).
 2. Framework preset: **Vite**.
 3. Build command: `npm run build`.
 4. Output directory: `dist`.

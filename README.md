@@ -23,7 +23,7 @@ When forking:
 - After default is `dev`, leaving “Copy the `dev` branch only” checked is fine for everyday contributors.
 
 ```bash
-git clone git@github.com:ravijaanthony/PixelMockup.git
+git clone git@github.com:PixelMockup/PixelMockup.git
 cd PixelMockup
 npm install
 # You should be on `dev` — create a fix/feat branch from here
