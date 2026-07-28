@@ -63,8 +63,8 @@ function readJsonBody(req: IncomingMessage): Promise<PresenceBody> {
 
 /**
  * Vite middleware: anonymous concurrent-user presence.
- * POST /__presence { id, action?: "leave" } → { count }
- * GET  /__presence → { count }
+ * POST /api/presence { id, action?: "leave" } → { count }
+ * GET  /api/presence → { count }
  */
 export function presencePlugin(): Plugin {
   const store = new PresenceStore();
