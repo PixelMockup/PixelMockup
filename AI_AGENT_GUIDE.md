@@ -119,10 +119,27 @@ If `test:all` fails, the change is not done.
 - Prefer `textContent` / `setAttribute` over `dangerouslySetInnerHTML` or `innerHTML`.
 - When in doubt, add a test that verifies the fix and prevents regression.
 
+## Branching & release rules
+
+- **Default branch:** `dev` is the shared integration branch. New clones and forks land here.
+- **Branch from `dev`:** Always create feature/bug branches from `dev`:
+  ```bash
+  git checkout dev
+  git pull origin dev
+  git checkout -b fix/short-description
+  ```
+- **Pull Requests:** Open PRs into `dev`. Never push directly to `dev` or `stable`.
+- **Production branch:** `stable` is the final release branch. Live production is [pixelmockup.vercel.app](https://pixelmockup.vercel.app/). Do not open everyday feature/fix PRs into `stable`.
+- **Preview / integration site:** `dev` deploys to [pixelmockup-preview.vercel.app](https://pixelmockup-preview.vercel.app/). Fix failures there before promoting.
+- **Required checks before `dev` → `stable`:** All of these must be green: **CI / unit**, **CI / e2e**, **Vercel** (deployment completed), **Vercel Preview Comments** (no unresolved feedback). Fix failures on `dev` first.
+- **Release flow:** When `dev` is healthy, open a release PR from `dev` into `stable`. After review and checks, merge it. Vercel then updates production.
+- **Branch naming:** use `fix/...`, `feat/...`, or `chore/...` prefixes.
+
 ## What to do when asked to make a change
 
 1. Read the relevant source and test files first.
-2. Add or update tests that exercise the change and prevent regression.
-3. Run the lint and the relevant test commands.
-4. Run `npm run test:all` as the final gate.
-5. Summarize what changed and why, and list the commands you ran.
+2. Create a branch from `dev` with a clear name (`fix/...`, `feat/...`, `chore/...`).
+3. Add or update tests that exercise the change and prevent regression.
+4. Run the lint and the relevant test commands.
+5. Run `npm run test:all` as the final gate.
+6. Summarize what changed and why, and list the commands you ran.
