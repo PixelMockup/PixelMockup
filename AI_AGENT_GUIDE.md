@@ -119,10 +119,25 @@ If `test:all` fails, the change is not done.
 - Prefer `textContent` / `setAttribute` over `dangerouslySetInnerHTML` or `innerHTML`.
 - When in doubt, add a test that verifies the fix and prevents regression.
 
+## Branching & release rules
+
+- **Default branch:** `dev` is the shared integration branch. New clones land here.
+- **Branch from `dev`:** Always create feature/bug branches from `dev`:
+  ```bash
+  git checkout dev
+  git pull origin dev
+  git checkout -b fix/short-description
+  ```
+- **Pull Requests:** Open PRs into `dev`. Never push directly to `dev` or `main`.
+- **Production branch:** `main` is reserved for production releases. Vercel deploys the live site from `main` only.
+- **Release flow:** When `dev` is stable, open a release PR from `dev` into `main`. After review and CI, merge it. Vercel will then deploy the production site.
+- **Branch naming:** use `fix/...`, `feat/...`, or `chore/...` prefixes.
+
 ## What to do when asked to make a change
 
 1. Read the relevant source and test files first.
-2. Add or update tests that exercise the change and prevent regression.
-3. Run the lint and the relevant test commands.
-4. Run `npm run test:all` as the final gate.
-5. Summarize what changed and why, and list the commands you ran.
+2. Create a branch from `dev` with a clear name (`fix/...`, `feat/...`, `chore/...`).
+3. Add or update tests that exercise the change and prevent regression.
+4. Run the lint and the relevant test commands.
+5. Run `npm run test:all` as the final gate.
+6. Summarize what changed and why, and list the commands you ran.

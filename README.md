@@ -32,3 +32,12 @@ First-time Playwright setup:
 ```bash
 npx playwright install chromium
 ```
+
+## Branching & Vercel
+
+- `dev` is the default branch for development. New clones land here.
+- Open Pull Requests into `dev` for bug fixes and features.
+- `main` is the production branch. Vercel deploys the live site from `main` only.
+- When `dev` is stable, open a release PR to merge `dev` into `main`.
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full workflow.
