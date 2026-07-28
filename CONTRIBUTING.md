@@ -4,11 +4,11 @@ This guide explains the Git and Vercel workflow for the project. It is designed 
 
 ## Branches
 
-| Branch | Purpose | Who pushes here |
-| --- | --- | --- |
-| `dev` | Shared integration branch. Forks and clones land here. | Pull requests only |
-| `stable` | Final release / production. Vercel deploys the live site from here only. | Pull requests only (from `dev`) |
-| `fix/...`, `feat/...`, `chore/...` | Short-lived work branches | Individual contributors |
+| Branch | Purpose | Live URL | Who pushes here |
+| --- | --- | --- | --- |
+| `dev` | Shared integration branch. Forks and clones land here. | [pixelmockup-preview.vercel.app](https://pixelmockup-preview.vercel.app/) | Pull requests only |
+| `stable` | Final release / production. | [pixelmockup.vercel.app](https://pixelmockup.vercel.app/) | Pull requests only (from `dev`) |
+| `fix/...`, `feat/...`, `chore/...` | Short-lived work branches | PR preview URLs | Individual contributors |
 
 **Do not push day-to-day work to `stable`.** It is the final release branch and must not be experimented on.
 
@@ -68,24 +68,29 @@ gh pr create --base stable --head dev \
   --body "Summarize what is shipping. Confirm unit, e2e, and Vercel checks are green."
 ```
 
-After review and all checks pass, merge the PR. Vercel deploys the live site from `stable`.
+After review and all checks pass, merge the PR. Vercel updates production at [pixelmockup.vercel.app](https://pixelmockup.vercel.app/) from `stable`. The preview site at [pixelmockup-preview.vercel.app](https://pixelmockup-preview.vercel.app/) continues to track `dev`.
 
 ## Vercel setup (project owner)
 
-Import the repo in the Vercel dashboard once:
+Configure one Vercel project for this repo:
 
-1. Go to [vercel.com/new](https://vercel.com/new) and import `ravijaanthony/PixelMockup`.
+1. Open [vercel.com](https://vercel.com) → project for `ravijaanthony/PixelMockup` (or import it if new).
 2. Framework preset: **Vite**.
 3. Build command: `npm run build`.
 4. Output directory: `dist`.
 5. Install command: `npm ci` (or leave the default).
-6. Project Settings → Git → **Production Branch: `stable`** (not `main`, not `dev`).
+6. **Settings → Git → Production Branch: `stable`.**
 7. Keep **Preview Deployments** enabled for Pull Requests.
+8. **Settings → Domains** — assign domains by Git branch:
+   - `pixelmockup.vercel.app` → **Production** (tracks `stable`)
+   - `pixelmockup-preview.vercel.app` → Git branch **`dev`**
+9. If [pixelmockup-preview.vercel.app](https://pixelmockup-preview.vercel.app/) shows a Vercel **login** page, open **Settings → Deployment Protection** and disable protection for that preview domain (or allow public access). The preview app should be viewable without logging into Vercel.
 
 After this:
 
-- Every PR gets a Preview URL (and the Vercel / Preview Comments checks).
-- Only merges into **`stable`** update the live production domain.
+- Pushes/merges to **`dev`** update [pixelmockup-preview.vercel.app](https://pixelmockup-preview.vercel.app/).
+- Merges to **`stable`** update [pixelmockup.vercel.app](https://pixelmockup.vercel.app/).
+- Feature PRs still get their own temporary Preview URLs.
 
 ## GitHub settings (project owner)
 

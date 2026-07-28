@@ -20,12 +20,12 @@ npm install
 
 ## Branches
 
-| Branch | Role |
-| --- | --- |
-| `dev` | Everyday work. Open bug-fix and feature PRs here. |
-| `stable` | Final release / production. Vercel deploys the live site from here only. Do not push day-to-day work to `stable`. |
+| Branch | Role | Live URL |
+| --- | --- | --- |
+| `dev` | Everyday work. Open bug-fix and feature PRs here. | [pixelmockup-preview.vercel.app](https://pixelmockup-preview.vercel.app/) |
+| `stable` | Final release / production. Do not push day-to-day work here. | [pixelmockup.vercel.app](https://pixelmockup.vercel.app/) |
 
-Flow: `fix/...` or `feat/...` → PR into **`dev`** → when ready, release PR **`dev` → `stable`**.
+Flow: `fix/...` or `feat/...` → PR into **`dev`** (updates the preview site) → when ready, release PR **`dev` → `stable`** (updates production).
 
 ## Required checks before promoting to `stable`
 
@@ -36,7 +36,7 @@ Flow: `fix/...` or `feat/...` → PR into **`dev`** → when ready, release PR *
 3. **Vercel** — Deployment has completed
 4. **Vercel Preview Comments** — no unresolved feedback
 
-If any check fails, fix it on `dev` first. Never “play with” `stable`.
+If any check fails, fix it on `dev` / the preview site first. Never “play with” `stable` or production.
 
 See [`CONTRIBUTING.md`](CONTRIBUTING.md) for the full PR workflow and Vercel/GitHub setup.
 
