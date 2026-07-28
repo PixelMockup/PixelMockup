@@ -97,8 +97,12 @@ After this:
 ### Default branch
 
 1. Settings → General → Default branch → **`dev`** → Update.  
-   This makes forks and clones land on `dev`.
-2. Delete old `main` if it still exists (only after default is `dev`): Settings → Branches, or `git push origin --delete main`.
+   This makes forks and clones land on `dev`. The fork UI checkbox will then say **“Copy the `dev` branch only”** (it always follows the default branch).
+2. Do **not** set the default branch to `stable`, or new forks will land on production and the checkbox will say “Copy the `stable` branch only.”
+3. Vercel Production Branch stays **`stable`** — Git default and Vercel production are independent.
+4. Delete old `main` if it still exists (only after default is `dev`): Settings → Branches, or `git push origin --delete main`.
+
+**Fork tip:** Until default is `dev`, forkers should **uncheck** “Copy the `stable` branch only” to get all branches, then `git checkout dev`.
 
 ### Organization (optional)
 
