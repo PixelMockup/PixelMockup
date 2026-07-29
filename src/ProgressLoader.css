@@ -1,0 +1,102 @@
+.ms-progress-loader {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ms-space-3);
+  width: min(360px, 80vw);
+  padding: var(--ms-space-5);
+  border-radius: var(--ms-radius);
+  background: var(--ms-surface-raised);
+  box-shadow: var(--ms-shadow);
+  text-align: center;
+}
+
+.ms-progress-loader__text-window {
+  position: relative;
+  height: 1.6em;
+  width: 100%;
+  overflow: hidden;
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black 25%,
+    black 75%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0%,
+    black 25%,
+    black 75%,
+    transparent 100%
+  );
+}
+
+.ms-progress-loader__text-strip {
+  display: flex;
+  flex-direction: column;
+  transition: transform 450ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+
+.ms-progress-loader__message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 1.6em;
+  flex-shrink: 0;
+  color: var(--ms-ink);
+  font-weight: 500;
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ms-progress-loader__track {
+  width: 100%;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--ms-border);
+  overflow: hidden;
+}
+
+.ms-progress-loader__bar {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--ms-accent), var(--ms-accent-hover));
+  transition: width 300ms ease-out;
+  will-change: width;
+}
+
+.ms-progress-loader__percent {
+  font-size: 0.75rem;
+  color: var(--ms-muted);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+/* Full-screen overlay variant used during the initial app boot. */
+.ms-progress-loader-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 25000;
+  background: var(--ms-bg-wash);
+  backdrop-filter: blur(6px);
+}
+
+/* Stage-centered overlay variant used while applying a layout preset. */
+.ms-progress-loader-stage {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 40;
+  background: color-mix(in srgb, var(--ms-stage) 85%, transparent);
+  backdrop-filter: blur(2px);
+}

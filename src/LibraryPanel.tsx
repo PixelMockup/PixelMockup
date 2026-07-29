@@ -3,6 +3,7 @@ import type { DeviceItem } from './App';
 import { formatDeviceDisplayName } from './deviceMeta';
 
 const PRODUCT_CHIP_PREVIEW = 8;
+const INITIAL_VISIBLE_ITEMS = 50;
 const LIBRARY_DRAG_MIME = 'application/x-mockup-device';
 
 export const LIBRARY_W_MIN = 280;
@@ -25,6 +26,9 @@ interface LibraryPanelProps {
   placingPath: string | null;
   searchIsGlobal: boolean;
   searchInputRef?: RefObject<HTMLInputElement | null>;
+  libraryLoading: boolean;
+  libraryProgress: number;
+  loadedCategories: Set<string>;
   onClose: () => void;
   onCategoryChange: (category: string) => void;
   onBrandAll: () => void;
@@ -42,18 +46,24 @@ interface LibraryPanelProps {
 function FilterChip({
   label,
   active,
+  loading,
+  title: chipTitle,
   onClick,
 }: {
   readonly label: string;
   readonly active: boolean;
+  readonly loading?: boolean;
+  readonly title?: string;
   readonly onClick: () => void;
 }) {
   return (
     <button
       type="button"
-      className="ms-chip"
+      className={`ms-chip${loading ? ' ms-chip--loading' : ''}`}
       onClick={onClick}
       aria-pressed={active}
+      aria-busy={loading}
+      title={chipTitle}
     >
       {label}
     </button>
@@ -75,6 +85,9 @@ export default function LibraryPanel({
   placingPath,
   searchIsGlobal,
   searchInputRef,
+  libraryLoading,
+  libraryProgress,
+  loadedCategories,
   onClose,
   onCategoryChange,
   onBrandAll,
@@ -89,6 +102,7 @@ export default function LibraryPanel({
   onResizePointerUp,
 }: Readonly<LibraryPanelProps>) {
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
   const preview = availableProducts.slice(0, PRODUCT_CHIP_PREVIEW);
   const hiddenCount = Math.max(0, availableProducts.length - PRODUCT_CHIP_PREVIEW);
   const showMore = availableProducts.length > PRODUCT_CHIP_PREVIEW;
@@ -114,6 +128,21 @@ export default function LibraryPanel({
         </button>
       </div>
 
+      {libraryLoading && (
+        <div className="ms-library-progress" aria-live="polite">
+          <div
+            className="ms-library-progress-bar"
+            style={{ width: `${libraryProgress}%` }}
+            aria-hidden="true"
+          />
+          <span className="ms-library-progress-label">
+            {libraryProgress > 0
+              ? `Loading devices… ${Math.round(libraryProgress)}%`
+              : 'Loading devices…'}
+          </span>
+        </div>
+      )}
+
       <div className="ms-filter-block ms-filter-block--search">
         <input
           ref={searchInputRef}
@@ -130,14 +159,19 @@ export default function LibraryPanel({
         <div className="ms-filter-block">
           <div className="ms-filter-label">Category</div>
           <div className="ms-chip-row">
-            {categories.map((category) => (
-              <FilterChip
-                key={category}
-                label={category}
-                active={!searchIsGlobal && effectiveCategory === category}
-                onClick={() => onCategoryChange(category)}
-              />
-            ))}
+            {categories.map((category) => {
+              const loaded = loadedCategories.has(category);
+              return (
+                <FilterChip
+                  key={category}
+                  label={category}
+                  active={!searchIsGlobal && effectiveCategory === category}
+                  loading={!loaded}
+                  title={loaded ? category : `${category} — click to load`}
+                  onClick={() => onCategoryChange(category)}
+                />
+              );
+            })}
           </div>
           {searchIsGlobal && (
             <p className="ms-filter-hint">Searching all categories</p>
@@ -229,7 +263,13 @@ export default function LibraryPanel({
       )}
 
       <div className="ms-library-results">
-        {filteredLibrary.length === 0 ? (
+        {filteredLibrary.length === 0 &&
+        effectiveCategory != null &&
+        !loadedCategories.has(effectiveCategory) ? (
+          <div className="ms-empty-block">
+            <p className="ms-empty">Loading {effectiveCategory}…</p>
+          </div>
+        ) : filteredLibrary.length === 0 ? (
           <div className="ms-empty-block">
             <p className="ms-empty">No devices match.</p>
             {hasActiveFilters && (
@@ -243,38 +283,69 @@ export default function LibraryPanel({
             )}
           </div>
         ) : (
-          filteredLibrary.map(({ category, items }) => (
-            <div key={category} className="ms-device-section">
-              <h3 className="ms-device-section-title">{category}</h3>
-              <div className="ms-device-grid">
-                {items.map((item) => {
-                  const placing = placingPath === item.path;
-                  const label = formatDeviceDisplayName(item.name);
-                  return (
-                    <button
-                      key={item.path}
-                      type="button"
-                      className="ms-device-tile"
-                      disabled={placingPath != null}
-                      aria-busy={placing}
-                      aria-label={label}
-                      title={`${label} — click or drag onto the canvas`}
-                      draggable={placingPath == null}
-                      onDragStart={(e) => {
-                        e.dataTransfer.setData(LIBRARY_DRAG_MIME, item.path);
-                        e.dataTransfer.setData('text/plain', item.path);
-                        e.dataTransfer.effectAllowed = 'copy';
-                      }}
-                      onClick={() => onAddDevice(item)}
-                    >
-                      <img src={item.src} alt="" draggable={false} />
-                      <span>{placing ? 'Placing…' : label}</span>
-                    </button>
-                  );
-                })}
+          filteredLibrary.map(({ category, items }) => {
+            const expanded =
+              searchIsGlobal ||
+              expandedSections.has(category) ||
+              items.length <= INITIAL_VISIBLE_ITEMS;
+            const visibleItems = expanded
+              ? items
+              : items.slice(0, INITIAL_VISIBLE_ITEMS);
+            const hiddenCount = items.length - visibleItems.length;
+            return (
+              <div key={category} className="ms-device-section">
+                <h3 className="ms-device-section-title">{category}</h3>
+                <div className="ms-device-grid">
+                  {visibleItems.map((item) => {
+                    const placing = placingPath === item.path;
+                    const label = formatDeviceDisplayName(item.name);
+                    return (
+                      <button
+                        key={item.path}
+                        type="button"
+                        className="ms-device-tile"
+                        disabled={placingPath != null}
+                        aria-busy={placing}
+                        aria-label={label}
+                        title={`${label} — click or drag onto the canvas`}
+                        draggable={placingPath == null}
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData(LIBRARY_DRAG_MIME, item.path);
+                          e.dataTransfer.setData('text/plain', item.path);
+                          e.dataTransfer.effectAllowed = 'copy';
+                        }}
+                        onClick={() => onAddDevice(item)}
+                      >
+                        <img
+                          src={item.src}
+                          alt=""
+                          draggable={false}
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        <span>{placing ? 'Placing…' : label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {hiddenCount > 0 && (
+                  <button
+                    type="button"
+                    className="ms-btn ms-btn--ghost ms-library-load-more"
+                    onClick={() =>
+                      setExpandedSections((prev) => {
+                        const next = new Set(prev);
+                        next.add(category);
+                        return next;
+                      })
+                    }
+                  >
+                    Load {hiddenCount} more
+                  </button>
+                )}
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 

@@ -1,5 +1,11 @@
 import { test, expect, type Page } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('pixelMockup.tourSeen', '1');
+  });
+});
+
 async function ensureLibraryOpen(page: Page) {
   const library = page.getByRole('complementary', { name: /^Devices$/i });
   if (await library.isVisible().catch(() => false)) {
