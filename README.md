@@ -76,3 +76,20 @@ First-time Playwright setup:
 ```bash
 npx playwright install chromium
 ```
+
+## Website capture
+
+“Show on devices” screenshots run through a local capture server (Playwright + Chrome) that only exists when you start the app with:
+
+```bash
+npm run dev
+# or
+npm run preview
+```
+
+Tips:
+
+- Test with a simple public site such as `https://example.com`.
+- Some hosts (including some Vercel deployments) may time out under headless Chrome even when they open fine in a normal browser — try another URL.
+- Multiple device sizes are captured a few at a time and wait in line (you may see “Loading site…” longer); they should not fail with “too many captures.”
+- The static Vercel site does **not** run the capture API for visitors; capture is a local/dev feature.

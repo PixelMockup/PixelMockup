@@ -15,6 +15,24 @@ type CaptureBody = {
 const MAX_VIEWPORT = 4096;
 const MAX_BODY_BYTES = 64 * 1024;
 const MAX_IN_FLIGHT = 2;
+const DNS_LOOKUP_TIMEOUT_MS = 5_000;
+const GOTO_TIMEOUT_MS = 20_000;
+
+function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error(message)), ms);
+    promise.then(
+      (value) => {
+        clearTimeout(timer);
+        resolve(value);
+      },
+      (err) => {
+        clearTimeout(timer);
+        reject(err);
+      },
+    );
+  });
+}
 
 /** Common Google Chrome / Chromium locations across distros. */
 const CHROME_CANDIDATES = [
@@ -43,6 +61,28 @@ function disableSandbox(): boolean {
 
 let browserPromise: Promise<Browser> | null = null;
 let inFlight = 0;
+const captureWaiters: Array<() => void> = [];
+
+async function acquireCaptureSlot(): Promise<void> {
+  if (inFlight < MAX_IN_FLIGHT) {
+    inFlight += 1;
+    return;
+  }
+  // Wait until releaseCaptureSlot transfers a free slot to this waiter.
+  await new Promise<void>((resolve) => {
+    captureWaiters.push(resolve);
+  });
+}
+
+function releaseCaptureSlot(): void {
+  const next = captureWaiters.shift();
+  if (next) {
+    // Hand the slot to the next waiter; keep inFlight the same.
+    next();
+    return;
+  }
+  inFlight = Math.max(0, inFlight - 1);
+}
 
 async function getBrowser(): Promise<Browser> {
   if (!browserPromise) {
@@ -77,7 +117,11 @@ async function assertPublicHost(url: string): Promise<void> {
   if (isBlockedAddress(hostname)) {
     throw new Error('blocked host');
   }
-  const addrs = await lookup(hostname, { all: true });
+  const addrs = await withTimeout(
+    lookup(hostname, { all: true }),
+    DNS_LOOKUP_TIMEOUT_MS,
+    'dns lookup timeout',
+  );
   if (addrs.length === 0 || addrs.some((a) => isBlockedAddress(a.address))) {
     throw new Error('blocked host');
   }
@@ -123,13 +167,12 @@ async function captureWebsite(
       }
     });
 
-    // networkidle can hang on sites with long-poll/analytics; fall back to
-    // domcontentloaded so SPAs still render, then give the app time to paint.
-    try {
-      await page.goto(url, { waitUntil: 'networkidle', timeout: 20_000 });
-    } catch {
-      await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 25_000 });
-    }
+    // Prefer domcontentloaded: networkidle rarely completes on modern SPAs
+    // (analytics/long-poll) and burned an extra 20s before the fallback.
+    await page.goto(url, {
+      waitUntil: 'domcontentloaded',
+      timeout: GOTO_TIMEOUT_MS,
+    });
     // Final URL must still be public (covers edge cases after navigation).
     await assertPublicHost(page.url());
     // Let fonts / late layout settle, then best-effort dismiss a modal/cookie.
@@ -232,12 +275,7 @@ export function websiteCapturePlugin(): Plugin {
         respondJson(res, 403, { error: 'forbidden origin' });
         return;
       }
-      if (inFlight >= MAX_IN_FLIGHT) {
-        respondJson(res, 429, { error: 'too many captures' });
-        return;
-      }
 
-      inFlight += 1;
       try {
         const body = await readJsonBody(req);
         const rawUrl = typeof body.url === 'string' ? body.url : '';
@@ -260,14 +298,33 @@ export function websiteCapturePlugin(): Plugin {
           respondJson(res, 400, { error: 'blocked host' });
           return;
         }
-        const png = await captureWebsite(url, width, height);
-        const dataUrl = `data:image/png;base64,${png.toString('base64')}`;
-        respondJson(res, 200, { dataUrl });
+
+        await acquireCaptureSlot();
+        try {
+          const png = await captureWebsite(url, width, height);
+          const dataUrl = `data:image/png;base64,${png.toString('base64')}`;
+          respondJson(res, 200, { dataUrl });
+        } catch (err) {
+          console.error('[website-capture]', err);
+          const msg = err instanceof Error ? err.message : String(err);
+          const name = err instanceof Error ? err.name : '';
+          if (
+            name === 'TimeoutError' ||
+            /timeout|page\.goto|dns lookup timeout/i.test(msg)
+          ) {
+            respondJson(res, 504, {
+              error:
+                'Site took too long to load (timeout). Try another URL.',
+            });
+          } else {
+            respondJson(res, 500, { error: 'capture failed' });
+          }
+        } finally {
+          releaseCaptureSlot();
+        }
       } catch (err) {
         console.error('[website-capture]', err);
         respondJson(res, 500, { error: 'capture failed' });
-      } finally {
-        inFlight -= 1;
       }
     });
   };

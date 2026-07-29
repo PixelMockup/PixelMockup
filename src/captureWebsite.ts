@@ -8,6 +8,9 @@ import { CAPTURE_WEBSITE_PATH } from './capturePath';
 
 export { CAPTURE_WEBSITE_PATH };
 
+const BUSY_RETRIES = 2;
+const BUSY_RETRY_DELAYS_MS = [500, 1000] as const;
+
 function cacheKey(url: string, width: number, height: number): string {
   return `${url}|${Math.round(width)}x${Math.round(height)}`;
 }
@@ -16,6 +19,16 @@ function cacheKey(url: string, width: number, height: number): string {
 const captureCache = new Map<string, string>();
 /** In-flight requests, so identical viewports capture only once. */
 const pending = new Map<string, Promise<string>>();
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
+}
+
+function isBusyErrorMessage(message: string): boolean {
+  return /too many captures|429/i.test(message);
+}
 
 /** Human-friendly message for a failed capture. */
 export function describeCaptureError(err: unknown): string {
@@ -26,14 +39,20 @@ export function describeCaptureError(err: unknown): string {
   if (/chrome|chromium|executable|launch/i.test(raw)) {
     return 'Could not open Chrome to capture the site. Install google-chrome-stable or set PIXEL_MOCKUP_CHROME.';
   }
+  if (/timeout|took too long to load|page\.goto|TimeoutError/i.test(raw)) {
+    return 'Site took too long to load (timeout). Try another URL.';
+  }
+  if (isBusyErrorMessage(raw)) {
+    return 'Capture is busy with other devices. Wait a moment and try again.';
+  }
   return raw || 'Website capture failed.';
 }
 
-async function requestCapture(
+async function requestCaptureOnce(
   url: string,
   width: number,
   height: number,
-): Promise<string> {
+): Promise<{ ok: true; dataUrl: string } | { ok: false; error: string; busy: boolean }> {
   let res: Response;
   try {
     res = await fetch(CAPTURE_WEBSITE_PATH, {
@@ -54,12 +73,35 @@ async function requestCapture(
     error?: string;
   };
   if (!res.ok || !data.dataUrl) {
-    throw new Error(describeCaptureError(new Error(data.error || 'capture failed')));
+    const error = data.error || 'capture failed';
+    return {
+      ok: false,
+      error,
+      busy: res.status === 429 || isBusyErrorMessage(error),
+    };
   }
   if (!data.dataUrl.startsWith('data:image/png;base64,')) {
     throw new Error(describeCaptureError(new Error('invalid capture payload')));
   }
-  return data.dataUrl;
+  return { ok: true, dataUrl: data.dataUrl };
+}
+
+async function requestCapture(
+  url: string,
+  width: number,
+  height: number,
+): Promise<string> {
+  let lastError = 'capture failed';
+  for (let attempt = 0; attempt <= BUSY_RETRIES; attempt++) {
+    const result = await requestCaptureOnce(url, width, height);
+    if (result.ok) return result.dataUrl;
+    lastError = result.error;
+    if (!result.busy || attempt === BUSY_RETRIES) {
+      throw new Error(describeCaptureError(new Error(lastError)));
+    }
+    await sleep(BUSY_RETRY_DELAYS_MS[attempt] ?? 1000);
+  }
+  throw new Error(describeCaptureError(new Error(lastError)));
 }
 
 /**
