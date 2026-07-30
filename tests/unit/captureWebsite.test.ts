@@ -7,7 +7,15 @@ import {
   classifyWebsiteInput,
   clearWebsiteCaptureCache,
   describeCaptureError,
+  isCaptureAbortError,
+  CAPTURE_WEBSITE_PATH,
 } from '../../src/captureWebsite';
+
+function captureFetchCalls(fetchMock: ReturnType<typeof vi.fn>) {
+  return fetchMock.mock.calls.filter(
+    (call) => call[0] === CAPTURE_WEBSITE_PATH || call[0] === '/__capture_website',
+  );
+}
 
 describe('captureWebsite', () => {
   beforeEach(() => {
@@ -31,7 +39,7 @@ describe('captureWebsite', () => {
     expect(url).toBe('data:image/png;base64,abc');
     expect(fetchMock).toHaveBeenCalledWith(
       '/__capture_website',
-      expect.objectContaining({ method: 'POST' }),
+      expect.objectContaining({ method: 'POST', signal: expect.any(AbortSignal) }),
     );
   });
 
@@ -50,7 +58,7 @@ describe('captureWebsite', () => {
 
     expect(map.get('a')).toBe('data:image/png;base64,xyz');
     expect(map.get('b')).toBe('data:image/png;base64,xyz');
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(captureFetchCalls(fetchMock)).toHaveLength(2);
   });
 
   it('reuses the shared cache across preview and export (no recapture)', async () => {
@@ -68,7 +76,7 @@ describe('captureWebsite', () => {
     ]);
 
     expect(map.get('x')).toBe('data:image/png;base64,shared');
-    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(captureFetchCalls(fetchMock)).toHaveLength(1);
   });
 
   it('maps a bad response to a clear error', async () => {
@@ -163,6 +171,49 @@ describe('captureWebsite', () => {
     expect(notice.reason).toMatch(/origin/i);
   });
 
+  it('classifyCaptureError treats AbortError as cancelled, not timeout', () => {
+    const abortErr = new DOMException('The operation was aborted.', 'AbortError');
+    expect(classifyCaptureError(abortErr).kind).toBe('cancelled');
+    expect(classifyCaptureError(abortErr).kind).not.toBe('timeout');
+    expect(isCaptureAbortError(abortErr)).toBe(true);
+    expect(
+      isCaptureAbortError(new Error('page.goto: Timeout 20000ms exceeded')),
+    ).toBe(false);
+  });
+
+  it('clearWebsiteCaptureCache aborts in-flight fetches', async () => {
+    let sawSignal = false;
+    const fetchMock = vi.fn().mockImplementation((url: string, init?: RequestInit) => {
+      if (url !== '/__capture_website' && url !== CAPTURE_WEBSITE_PATH) {
+        return Promise.resolve({ ok: true, json: async () => ({}) });
+      }
+      const signal = init?.signal;
+      return new Promise((_resolve, reject) => {
+        if (!signal) {
+          reject(new Error('missing signal'));
+          return;
+        }
+        sawSignal = true;
+        signal.addEventListener('abort', () => {
+          reject(new DOMException('The operation was aborted.', 'AbortError'));
+        });
+      });
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const pendingCapture = captureWebsiteScreenshot(
+      'https://example.com/',
+      390,
+      844,
+    );
+    await Promise.resolve();
+    clearWebsiteCaptureCache();
+    await expect(pendingCapture).rejects.toSatisfy(
+      (err: unknown) => isCaptureAbortError(err),
+    );
+    expect(sawSignal).toBe(true);
+  });
+
   it('classifyWebsiteInput distinguishes blocked vs invalid', () => {
     expect(classifyWebsiteInput('http://127.0.0.1/').kind).toBe('blocked_host');
     expect(classifyWebsiteInput('not a url!!!').kind).toBe('invalid_url');
@@ -170,18 +221,24 @@ describe('captureWebsite', () => {
 
   it('retries once on 429 too many captures then succeeds', async () => {
     vi.useFakeTimers();
-    const fetchMock = vi
-      .fn()
-      .mockResolvedValueOnce({
-        ok: false,
-        status: 429,
-        json: async () => ({ error: 'too many captures' }),
-      })
-      .mockResolvedValueOnce({
+    const fetchMock = vi.fn().mockImplementation((url: string) => {
+      if (url !== '/__capture_website' && url !== CAPTURE_WEBSITE_PATH) {
+        return Promise.resolve({ ok: true, json: async () => ({}) });
+      }
+      const n = captureFetchCalls(fetchMock).length;
+      if (n === 1) {
+        return Promise.resolve({
+          ok: false,
+          status: 429,
+          json: async () => ({ error: 'too many captures' }),
+        });
+      }
+      return Promise.resolve({
         ok: true,
         status: 200,
         json: async () => ({ dataUrl: 'data:image/png;base64,ok' }),
       });
+    });
     vi.stubGlobal('fetch', fetchMock);
 
     const pendingCapture = captureWebsiteScreenshot(
@@ -192,7 +249,7 @@ describe('captureWebsite', () => {
     await vi.advanceTimersByTimeAsync(500);
     const url = await pendingCapture;
     expect(url).toBe('data:image/png;base64,ok');
-    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(captureFetchCalls(fetchMock)).toHaveLength(2);
     vi.useRealTimers();
   });
 });

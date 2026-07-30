@@ -71,4 +71,41 @@ describe('WebsiteScreen', () => {
       expect.objectContaining({ kind: 'unreachable_server' }),
     );
   });
+
+  it('stays loading on AbortError (no timeout/error UI)', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockRejectedValue(
+        new DOMException('The operation was aborted.', 'AbortError'),
+      ),
+    );
+
+    const onCaptureFailed = vi.fn();
+
+    render(
+      <WebsiteScreen
+        url="https://example.com/"
+        viewport={VIEWPORT}
+        title="Site"
+        onCaptureFailed={onCaptureFailed}
+      />,
+    );
+
+    expect(screen.getByText('Loading site…')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(
+        vi.mocked(fetch).mock.calls.some(
+          (c) =>
+            typeof c[0] === 'string' &&
+            c[0].includes('/__capture_website'),
+        ),
+      ).toBe(true);
+    });
+    // Still loading — abort must not flip to error/timeout UI.
+    expect(screen.getByText('Loading site…')).toBeInTheDocument();
+    expect(
+      screen.queryByText(/couldn’t load this site|couldn't load this site/i),
+    ).toBeNull();
+    expect(onCaptureFailed).not.toHaveBeenCalled();
+  });
 });

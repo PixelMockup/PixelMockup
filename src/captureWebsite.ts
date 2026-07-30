@@ -23,6 +23,7 @@ export type CaptureErrorKind =
   | 'timeout'
   | 'busy'
   | 'forbidden_origin'
+  | 'cancelled'
   | 'generic';
 
 export type CaptureNotice = {
@@ -114,6 +115,14 @@ const NOTICES: Record<CaptureErrorKind, CaptureNotice> = {
     'Use the Pixel Mockup window opened by `npm run dev` or `npm run preview`, then try again. Or upload a screenshot instead.',
     'Capture request was blocked (wrong origin).',
   ),
+  cancelled: notice(
+    'cancelled',
+    'Capture cancelled',
+    'This capture was cancelled because a newer request replaced it.',
+    'Changing the website URL aborts in-flight captures so they don’t block the queue.',
+    'Wait for the new URL to finish loading on the devices.',
+    'Capture cancelled.',
+  ),
   generic: notice(
     'generic',
     'Couldn’t capture this website',
@@ -132,8 +141,19 @@ function isOpaqueServerMessage(raw: string): boolean {
   return OPAQUE_SERVER_MESSAGES.has(raw.trim().toLowerCase());
 }
 
+function isAbortError(err: unknown): boolean {
+  if (err == null || typeof err !== 'object') return false;
+  const name = 'name' in err ? String(err.name) : '';
+  if (name === 'AbortError') return true;
+  const message = 'message' in err ? String(err.message) : '';
+  return /aborted|abort(ed)? by user|The operation was aborted/i.test(message);
+}
+
 function kindFromMessage(raw: string): CaptureErrorKind {
   const t = raw.trim();
+  if (/aborted|abort(ed)? by user|The operation was aborted/i.test(t)) {
+    return 'cancelled';
+  }
   if (/blocked host/i.test(t)) return 'blocked_host';
   if (/invalid or non-http\(s\) url/i.test(t)) return 'invalid_url';
   if (/forbidden origin/i.test(t)) return 'forbidden_origin';
@@ -153,6 +173,7 @@ function kindFromMessage(raw: string): CaptureErrorKind {
 
 /** Structured notice for dialogs; `summary` stays toast/a11y friendly. */
 export function classifyCaptureError(err: unknown): CaptureNotice {
+  if (isAbortError(err)) return NOTICES.cancelled;
   const raw = (err instanceof Error ? err.message : String(err)).trim();
   const kind = kindFromMessage(raw);
   const base = NOTICES[kind];
@@ -189,6 +210,8 @@ function cacheKey(url: string, width: number, height: number): string {
 const captureCache = new Map<string, string>();
 /** In-flight requests, so identical viewports capture only once. */
 const pending = new Map<string, Promise<string>>();
+/** Controllers for in-flight fetches; aborted on cache clear / re-apply. */
+const inFlightControllers = new Set<AbortController>();
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
@@ -200,6 +223,7 @@ async function requestCaptureOnce(
   url: string,
   width: number,
   height: number,
+  signal?: AbortSignal,
 ): Promise<{ ok: true; dataUrl: string } | { ok: false; error: string; busy: boolean }> {
   let res: Response;
   try {
@@ -211,8 +235,12 @@ async function requestCaptureOnce(
         width: Math.max(1, Math.round(width)),
         height: Math.max(1, Math.round(height)),
       }),
+      signal,
     });
   } catch (err) {
+    if (isAbortError(err) || signal?.aborted) {
+      throw new DOMException('The operation was aborted.', 'AbortError');
+    }
     // Keep the raw network error so classifyCaptureError can map it.
     throw err instanceof Error ? err : new Error(String(err));
   }
@@ -239,10 +267,14 @@ async function requestCapture(
   url: string,
   width: number,
   height: number,
+  signal?: AbortSignal,
 ): Promise<string> {
   let lastError = 'capture failed';
   for (let attempt = 0; attempt <= BUSY_RETRIES; attempt++) {
-    const result = await requestCaptureOnce(url, width, height);
+    if (signal?.aborted) {
+      throw new DOMException('The operation was aborted.', 'AbortError');
+    }
+    const result = await requestCaptureOnce(url, width, height, signal);
     if (result.ok) return result.dataUrl;
     lastError = result.error;
     if (!result.busy || attempt === BUSY_RETRIES) {
@@ -251,6 +283,33 @@ async function requestCapture(
     await sleep(BUSY_RETRY_DELAYS_MS[attempt] ?? 1000);
   }
   throw new Error(lastError);
+}
+
+function debugAgentLog(
+  location: string,
+  message: string,
+  data: Record<string, unknown>,
+  hypothesisId: string,
+): void {
+  // #region agent log
+  Promise.resolve(
+    fetch('http://127.0.0.1:7612/ingest/24908c0c-1698-435b-8c6e-d81408b3f4b6', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Debug-Session-Id': '741bd0',
+      },
+      body: JSON.stringify({
+        sessionId: '741bd0',
+        location,
+        message,
+        data,
+        timestamp: Date.now(),
+        hypothesisId,
+      }),
+    }),
+  ).catch(() => {});
+  // #endregion
 }
 
 /**
@@ -264,21 +323,94 @@ export function captureOne(
 ): Promise<string> {
   const key = cacheKey(url, width, height);
   const cached = captureCache.get(key);
-  if (cached) return Promise.resolve(cached);
+  const pendingHit = !cached && pending.has(key);
+  // #region agent log
+  debugAgentLog(
+    'captureWebsite.ts:captureOne:start',
+    'captureOne start',
+    {
+      url,
+      width: Math.round(width),
+      height: Math.round(height),
+      cacheHit: Boolean(cached),
+      pendingHit,
+      pendingSize: pending.size,
+      cacheSize: captureCache.size,
+    },
+    'H1,H3',
+  );
+  // #endregion
+  if (cached) {
+    // #region agent log
+    debugAgentLog(
+      'captureWebsite.ts:captureOne:end',
+      'captureOne end',
+      {
+        url,
+        width: Math.round(width),
+        height: Math.round(height),
+        outcome: 'ok',
+        via: 'cache',
+      },
+      'H1,H3',
+    );
+    // #endregion
+    return Promise.resolve(cached);
+  }
 
   let p = pending.get(key);
   if (!p) {
-    p = requestCapture(url, width, height)
+    const controller = new AbortController();
+    inFlightControllers.add(controller);
+    p = requestCapture(url, width, height, controller.signal)
       .then((dataUrl) => {
         captureCache.set(key, dataUrl);
         return dataUrl;
       })
       .finally(() => {
+        inFlightControllers.delete(controller);
         pending.delete(key);
       });
     pending.set(key, p);
   }
-  return p;
+  return p.then(
+    (dataUrl) => {
+      // #region agent log
+      debugAgentLog(
+        'captureWebsite.ts:captureOne:end',
+        'captureOne end',
+        {
+          url,
+          width: Math.round(width),
+          height: Math.round(height),
+          outcome: 'ok',
+          via: pendingHit ? 'pending' : 'network',
+        },
+        'H1,H3',
+      );
+      // #endregion
+      return dataUrl;
+    },
+    (err) => {
+      // #region agent log
+      const kind = classifyCaptureError(err).kind;
+      debugAgentLog(
+        'captureWebsite.ts:captureOne:end',
+        'captureOne end',
+        {
+          url,
+          width: Math.round(width),
+          height: Math.round(height),
+          outcome: 'error',
+          kind,
+          errorMessage: err instanceof Error ? err.message : String(err),
+        },
+        'H1,H3',
+      );
+      // #endregion
+      throw err;
+    },
+  );
 }
 
 /** Backwards-compatible single capture (now cached). */
@@ -306,6 +438,15 @@ export async function captureWebsiteScreenshotsCached(
 
 /** Clear cached captures (e.g. when the user changes the URL). */
 export function clearWebsiteCaptureCache(): void {
+  for (const controller of inFlightControllers) {
+    controller.abort();
+  }
+  inFlightControllers.clear();
   captureCache.clear();
   pending.clear();
+}
+
+/** True when an error is an intentional abort (re-apply / cache clear). */
+export function isCaptureAbortError(err: unknown): boolean {
+  return isAbortError(err) || classifyCaptureError(err).kind === 'cancelled';
 }
