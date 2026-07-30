@@ -48,126 +48,17 @@ export default function WebsiteScreen({
     setState({ status: 'loading' });
     reportedUrlRef.current = null;
 
-    // #region agent log
-    fetch('http://127.0.0.1:7612/ingest/24908c0c-1698-435b-8c6e-d81408b3f4b6', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Debug-Session-Id': '741bd0',
-      },
-      body: JSON.stringify({
-        sessionId: '741bd0',
-        location: 'WebsiteScreen.tsx:effect',
-        message: 'effect start',
-        data: {
-          token,
-          url,
-          width: viewport.width,
-          height: viewport.height,
-          title,
-        },
-        timestamp: Date.now(),
-        hypothesisId: 'H4',
-      }),
-    }).catch(() => {});
-    // #endregion
-
     const timer = window.setTimeout(() => {
       captureOne(url, viewport.width, viewport.height)
         .then((src) => {
-          if (latestRef.current !== token) {
-            // #region agent log
-            fetch(
-              'http://127.0.0.1:7612/ingest/24908c0c-1698-435b-8c6e-d81408b3f4b6',
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-Debug-Session-Id': '741bd0',
-                },
-                body: JSON.stringify({
-                  sessionId: '741bd0',
-                  location: 'WebsiteScreen.tsx:stale',
-                  message: 'stale discard',
-                  data: {
-                    token,
-                    latest: latestRef.current,
-                    url,
-                    width: viewport.width,
-                    height: viewport.height,
-                    phase: 'resolve',
-                  },
-                  timestamp: Date.now(),
-                  hypothesisId: 'H4',
-                }),
-              },
-            ).catch(() => {});
-            // #endregion
-            return;
-          }
+          if (latestRef.current !== token) return;
           setState({ status: 'ready', src });
         })
         .catch((err) => {
-          if (latestRef.current !== token) {
-            // #region agent log
-            fetch(
-              'http://127.0.0.1:7612/ingest/24908c0c-1698-435b-8c6e-d81408b3f4b6',
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-Debug-Session-Id': '741bd0',
-                },
-                body: JSON.stringify({
-                  sessionId: '741bd0',
-                  location: 'WebsiteScreen.tsx:stale',
-                  message: 'stale discard',
-                  data: {
-                    token,
-                    latest: latestRef.current,
-                    url,
-                    width: viewport.width,
-                    height: viewport.height,
-                    phase: 'reject',
-                  },
-                  timestamp: Date.now(),
-                  hypothesisId: 'H4',
-                }),
-              },
-            ).catch(() => {});
-            // #endregion
-            return;
-          }
+          if (latestRef.current !== token) return;
           // Re-apply / cache clear aborts in-flight fetches — stay loading for
           // the new URL instead of showing a sticky timeout from the old one.
-          if (isCaptureAbortError(err)) {
-            // #region agent log
-            fetch(
-              'http://127.0.0.1:7612/ingest/24908c0c-1698-435b-8c6e-d81408b3f4b6',
-              {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'X-Debug-Session-Id': '741bd0',
-                },
-                body: JSON.stringify({
-                  sessionId: '741bd0',
-                  location: 'WebsiteScreen.tsx:abort',
-                  message: 'capture aborted; staying loading',
-                  data: {
-                    token,
-                    url,
-                    width: viewport.width,
-                    height: viewport.height,
-                  },
-                  timestamp: Date.now(),
-                  hypothesisId: 'H3',
-                }),
-              },
-            ).catch(() => {});
-            // #endregion
-            return;
-          }
+          if (isCaptureAbortError(err)) return;
           const notice = classifyCaptureError(err);
           setState({ status: 'error', notice });
           if (reportedUrlRef.current !== url) {

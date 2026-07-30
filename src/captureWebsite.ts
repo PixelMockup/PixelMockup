@@ -77,11 +77,11 @@ const NOTICES: Record<CaptureErrorKind, CaptureNotice> = {
   ),
   unreachable_server: notice(
     'unreachable_server',
-    'Capture server unavailable',
-    'Pixel Mockup couldn’t reach the local service that takes website screenshots.',
-    'Capture only runs while the app is started with the Vite server (`npm run dev` or `npm run preview`). A static build or a stopped server has no capture endpoint.',
-    'Start the app with `npm run dev` or `npm run preview`, then try again. Or upload your own screenshot onto the devices.',
-    'Could not reach the capture server. Run the app with `npm run dev` (or `npm run preview`).',
+    'Capture isn’t available here',
+    'Automatic website screenshots aren’t available on this hosted build.',
+    'Capture only runs with the local Vite server (`npm run dev` or `npm run preview`). Preview and production hosts (such as Vercel) ship a static app with no capture endpoint.',
+    'Upload your own screenshot onto the devices, or run Pixel Mockup locally with `npm run dev` to capture websites automatically.',
+    'Website capture needs a local run (`npm run dev`). On this hosted build, upload a screenshot instead.',
   ),
   chrome_missing: notice(
     'chrome_missing',
@@ -157,7 +157,11 @@ function kindFromMessage(raw: string): CaptureErrorKind {
   if (/blocked host/i.test(t)) return 'blocked_host';
   if (/invalid or non-http\(s\) url/i.test(t)) return 'invalid_url';
   if (/forbidden origin/i.test(t)) return 'forbidden_origin';
-  if (/failed to fetch|networkerror|load failed/i.test(t)) {
+  if (
+    /failed to fetch|networkerror|load failed|capture server unavailable/i.test(
+      t,
+    )
+  ) {
     return 'unreachable_server';
   }
   if (/chrome|chromium|executable|launch/i.test(t)) return 'chrome_missing';
@@ -250,7 +254,12 @@ async function requestCaptureOnce(
     error?: string;
   };
   if (!res.ok || !data.dataUrl) {
-    const error = data.error || 'capture failed';
+    // Static hosts (Vercel) often return HTML 404 for /__capture_website with
+    // no JSON error field — treat that as missing capture, not a site failure.
+    const error =
+      typeof data.error === 'string' && data.error.trim()
+        ? data.error
+        : 'capture server unavailable';
     return {
       ok: false,
       error,
@@ -285,33 +294,6 @@ async function requestCapture(
   throw new Error(lastError);
 }
 
-function debugAgentLog(
-  location: string,
-  message: string,
-  data: Record<string, unknown>,
-  hypothesisId: string,
-): void {
-  // #region agent log
-  Promise.resolve(
-    fetch('http://127.0.0.1:7612/ingest/24908c0c-1698-435b-8c6e-d81408b3f4b6', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Debug-Session-Id': '741bd0',
-      },
-      body: JSON.stringify({
-        sessionId: '741bd0',
-        location,
-        message,
-        data,
-        timestamp: Date.now(),
-        hypothesisId,
-      }),
-    }),
-  ).catch(() => {});
-  // #endregion
-}
-
 /**
  * Capture (or reuse cached) screenshot for a url + viewport.
  * Concurrent identical requests share one network call.
@@ -323,40 +305,7 @@ export function captureOne(
 ): Promise<string> {
   const key = cacheKey(url, width, height);
   const cached = captureCache.get(key);
-  const pendingHit = !cached && pending.has(key);
-  // #region agent log
-  debugAgentLog(
-    'captureWebsite.ts:captureOne:start',
-    'captureOne start',
-    {
-      url,
-      width: Math.round(width),
-      height: Math.round(height),
-      cacheHit: Boolean(cached),
-      pendingHit,
-      pendingSize: pending.size,
-      cacheSize: captureCache.size,
-    },
-    'H1,H3',
-  );
-  // #endregion
-  if (cached) {
-    // #region agent log
-    debugAgentLog(
-      'captureWebsite.ts:captureOne:end',
-      'captureOne end',
-      {
-        url,
-        width: Math.round(width),
-        height: Math.round(height),
-        outcome: 'ok',
-        via: 'cache',
-      },
-      'H1,H3',
-    );
-    // #endregion
-    return Promise.resolve(cached);
-  }
+  if (cached) return Promise.resolve(cached);
 
   let p = pending.get(key);
   if (!p) {
@@ -373,44 +322,7 @@ export function captureOne(
       });
     pending.set(key, p);
   }
-  return p.then(
-    (dataUrl) => {
-      // #region agent log
-      debugAgentLog(
-        'captureWebsite.ts:captureOne:end',
-        'captureOne end',
-        {
-          url,
-          width: Math.round(width),
-          height: Math.round(height),
-          outcome: 'ok',
-          via: pendingHit ? 'pending' : 'network',
-        },
-        'H1,H3',
-      );
-      // #endregion
-      return dataUrl;
-    },
-    (err) => {
-      // #region agent log
-      const kind = classifyCaptureError(err).kind;
-      debugAgentLog(
-        'captureWebsite.ts:captureOne:end',
-        'captureOne end',
-        {
-          url,
-          width: Math.round(width),
-          height: Math.round(height),
-          outcome: 'error',
-          kind,
-          errorMessage: err instanceof Error ? err.message : String(err),
-        },
-        'H1,H3',
-      );
-      // #endregion
-      throw err;
-    },
-  );
+  return p;
 }
 
 /** Backwards-compatible single capture (now cached). */

@@ -1467,23 +1467,6 @@ export default function MockupStudio({
 
   const applyWebsiteUrl = (url: string) => {
     const n = canvasItemsRef.current.length;
-    // #region agent log
-    fetch('http://127.0.0.1:7612/ingest/24908c0c-1698-435b-8c6e-d81408b3f4b6', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Debug-Session-Id': '741bd0',
-      },
-      body: JSON.stringify({
-        sessionId: '741bd0',
-        location: 'MockupStudio.tsx:applyWebsiteUrl',
-        message: 'applyWebsiteUrl',
-        data: { url, deviceCount: n },
-        timestamp: Date.now(),
-        hypothesisId: 'H3',
-      }),
-    }).catch(() => {});
-    // #endregion
     clearWebsiteCaptureCache();
     setWebsiteUrl(url);
     setWebsiteUrlDraft(url);
