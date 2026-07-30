@@ -217,6 +217,84 @@ const pending = new Map<string, Promise<string>>();
 /** Controllers for in-flight fetches; aborted on cache clear / re-apply. */
 const inFlightControllers = new Set<AbortController>();
 
+/**
+ * Hosted static builds (Vercel) have no capture middleware. Probe once in
+ * production so Apply / N devices don't hammer a missing endpoint.
+ * Dev skips the probe — the Vite plugin is always present.
+ */
+type CaptureEndpointState = 'unknown' | 'available' | 'unavailable';
+let captureEndpointState: CaptureEndpointState = 'unknown';
+let captureProbeInFlight: Promise<boolean> | null = null;
+
+const CAPTURE_UNAVAILABLE_ERROR = 'capture server unavailable';
+
+function markCaptureUnavailable(): void {
+  captureEndpointState = 'unavailable';
+}
+
+/** Structured notice when capture is known missing (hosted/static). */
+export function captureUnavailableNotice(): CaptureNotice {
+  return NOTICES.unreachable_server;
+}
+
+export function isCaptureUnavailable(): boolean {
+  return captureEndpointState === 'unavailable';
+}
+
+/** Test helper — reset the one-shot probe between cases. */
+export function resetCaptureAvailabilityForTests(): void {
+  captureEndpointState = 'unknown';
+  captureProbeInFlight = null;
+}
+
+/**
+ * Lightweight POST that never launches Chrome: empty body → JSON 400 from the
+ * Vite middleware. SPA/static hosts return HTML (or fail to parse as JSON).
+ */
+async function probeCaptureEndpoint(): Promise<boolean> {
+  try {
+    const res = await fetch(CAPTURE_WEBSITE_PATH, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    const data = (await res.json().catch(() => null)) as {
+      error?: unknown;
+      dataUrl?: unknown;
+    } | null;
+    return (
+      data != null &&
+      typeof data === 'object' &&
+      ('error' in data || 'dataUrl' in data)
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Resolve whether `/__capture_website` exists. Safe to call from Apply before
+ * mounting device captures — subsequent calls are free after the first probe.
+ * Uses one empty POST (no Chrome) so `vite preview` still detects the plugin
+ * while static hosts (Vercel) fail fast.
+ */
+export async function ensureCaptureAvailable(): Promise<boolean> {
+  if (captureEndpointState === 'available') return true;
+  if (captureEndpointState === 'unavailable') return false;
+
+  if (!captureProbeInFlight) {
+    captureProbeInFlight = probeCaptureEndpoint()
+      .then((ok) => {
+        captureEndpointState = ok ? 'available' : 'unavailable';
+        return ok;
+      })
+      .finally(() => {
+        captureProbeInFlight = null;
+      });
+  }
+  return captureProbeInFlight;
+}
+
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
     window.setTimeout(resolve, ms);
@@ -245,6 +323,9 @@ async function requestCaptureOnce(
     if (isAbortError(err) || signal?.aborted) {
       throw new DOMException('The operation was aborted.', 'AbortError');
     }
+    // Network failure on a relative same-origin URL usually means the capture
+    // route isn't there (or the tab went offline). Remember for siblings.
+    markCaptureUnavailable();
     // Keep the raw network error so classifyCaptureError can map it.
     throw err instanceof Error ? err : new Error(String(err));
   }
@@ -259,7 +340,10 @@ async function requestCaptureOnce(
     const error =
       typeof data.error === 'string' && data.error.trim()
         ? data.error
-        : 'capture server unavailable';
+        : CAPTURE_UNAVAILABLE_ERROR;
+    if (error === CAPTURE_UNAVAILABLE_ERROR) {
+      markCaptureUnavailable();
+    }
     return {
       ok: false,
       error,
@@ -297,15 +381,24 @@ async function requestCapture(
 /**
  * Capture (or reuse cached) screenshot for a url + viewport.
  * Concurrent identical requests share one network call.
+ * Short-circuits when the capture endpoint is known missing (hosted builds).
  */
-export function captureOne(
+export async function captureOne(
   url: string,
   width: number,
   height: number,
 ): Promise<string> {
+  if (captureEndpointState === 'unavailable') {
+    throw new Error(CAPTURE_UNAVAILABLE_ERROR);
+  }
+  if (captureEndpointState === 'unknown') {
+    const ok = await ensureCaptureAvailable();
+    if (!ok) throw new Error(CAPTURE_UNAVAILABLE_ERROR);
+  }
+
   const key = cacheKey(url, width, height);
   const cached = captureCache.get(key);
-  if (cached) return Promise.resolve(cached);
+  if (cached) return cached;
 
   let p = pending.get(key);
   if (!p) {

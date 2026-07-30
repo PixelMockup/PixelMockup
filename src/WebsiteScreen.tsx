@@ -93,7 +93,11 @@ export default function WebsiteScreen({
           <span>Loading site…</span>
         ) : (
           <>
-            <span>Couldn’t load this site</span>
+            <span>
+              {state.notice.kind === 'unreachable_server'
+                ? 'Capture unavailable — upload a screenshot'
+                : 'Couldn’t load this site'}
+            </span>
             {onRequestDetails ? (
               <button
                 type="button"
