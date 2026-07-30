@@ -1,5 +1,6 @@
 import type { CanvasItem } from './MockupStudio';
 import type { DeviceItem } from './App';
+import { useLongPress } from './useLongPress';
 import { LIBRARY_DRAG_MIME } from './LibraryPanel';
 import { clientToLogical } from './clientToLogical';
 import { artboardWidthCss, type SnapGuides, type ViewZoom } from './artboardSnap';
@@ -21,7 +22,7 @@ type ArtboardCanvasProps = {
   setSelectedIds: React.Dispatch<React.SetStateAction<string[]>>;
   setHoveredId: React.Dispatch<React.SetStateAction<string | null>>;
   openContextMenu: (
-    e: React.MouseEvent,
+    e: React.MouseEvent | React.PointerEvent,
     target: 'artboard' | 'device',
     item?: CanvasItem,
   ) => void;
@@ -59,6 +60,15 @@ export default function ArtboardCanvas({
       setSelectedIds([]);
     }
   };
+
+  const canvasLongPress = useLongPress(
+    (e) => {
+      if (e.target === canvasRef.current) {
+        openContextMenu(e, 'artboard');
+      }
+    },
+    { delay: 500 },
+  );
 
   const onKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Escape') {
@@ -120,7 +130,14 @@ export default function ArtboardCanvas({
         }}
         onClick={onClickBackground}
         onKeyDown={onKeyDown}
-        onContextMenu={onContextMenu}
+        onPointerDown={canvasLongPress.onPointerDown}
+        onPointerUp={canvasLongPress.onPointerUp}
+        onPointerMove={canvasLongPress.onPointerMove}
+        onPointerLeave={canvasLongPress.onPointerLeave}
+        onContextMenu={(e) => {
+          canvasLongPress.onContextMenu(e);
+          onContextMenu(e);
+        }}
         onDragOver={onDragOver}
         onDrop={onDrop}
       >

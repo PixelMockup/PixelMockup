@@ -2,6 +2,12 @@ import { test, expect } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
 
 test.describe('e2e accessibility', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      localStorage.setItem('pixelMockup.tourSeen', '1');
+    });
+  });
+
   test('home has no critical axe violations', async ({ page }) => {
     await page.goto('/');
     const results = await new AxeBuilder({ page })

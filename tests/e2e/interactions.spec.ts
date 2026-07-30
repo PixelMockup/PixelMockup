@@ -1,5 +1,11 @@
 import { test, expect, type Page } from '@playwright/test';
 
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('pixelMockup.tourSeen', '1');
+  });
+});
+
 async function ensureLibraryOpen(page: Page) {
   const library = page.getByRole('complementary', { name: /^Devices$/i });
   if (await library.isVisible().catch(() => false)) {
@@ -17,13 +23,27 @@ async function ensureLibraryOpen(page: Page) {
 }
 
 async function placeIphone(page: Page) {
+  // Boot priority load can show an overlay that steals hit-testing.
+  await expect(page.locator('.ms-progress-loader-overlay')).toHaveCount(0, {
+    timeout: 60_000,
+  });
   await ensureLibraryOpen(page);
   await page.getByRole('searchbox', { name: /Search devices/i }).fill('iPhone 11 Black');
-  await page
+  const device = page
     .getByRole('complementary', { name: /^Devices$/i })
     .getByRole('button', { name: /iPhone 11 Black/i })
-    .first()
-    .click();
+    .first();
+  await expect(device).toBeVisible({ timeout: 20_000 });
+
+  // Unloaded tiles load on first click and place on the second.
+  if (await device.evaluate((el) => el.classList.contains('ms-device-tile--unloaded'))) {
+    await device.click();
+    await expect(device).not.toHaveClass(/ms-device-tile--unloaded/, {
+      timeout: 30_000,
+    });
+  }
+  await ensureLibraryOpen(page);
+  await device.click();
   await expect(page.locator('.ms-canvas-item').first()).toBeVisible({
     timeout: 30_000,
   });

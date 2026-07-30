@@ -132,6 +132,7 @@ export function validateStorageValue(key: string, value: string): string | null 
       return SIZE_SCALE_VALUES.has(raw) ? raw : null;
     case 'pixelMockup.libraryCollapsed':
     case 'pixelMockup.snapEnabled':
+    case 'pixelMockup.tourSeen':
       // NOSONAR tssecurity:S8475 - value matched against trusted FLAG_VALUES allowlist
       return FLAG_VALUES.has(raw) ? raw : null;
     case 'pixelMockup.libraryWidth':

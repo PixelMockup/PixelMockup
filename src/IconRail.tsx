@@ -1,14 +1,17 @@
 import {
   AlignHorizontalJustifyCenter,
   AlignVerticalJustifyCenter,
+  HelpCircle,
   Keyboard,
   LayoutTemplate,
   Magnet,
   Moon,
+  Settings,
   Smartphone,
   SlidersHorizontal,
   Sun,
 } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { LAYOUT_PRESETS } from './layoutPresets';
 import {
   ARTBOARD_FORMATS,
@@ -40,6 +43,7 @@ type Props = {
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
   onOpenShortcuts: () => void;
+  onTakeTour?: () => void;
   layoutsRef: React.RefObject<HTMLDivElement | null>;
   moreRef: React.RefObject<HTMLDivElement | null>;
 };
@@ -67,9 +71,41 @@ export default function IconRail({
   theme,
   onToggleTheme,
   onOpenShortcuts,
+  onTakeTour,
   layoutsRef,
   moreRef,
 }: Readonly<Props>) {
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (!settingsOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setSettingsOpen(false);
+      }
+    };
+    const onPointerDown = (e: PointerEvent) => {
+      const wrap = settingsRef.current;
+      if (!wrap) return;
+      const target = e.target as HTMLElement;
+      if (!wrap.contains(target)) {
+        setSettingsOpen(false);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    window.addEventListener('pointerdown', onPointerDown);
+    return () => {
+      window.removeEventListener('keydown', onKey);
+      window.removeEventListener('pointerdown', onPointerDown);
+    };
+  }, [settingsOpen]);
+
+  const closeOtherMenus = () => {
+    onLayoutsOpenChange(false);
+    onMoreOpenChange(false);
+  };
+
   return (
     <nav className="ms-icon-rail" aria-label="Studio tools">
       <button
@@ -83,8 +119,8 @@ export default function IconRail({
         title="Devices"
         onClick={() => {
           onToggleDevices();
-          onLayoutsOpenChange(false);
-          onMoreOpenChange(false);
+          closeOtherMenus();
+          setSettingsOpen(false);
         }}
       >
         <Smartphone size={20} strokeWidth={1.5} aria-hidden />
@@ -102,6 +138,7 @@ export default function IconRail({
           onClick={() => {
             onLayoutsOpenChange(!layoutsOpen);
             onMoreOpenChange(false);
+            setSettingsOpen(false);
             if (devicesOpen) onToggleDevices();
           }}
         >
@@ -139,6 +176,7 @@ export default function IconRail({
           onClick={() => {
             onMoreOpenChange(!moreOpen);
             onLayoutsOpenChange(false);
+            setSettingsOpen(false);
             if (devicesOpen) onToggleDevices();
           }}
         >
@@ -235,28 +273,69 @@ export default function IconRail({
 
       <div className="ms-icon-rail__spacer" />
 
-      <button
-        type="button"
-        className="ms-rail-btn"
-        aria-label={theme === 'dark' ? 'Light mode' : 'Dark mode'}
-        title={theme === 'dark' ? 'Light mode' : 'Dark mode'}
-        onClick={onToggleTheme}
-      >
-        {theme === 'dark' ? (
-          <Sun size={20} strokeWidth={1.5} aria-hidden />
-        ) : (
-          <Moon size={20} strokeWidth={1.5} aria-hidden />
-        )}
-      </button>
-      <button
-        type="button"
-        className="ms-rail-btn"
-        aria-label="Shortcuts"
-        title="Shortcuts"
-        onClick={onOpenShortcuts}
-      >
-        <Keyboard size={20} strokeWidth={1.5} aria-hidden />
-      </button>
+      <div className="ms-rail-menu-wrap" ref={settingsRef}>
+        <button
+          type="button"
+          className={`ms-rail-btn${settingsOpen ? ' is-active' : ''}`}
+          aria-label="Settings"
+          aria-expanded={settingsOpen}
+          aria-haspopup="menu"
+          title="Settings"
+          onClick={() => {
+            setSettingsOpen((v) => !v);
+            closeOtherMenus();
+            if (devicesOpen) onToggleDevices();
+          }}
+        >
+          <Settings size={20} strokeWidth={1.5} aria-hidden />
+        </button>
+        {settingsOpen ? (
+          <div className="ms-menu ms-rail-menu ms-rail-menu--settings" role="menu">
+            <button
+              type="button"
+              role="menuitem"
+              className="ms-menu__item ms-menu__item--with-icon"
+              onClick={() => {
+                onToggleTheme();
+                setSettingsOpen(false);
+              }}
+            >
+              {theme === 'dark' ? (
+                <Sun size={16} strokeWidth={1.75} aria-hidden />
+              ) : (
+                <Moon size={16} strokeWidth={1.75} aria-hidden />
+              )}
+              {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              className="ms-menu__item ms-menu__item--with-icon"
+              onClick={() => {
+                onOpenShortcuts();
+                setSettingsOpen(false);
+              }}
+            >
+              <Keyboard size={16} strokeWidth={1.75} aria-hidden />
+              Keyboard shortcuts
+            </button>
+            {onTakeTour ? (
+              <button
+                type="button"
+                role="menuitem"
+                className="ms-menu__item ms-menu__item--with-icon"
+                onClick={() => {
+                  onTakeTour();
+                  setSettingsOpen(false);
+                }}
+              >
+                <HelpCircle size={16} strokeWidth={1.75} aria-hidden />
+                Take tour
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+      </div>
     </nav>
   );
 }

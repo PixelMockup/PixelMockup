@@ -47,7 +47,7 @@ type Props = {
   activeUsers: number | null;
 };
 
-function downloadLable(downloading: boolean, softEmptyDownload: boolean): string {
+function downloadLabel(downloading: boolean, softEmptyDownload: boolean): string {
   if (downloading) return 'Downloading...';
   if (softEmptyDownload) return 'Download anyway';
   return 'Download';
@@ -143,23 +143,27 @@ export default function TopCommandBar({
           </span>
         ) : null}
 
-        {hasDevices ? (
-          <div className="ms-download-cluster" ref={downloadMenuRef}>
-            <button
-              type="button"
-              className="ms-btn ms-btn--accent ms-btn--download"
-              disabled={downloading}
-              aria-busy={downloading}
-              title={
-                softEmptyDownload
+        <div className="ms-download-cluster" ref={downloadMenuRef}>
+          <button
+            type="button"
+            className="ms-btn ms-btn--accent ms-btn--download"
+            disabled={!hasDevices || downloading}
+            aria-busy={downloading}
+            title={
+              !hasDevices
+                ? 'Add a device first to download your mockup'
+                : softEmptyDownload
                   ? 'Screens look empty — click again to download anyway'
                   : undefined
-              }
-              onClick={onDownload}
-            >
-              <Download size={16} strokeWidth={1.75} aria-hidden />
-              {downloadLable(downloading, softEmptyDownload)}
-            </button>
+            }
+            onClick={onDownload}
+          >
+            <Download size={16} strokeWidth={1.75} aria-hidden />
+            <span className="ms-btn__label">
+              {downloadLabel(downloading, softEmptyDownload)}
+            </span>
+          </button>
+          {hasDevices ? (
             <button
               type="button"
               className="ms-icon-btn"
@@ -171,49 +175,49 @@ export default function TopCommandBar({
             >
               <Ellipsis size={18} strokeWidth={1.75} aria-hidden />
             </button>
-            {downloadMenuOpen ? (
-              <div className="ms-menu ms-download-menu" role="menu">
-                <label className="ms-field">
-                  <span className="ms-field__label">Format</span>
-                  <select
-                    value={exportFormat}
-                    onChange={(e) => {
-                      const next = parseExportFormat(e.target.value);
-                      if (next) onExportFormat(next);
-                    }}
-                  >
-                    <option value="png">PNG</option>
-                    <option value="jpg">JPG</option>
-                  </select>
-                </label>
-                <label className="ms-field">
-                  <span className="ms-field__label">Resolution</span>
-                  <select
-                    value={exportResolution}
-                    onChange={(e) => {
-                      const next = parseExportResolution(e.target.value);
-                      if (next) onExportResolution(next);
-                    }}
-                  >
-                    <option value="best">Best</option>
-                    <option value="1440p">1440p</option>
-                    <option value="1080p">1080p</option>
-                    <option value="720p">720p</option>
-                  </select>
-                </label>
-                <label className="ms-check">
-                  <input
-                    type="checkbox"
-                    checked={exportTransparentBg && exportFormat !== 'jpg'}
-                    disabled={exportFormat === 'jpg'}
-                    onChange={(e) => onExportTransparentBg(e.target.checked)}
-                  /> {''}
-                  Transparent background
-                </label>
-              </div>
-            ) : null}
-          </div>
-        ) : null}
+          ) : null}
+          {hasDevices && downloadMenuOpen ? (
+            <div className="ms-menu ms-download-menu" role="menu">
+              <label className="ms-field">
+                <span className="ms-field__label">Format</span>
+                <select
+                  value={exportFormat}
+                  onChange={(e) => {
+                    const next = parseExportFormat(e.target.value);
+                    if (next) onExportFormat(next);
+                  }}
+                >
+                  <option value="png">PNG</option>
+                  <option value="jpg">JPG</option>
+                </select>
+              </label>
+              <label className="ms-field">
+                <span className="ms-field__label">Resolution</span>
+                <select
+                  value={exportResolution}
+                  onChange={(e) => {
+                    const next = parseExportResolution(e.target.value);
+                    if (next) onExportResolution(next);
+                  }}
+                >
+                  <option value="best">Best</option>
+                  <option value="1440p">1440p</option>
+                  <option value="1080p">1080p</option>
+                  <option value="720p">720p</option>
+                </select>
+              </label>
+              <label className="ms-check">
+                <input
+                  type="checkbox"
+                  checked={exportTransparentBg && exportFormat !== 'jpg'}
+                  disabled={exportFormat === 'jpg'}
+                  onChange={(e) => onExportTransparentBg(e.target.checked)}
+                /> {''}
+                Transparent background
+              </label>
+            </div>
+          ) : null}
+        </div>
       </div>
     </header>
   );
