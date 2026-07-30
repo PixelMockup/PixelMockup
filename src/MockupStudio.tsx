@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -65,8 +66,10 @@ import {
 import { loadNativeSize } from './loadImage';
 import {
   captureWebsiteScreenshotsCached,
+  classifyCaptureError,
+  classifyWebsiteInput,
   clearWebsiteCaptureCache,
-  describeCaptureError,
+  type CaptureNotice,
 } from './captureWebsite';
 import {
   getWebsiteViewport,
@@ -111,6 +114,7 @@ import { useTheme } from './useTheme';
 import MobileDock from './MobileDock';
 import StatusShell from './StatusShell';
 import ArtboardCanvas from './ArtboardCanvas';
+import AppDialog from './AppDialog';
 import { clientToLogical } from './clientToLogical';
 
 const LIBRARY_W_KEY = 'pixelMockup.libraryWidth';
@@ -408,6 +412,15 @@ export default function MockupStudio({
   const [placingPath, setPlacingPath] = useState<string | null>(null);
   const [layerHint, setLayerHint] = useState<string | null>(null);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+  const [statusTone, setStatusTone] = useState<'info' | 'error'>('info');
+  const [captureNotice, setCaptureNotice] = useState<CaptureNotice | null>(
+    null,
+  );
+  const [presetConfirm, setPresetConfirm] = useState<{
+    label: string;
+    resolve: (ok: boolean) => void;
+  } | null>(null);
+  const captureNoticeUrlRef = useRef<string | null>(null);
   /** Global website shown on all devices without a per-device screen image. */
   const [websiteUrl, setWebsiteUrl] = useState<string | null>(null);
   const [websiteUrlDraft, setWebsiteUrlDraft] = useState('');
@@ -500,11 +513,42 @@ export default function MockupStudio({
     announce('Undone');
   };
 
-  const announce = (msg: string) => {
+  const announce = (msg: string, tone: 'info' | 'error' = 'info') => {
+    setStatusTone(tone);
     setStatusMessage(msg);
     if (statusTimer.current) window.clearTimeout(statusTimer.current);
-    statusTimer.current = window.setTimeout(() => setStatusMessage(null), 1600);
+    statusTimer.current = window.setTimeout(
+      () => setStatusMessage(null),
+      tone === 'error' ? 3200 : 1600,
+    );
   };
+
+  const openCaptureNotice = useCallback((notice: CaptureNotice, urlKey?: string) => {
+    if (urlKey != null) {
+      if (captureNoticeUrlRef.current === urlKey) return;
+      captureNoticeUrlRef.current = urlKey;
+    }
+    setCaptureNotice(notice);
+  }, []);
+
+  const closeCaptureNotice = () => {
+    setCaptureNotice(null);
+  };
+
+  const focusWebsiteUrlField = () => {
+    const el =
+      document.getElementById('ms-url-command-input') ??
+      document.getElementById('ms-mobile-url-input');
+    if (el instanceof HTMLInputElement) {
+      el.focus();
+      el.select();
+    }
+  };
+
+  const askReplacePreset = (label: string): Promise<boolean> =>
+    new Promise((resolve) => {
+      setPresetConfirm({ label, resolve });
+    });
 
   const effectiveCategory =
     categoryFilter && categories.includes(categoryFilter)
@@ -731,9 +775,7 @@ export default function MockupStudio({
     const preset = getLayoutPreset(presetId);
     if (!preset) return false;
     if (canvasItemsRef.current.length > 0) {
-      const ok = window.confirm(
-        `Replace the artboard with “${preset.label}”? This cannot be undone from the preset itself — use Undo after if needed.`,
-      );
+      const ok = await askReplacePreset(preset.label);
       if (!ok) return false;
     }
     setPlacingPath(preset.id);
@@ -1438,9 +1480,11 @@ export default function MockupStudio({
   const tryApplyWebsiteUrl = (raw: string) => {
     const normalized = normalizeWebsiteUrl(raw);
     if (!normalized) {
-      announce('Enter a website (e.g. google.com)');
+      const notice = classifyWebsiteInput(raw);
+      openCaptureNotice(notice);
       return;
     }
+    captureNoticeUrlRef.current = null;
     applyWebsiteUrl(normalized);
   };
 
@@ -1456,6 +1500,7 @@ export default function MockupStudio({
     setWebsiteUrl(null);
     setWebsiteUrlDraft('');
     setCapturingHint(null);
+    captureNoticeUrlRef.current = null;
     announce('Website cleared');
   };
 
@@ -1517,11 +1562,7 @@ export default function MockupStudio({
       let websiteShots = new Map<string, string>();
       if (websiteJobs.length > 0) {
         announce('Capturing website for download…');
-        try {
-          websiteShots = await captureWebsiteScreenshotsCached(websiteJobs);
-        } catch (err) {
-          throw new Error(describeCaptureError(err));
-        }
+        websiteShots = await captureWebsiteScreenshotsCached(websiteJobs);
       }
 
       const { blob, filenameHint } = await exportMockup(
@@ -1573,7 +1614,7 @@ export default function MockupStudio({
       announce('Downloaded');
     } catch (err) {
       console.error(err);
-      announce(describeCaptureError(err));
+      openCaptureNotice(classifyCaptureError(err));
     } finally {
       setIsExporting(false);
     }
@@ -1926,6 +1967,12 @@ export default function MockupStudio({
               handleScreenPointerDown={handleScreenPointerDown}
               handleAddAndSelect={handleAddAndSelect}
               findDeviceByPath={findDeviceByPath}
+              onWebsiteCaptureFailed={(notice) =>
+                openCaptureNotice(notice, websiteUrl ?? notice.summary)
+              }
+              onWebsiteCaptureDetails={(notice) => {
+                setCaptureNotice(notice);
+              }}
             />
 
             {placingPath != null ? (
@@ -1965,7 +2012,68 @@ export default function MockupStudio({
         applyScreenImageFile={applyScreenImageFile}
         layerHint={layerHint}
         setLayerHint={setLayerHint}
-        statusMessage={statusMessage}
+        statusMessage={captureNotice ? null : statusMessage}
+        statusTone={statusTone}
+      />
+
+      <AppDialog
+        open={captureNotice != null}
+        title={captureNotice?.title ?? ''}
+        body={captureNotice?.body ?? ''}
+        reason={captureNotice?.reason}
+        detail={captureNotice?.remediation}
+        technicalDetail={captureNotice?.technicalDetail}
+        onClose={closeCaptureNotice}
+        actions={[
+          {
+            label: 'Try another URL',
+            variant: 'ghost',
+            onClick: () => {
+              closeCaptureNotice();
+              focusWebsiteUrlField();
+            },
+          },
+          {
+            label: 'Upload screenshot',
+            variant: 'primary',
+            onClick: () => {
+              closeCaptureNotice();
+              requestScreenImage();
+            },
+          },
+        ]}
+      />
+
+      <AppDialog
+        open={presetConfirm != null}
+        title="Replace artboard?"
+        body={
+          presetConfirm
+            ? `Replace the artboard with “${presetConfirm.label}”? This cannot be undone from the preset itself — use Undo after if needed.`
+            : ''
+        }
+        onClose={() => {
+          presetConfirm?.resolve(false);
+          setPresetConfirm(null);
+        }}
+        actions={[
+          {
+            label: 'Cancel',
+            variant: 'ghost',
+            onClick: () => {
+              presetConfirm?.resolve(false);
+              setPresetConfirm(null);
+            },
+          },
+          {
+            label: 'Replace',
+            variant: 'primary',
+            onClick: () => {
+              presetConfirm?.resolve(true);
+              setPresetConfirm(null);
+            },
+          },
+        ]}
       />
 
       <MobileDock

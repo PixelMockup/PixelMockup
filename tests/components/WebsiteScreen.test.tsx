@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import WebsiteScreen from '../../src/WebsiteScreen';
 import { clearWebsiteCaptureCache } from '../../src/captureWebsite';
 
@@ -37,20 +37,38 @@ describe('WebsiteScreen', () => {
     });
   });
 
-  it('shows a friendly error when capture fails', async () => {
+  it('shows a short inline error when capture fails', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockRejectedValue(new TypeError('Failed to fetch')),
     );
 
+    const onCaptureFailed = vi.fn();
+    const onRequestDetails = vi.fn();
+
     render(
-      <WebsiteScreen url="https://example.com/" viewport={VIEWPORT} title="Site" />,
+      <WebsiteScreen
+        url="https://example.com/"
+        viewport={VIEWPORT}
+        title="Site"
+        onCaptureFailed={onCaptureFailed}
+        onRequestDetails={onRequestDetails}
+      />,
     );
 
     await waitFor(() => {
-      expect(
-        screen.getByText(/capture server|npm run dev/i),
-      ).toBeInTheDocument();
+      expect(screen.getByText(/couldn’t load this site|couldn't load this site/i)).toBeInTheDocument();
     });
+
+    expect(screen.getByRole('button', { name: 'Details' })).toBeInTheDocument();
+    await waitFor(() => {
+      expect(onCaptureFailed).toHaveBeenCalled();
+    });
+    expect(onCaptureFailed.mock.calls[0][0].kind).toBe('unreachable_server');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Details' }));
+    expect(onRequestDetails).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'unreachable_server' }),
+    );
   });
 });

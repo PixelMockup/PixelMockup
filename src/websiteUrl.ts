@@ -96,6 +96,41 @@ export function isBlockedAddress(hostnameOrIp: string): boolean {
   return false;
 }
 
+/** Why `normalizeWebsiteUrl` rejected input, or null if the URL is usable. */
+export type WebsiteInputIssue = 'blocked_host' | 'invalid_url';
+
+/**
+ * Classify a rejected website field value without changing normalize rules.
+ * Returns null when the input would normalize successfully.
+ */
+export function websiteInputIssue(input: string): WebsiteInputIssue | null {
+  if (normalizeWebsiteUrl(input) != null) return null;
+
+  const trimmed = input.trim();
+  if (!trimmed || /\s/.test(trimmed)) return 'invalid_url';
+
+  let candidate = trimmed;
+  if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(candidate)) {
+    candidate = `https://${candidate}`;
+  }
+
+  let parsed: URL;
+  try {
+    parsed = new URL(candidate);
+  } catch {
+    return 'invalid_url';
+  }
+
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    return 'invalid_url';
+  }
+  if (!parsed.hostname) return 'invalid_url';
+  if (parsed.username || parsed.password) return 'invalid_url';
+  if (isBlockedAddress(parsed.hostname)) return 'blocked_host';
+
+  return 'invalid_url';
+}
+
 /**
  * Normalize user input to an absolute http(s) URL, or null if invalid.
  * Missing scheme → https://. Rejects blank, whitespace-only, non-http schemes,

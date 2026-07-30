@@ -6,6 +6,7 @@ import { clientToLogical } from './clientToLogical';
 import { artboardWidthCss, type SnapGuides, type ViewZoom } from './artboardSnap';
 import CanvasItemView from './CanvasItemView';
 import SnapGuidesOverlay from './SnapGuidesOverlay';
+import type { CaptureNotice } from './captureWebsite';
 
 type ArtboardCanvasProps = {
   canvasRef: React.RefObject<HTMLDivElement | null>;
@@ -33,6 +34,8 @@ type ArtboardCanvasProps = {
     at?: { x: number; y: number },
   ) => Promise<void>;
   findDeviceByPath: (path: string) => DeviceItem | undefined;
+  onWebsiteCaptureFailed?: (notice: CaptureNotice) => void;
+  onWebsiteCaptureDetails?: (notice: CaptureNotice) => void;
 };
 
 export default function ArtboardCanvas({
@@ -54,6 +57,8 @@ export default function ArtboardCanvas({
   handleScreenPointerDown,
   handleAddAndSelect,
   findDeviceByPath,
+  onWebsiteCaptureFailed,
+  onWebsiteCaptureDetails,
 }: ArtboardCanvasProps) {
   const onClickBackground = (e: React.MouseEvent) => {
     if (e.target === canvasRef.current) {
@@ -164,6 +169,8 @@ export default function ArtboardCanvas({
           onHoverEnd={(id) =>
             setHoveredId((current) => (current === id ? null : current))
           }
+          onWebsiteCaptureFailed={onWebsiteCaptureFailed}
+          onWebsiteCaptureDetails={onWebsiteCaptureDetails}
         />
       ))}
     </div>
