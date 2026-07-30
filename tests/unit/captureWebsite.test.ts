@@ -3,6 +3,8 @@ import {
   captureOne,
   captureWebsiteScreenshot,
   captureWebsiteScreenshotsCached,
+  classifyCaptureError,
+  classifyWebsiteInput,
   clearWebsiteCaptureCache,
   describeCaptureError,
 } from '../../src/captureWebsite';
@@ -82,39 +84,63 @@ describe('captureWebsite', () => {
     ).rejects.toThrow(/not found/i);
   });
 
-  it('maps a network failure to a friendly capture-server message', async () => {
+  it('propagates network failures for classification at the UI', async () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockRejectedValue(new TypeError('Failed to fetch')),
     );
     await expect(
       captureWebsiteScreenshot('https://example.com/', 100, 100),
-    ).rejects.toThrow(/capture server|npm run dev/i);
+    ).rejects.toThrow(/Failed to fetch/i);
   });
 
-  it('describeCaptureError explains Chrome launch failures', () => {
+  it('classifyCaptureError explains Chrome launch failures', () => {
+    const notice = classifyCaptureError(
+      new Error('Failed to launch chromium executable'),
+    );
+    expect(notice.kind).toBe('chrome_missing');
+    expect(notice.remediation).toMatch(/screenshot/i);
     expect(
       describeCaptureError(new Error('Failed to launch chromium executable')),
     ).toMatch(/chrome/i);
   });
 
-  it('describeCaptureError explains navigation timeouts', () => {
+  it('classifyCaptureError explains navigation timeouts', () => {
     expect(
-      describeCaptureError(
-        new Error('page.goto: Timeout 25000ms exceeded.'),
-      ),
-    ).toMatch(/too long to load|timeout/i);
+      classifyCaptureError(new Error('page.goto: Timeout 25000ms exceeded.'))
+        .kind,
+    ).toBe('timeout');
     expect(
       describeCaptureError(
         new Error('Site took too long to load (timeout). Try another URL.'),
       ),
-    ).toMatch(/too long to load/i);
+    ).toMatch(/too long to load|timeout/i);
   });
 
-  it('describeCaptureError explains busy / too-many-captures failures', () => {
-    expect(
-      describeCaptureError(new Error('too many captures')),
-    ).toMatch(/busy with other devices/i);
+  it('classifyCaptureError explains busy / too-many-captures failures', () => {
+    expect(classifyCaptureError(new Error('too many captures')).kind).toBe(
+      'busy',
+    );
+    expect(describeCaptureError(new Error('too many captures'))).toMatch(
+      /busy with other devices/i,
+    );
+  });
+
+  it('classifyCaptureError explains blocked host', () => {
+    const notice = classifyCaptureError(new Error('blocked host'));
+    expect(notice.kind).toBe('blocked_host');
+    expect(notice.remediation).toMatch(/screenshot/i);
+  });
+
+  it('classifyCaptureError explains unreachable capture server', () => {
+    const notice = classifyCaptureError(new TypeError('Failed to fetch'));
+    expect(notice.kind).toBe('unreachable_server');
+    expect(notice.summary).toMatch(/capture server|npm run dev/i);
+  });
+
+  it('classifyWebsiteInput distinguishes blocked vs invalid', () => {
+    expect(classifyWebsiteInput('http://127.0.0.1/').kind).toBe('blocked_host');
+    expect(classifyWebsiteInput('not a url!!!').kind).toBe('invalid_url');
   });
 
   it('retries once on 429 too many captures then succeeds', async () => {

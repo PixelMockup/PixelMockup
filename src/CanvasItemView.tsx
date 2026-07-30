@@ -11,6 +11,7 @@ import {
   type DeviceScreenRect,
 } from './deviceScreens';
 import type { ContentBounds } from './imageContentBounds';
+import type { CaptureNotice } from './captureWebsite';
 
 function contentCropImgStyle(
   bounds: ContentBounds,
@@ -55,6 +56,8 @@ type CanvasItemViewProps = Readonly<{
   onScreenPointerDown: (e: React.PointerEvent, item: CanvasItem) => void;
   onHoverStart: (id: string) => void;
   onHoverEnd: (id: string) => void;
+  onWebsiteCaptureFailed?: (notice: CaptureNotice) => void;
+  onWebsiteCaptureDetails?: (notice: CaptureNotice) => void;
 }>;
 
 function CanvasItemView({
@@ -71,6 +74,8 @@ function CanvasItemView({
   onScreenPointerDown,
   onHoverStart,
   onHoverEnd,
+  onWebsiteCaptureFailed,
+  onWebsiteCaptureDetails,
 }: CanvasItemViewProps) {
   const displayName = formatDeviceDisplayName(item.name);
   const showCaption = isSelected || isHovered;
@@ -93,6 +98,14 @@ function CanvasItemView({
         aria-label={displayName}
         title={displayName}
         onPointerDown={(e) => {
+          // Details must keep its click; canvas drag preventDefault() suppresses it.
+          if (
+            (e.target as HTMLElement | null)?.closest?.(
+              '.ms-canvas-item__website-details',
+            )
+          ) {
+            return;
+          }
           longPress.onPointerDown(e);
           onPointerDown(e, item);
         }}
@@ -131,6 +144,8 @@ function CanvasItemView({
             websiteUrl={websiteUrl}
             screenDrag={screenDrag}
             onScreenPointerDown={onScreenPointerDown}
+            onWebsiteCaptureFailed={onWebsiteCaptureFailed}
+            onWebsiteCaptureDetails={onWebsiteCaptureDetails}
           />
           <img
             src={item.screenImageSrc && item.punchedSrc ? item.punchedSrc : item.src}
@@ -161,6 +176,8 @@ function CanvasItemScreen({
   websiteUrl,
   screenDrag,
   onScreenPointerDown,
+  onWebsiteCaptureFailed,
+  onWebsiteCaptureDetails,
 }: Readonly<{
   item: CanvasItem;
   screen: DeviceScreenRect | null;
@@ -168,6 +185,8 @@ function CanvasItemScreen({
   websiteUrl: string | null;
   screenDrag?: { id: string } | null;
   onScreenPointerDown: (e: React.PointerEvent, item: CanvasItem) => void;
+  onWebsiteCaptureFailed?: (notice: CaptureNotice) => void;
+  onWebsiteCaptureDetails?: (notice: CaptureNotice) => void;
 }>) {
   if (!screen) return null;
   if (item.screenImageSrc) {
@@ -224,6 +243,8 @@ function CanvasItemScreen({
           url={websiteUrl}
           viewport={viewport}
           title={`Website on ${formatDeviceDisplayName(item.name)}`}
+          onCaptureFailed={onWebsiteCaptureFailed}
+          onRequestDetails={onWebsiteCaptureDetails}
         />
       </div>
     );
