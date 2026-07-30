@@ -9,9 +9,14 @@ export type DialogAction = {
 type AppDialogProps = {
   open: boolean;
   title: string;
+  /** What happened */
   body: string;
-  /** Optional second paragraph (e.g. remediation). */
+  /** Why this happens */
+  reason?: string;
+  /** What you can do (remediation) */
   detail?: string;
+  /** Optional opaque server string for power users */
+  technicalDetail?: string;
   onClose: () => void;
   actions: DialogAction[];
   /** Accessible name when title is decorative. */
@@ -25,7 +30,9 @@ export default function AppDialog({
   open,
   title,
   body,
+  reason,
   detail,
+  technicalDetail,
   onClose,
   actions,
   ariaLabel,
@@ -74,8 +81,30 @@ export default function AppDialog({
           </button>
         </div>
         <div className="ms-modal-body ms-modal-body--dialog" id={bodyId}>
-          <p className="ms-dialog-body">{body}</p>
-          {detail ? <p className="ms-dialog-detail">{detail}</p> : null}
+          {reason ? (
+            <>
+              <p className="ms-dialog-label">What happened</p>
+              <p className="ms-dialog-body">{body}</p>
+              <p className="ms-dialog-label">Why this happens</p>
+              <p className="ms-dialog-reason">{reason}</p>
+              {detail ? (
+                <>
+                  <p className="ms-dialog-label">What you can do</p>
+                  <p className="ms-dialog-detail">{detail}</p>
+                </>
+              ) : null}
+              {technicalDetail ? (
+                <p className="ms-dialog-tech">
+                  Technical detail: {technicalDetail}
+                </p>
+              ) : null}
+            </>
+          ) : (
+            <>
+              <p className="ms-dialog-body">{body}</p>
+              {detail ? <p className="ms-dialog-detail">{detail}</p> : null}
+            </>
+          )}
         </div>
         <div className="ms-modal-actions">
           {actions.map((action) => (

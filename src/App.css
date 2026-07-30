@@ -1571,11 +1571,39 @@
   color: var(--ms-ink);
 }
 
+.ms-dialog-label {
+  margin: 14px 0 4px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ms-muted);
+}
+
+.ms-dialog-label:first-child {
+  margin-top: 0;
+}
+
+.ms-dialog-reason {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--ms-ink);
+}
+
 .ms-dialog-detail {
-  margin: 12px 0 0;
+  margin: 0;
   font-size: 0.875rem;
   line-height: 1.45;
   color: var(--ms-muted);
+}
+
+.ms-dialog-tech {
+  margin: 12px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--ms-muted);
+  font-family: var(--ms-mono);
 }
 
 .ms-modal-actions {

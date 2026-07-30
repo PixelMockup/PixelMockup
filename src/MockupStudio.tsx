@@ -2020,7 +2020,9 @@ export default function MockupStudio({
         open={captureNotice != null}
         title={captureNotice?.title ?? ''}
         body={captureNotice?.body ?? ''}
+        reason={captureNotice?.reason}
         detail={captureNotice?.remediation}
+        technicalDetail={captureNotice?.technicalDetail}
         onClose={closeCaptureNotice}
         actions={[
           {

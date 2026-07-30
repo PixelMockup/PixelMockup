@@ -99,6 +99,7 @@ describe('captureWebsite', () => {
       new Error('Failed to launch chromium executable'),
     );
     expect(notice.kind).toBe('chrome_missing');
+    expect(notice.reason).toMatch(/browser process|Chrome/i);
     expect(notice.remediation).toMatch(/screenshot/i);
     expect(
       describeCaptureError(new Error('Failed to launch chromium executable')),
@@ -106,10 +107,12 @@ describe('captureWebsite', () => {
   });
 
   it('classifyCaptureError explains navigation timeouts', () => {
-    expect(
-      classifyCaptureError(new Error('page.goto: Timeout 25000ms exceeded.'))
-        .kind,
-    ).toBe('timeout');
+    const notice = classifyCaptureError(
+      new Error('page.goto: Timeout 25000ms exceeded.'),
+    );
+    expect(notice.kind).toBe('timeout');
+    expect(notice.reason.length).toBeGreaterThan(20);
+    expect(notice.remediation).toMatch(/screenshot|captcha/i);
     expect(
       describeCaptureError(
         new Error('Site took too long to load (timeout). Try another URL.'),
@@ -129,6 +132,7 @@ describe('captureWebsite', () => {
   it('classifyCaptureError explains blocked host', () => {
     const notice = classifyCaptureError(new Error('blocked host'));
     expect(notice.kind).toBe('blocked_host');
+    expect(notice.reason).toMatch(/private|local|metadata/i);
     expect(notice.remediation).toMatch(/screenshot/i);
   });
 
@@ -136,6 +140,27 @@ describe('captureWebsite', () => {
     const notice = classifyCaptureError(new TypeError('Failed to fetch'));
     expect(notice.kind).toBe('unreachable_server');
     expect(notice.summary).toMatch(/capture server|npm run dev/i);
+  });
+
+  it('classifyCaptureError does not put raw "capture failed" in the body', () => {
+    const notice = classifyCaptureError(new Error('capture failed'));
+    expect(notice.kind).toBe('generic');
+    expect(notice.body.toLowerCase()).not.toBe('capture failed');
+    expect(notice.body).toMatch(/automatic screenshot|couldn’t take|couldn't take/i);
+    expect(notice.reason).toMatch(/captcha|automated|login/i);
+    expect(notice.remediation).toMatch(/screenshot/i);
+  });
+
+  it('classifyCaptureError maps invalid URL server codes', () => {
+    expect(
+      classifyCaptureError(new Error('invalid or non-http(s) url')).kind,
+    ).toBe('invalid_url');
+  });
+
+  it('classifyCaptureError maps forbidden origin', () => {
+    const notice = classifyCaptureError(new Error('forbidden origin'));
+    expect(notice.kind).toBe('forbidden_origin');
+    expect(notice.reason).toMatch(/origin/i);
   });
 
   it('classifyWebsiteInput distinguishes blocked vs invalid', () => {

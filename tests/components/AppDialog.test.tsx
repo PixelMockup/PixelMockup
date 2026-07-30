@@ -40,4 +40,25 @@ describe('AppDialog', () => {
     expect(onConfirm).toHaveBeenCalled();
     expect(confirmSpy).not.toHaveBeenCalled();
   });
+
+  it('renders What / Why / What to do when reason is provided', () => {
+    render(
+      <AppDialog
+        open
+        title="Couldn’t capture this website"
+        body="Pixel Mockup couldn’t take an automatic screenshot of this page."
+        reason="Many sites block automated browsers or show a captcha."
+        detail="Try another site or upload a screenshot."
+        onClose={() => {}}
+        actions={[{ label: 'Close', variant: 'ghost', onClick: () => {} }]}
+      />,
+    );
+
+    expect(screen.getByText('What happened')).toBeInTheDocument();
+    expect(screen.getByText('Why this happens')).toBeInTheDocument();
+    expect(screen.getByText('What you can do')).toBeInTheDocument();
+    expect(
+      screen.getByText(/automatic screenshot/i),
+    ).toBeInTheDocument();
+  });
 });

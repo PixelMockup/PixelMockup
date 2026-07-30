@@ -22,60 +22,79 @@ export type CaptureErrorKind =
   | 'chrome_missing'
   | 'timeout'
   | 'busy'
+  | 'forbidden_origin'
   | 'generic';
 
 export type CaptureNotice = {
   kind: CaptureErrorKind;
   title: string;
+  /** What happened */
   body: string;
+  /** Why this happens */
+  reason: string;
+  /** What the user can do next */
   remediation: string;
   /** One-line summary for toasts / a11y. */
   summary: string;
+  /** Optional opaque server detail (never the main explanation). */
+  technicalDetail?: string;
 };
 
 function notice(
   kind: CaptureErrorKind,
   title: string,
   body: string,
+  reason: string,
   remediation: string,
   summary: string,
 ): CaptureNotice {
-  return { kind, title, body, remediation, summary };
+  return { kind, title, body, reason, remediation, summary };
 }
+
+const OPAQUE_SERVER_MESSAGES = new Set([
+  'capture failed',
+  'invalid capture payload',
+  'application/json required',
+]);
 
 const NOTICES: Record<CaptureErrorKind, CaptureNotice> = {
   blocked_host: notice(
     'blocked_host',
     'This address can’t be captured',
-    'Private, local, or metadata hosts are blocked for safety, so Pixel Mockup can’t screenshot that URL.',
+    'Pixel Mockup refused to open this address for a screenshot.',
+    'Private, local, or cloud-metadata hosts are blocked so the capture service can’t be used to probe your network or internal services.',
     REMEDIATION_UPLOAD,
     'That address can’t be captured (private or local host).',
   ),
   invalid_url: notice(
     'invalid_url',
     'Enter a valid website',
-    'Use a normal web address such as google.com or https://example.com.',
-    'Then apply it again, or upload a screenshot if you already have one.',
+    'That text isn’t a usable website address for capture.',
+    'The URL must be http or https, with a real hostname, and without embedded login credentials.',
+    'Use something like google.com or https://example.com, then apply again — or upload a screenshot if you already have one.',
     'Enter a website (e.g. google.com)',
   ),
   unreachable_server: notice(
     'unreachable_server',
     'Capture server unavailable',
-    'Pixel Mockup couldn’t reach the local capture service that screenshots websites.',
-    'Run the app with `npm run dev` or `npm run preview`, then try again. Or upload your own screenshot onto the devices.',
+    'Pixel Mockup couldn’t reach the local service that takes website screenshots.',
+    'Capture only runs while the app is started with the Vite server (`npm run dev` or `npm run preview`). A static build or a stopped server has no capture endpoint.',
+    'Start the app with `npm run dev` or `npm run preview`, then try again. Or upload your own screenshot onto the devices.',
     'Could not reach the capture server. Run the app with `npm run dev` (or `npm run preview`).',
   ),
   chrome_missing: notice(
     'chrome_missing',
     'Chrome is required to capture sites',
-    'The capture service couldn’t open Chrome/Chromium to load the page.',
-    'Install google-chrome-stable or set PIXEL_MOCKUP_CHROME, then retry. Or upload a manual screenshot instead.',
+    'The capture service couldn’t open Chrome or Chromium to load the page.',
+    'Screenshots are taken in a real browser process. If Chrome isn’t installed or isn’t findable, capture can’t start.',
+    'Install google-chrome-stable or set PIXEL_MOCKUP_CHROME to the browser path, then retry. Or upload a manual screenshot instead.',
     'Could not open Chrome to capture the site. Install google-chrome-stable or set PIXEL_MOCKUP_CHROME.',
   ),
   timeout: notice(
     'timeout',
     'This site took too long',
-    'The page didn’t finish loading in time. Captchas, bot checks, or very slow pages often cause this.',
+    'The page didn’t finish loading before capture gave up.',
+    'Captchas, bot checks, login walls, or a very slow site often delay the page past the capture time limit.',
     REMEDIATION_UPLOAD,
     'Site took too long to load (timeout). Try another URL.',
   ),
@@ -83,13 +102,23 @@ const NOTICES: Record<CaptureErrorKind, CaptureNotice> = {
     'busy',
     'Capture is busy',
     'Too many website captures are already running for other devices.',
+    'The capture service limits how many screenshots it takes at once so Chrome stays responsive.',
     'Wait a moment and try again, or upload a screenshot onto the screens.',
     'Capture is busy with other devices. Wait a moment and try again.',
+  ),
+  forbidden_origin: notice(
+    'forbidden_origin',
+    'Capture request was blocked',
+    'The capture service rejected this request as coming from the wrong place.',
+    'For safety, screenshots are only allowed from this app’s own origin while it is running locally.',
+    'Use the Pixel Mockup window opened by `npm run dev` or `npm run preview`, then try again. Or upload a screenshot instead.',
+    'Capture request was blocked (wrong origin).',
   ),
   generic: notice(
     'generic',
     'Couldn’t capture this website',
-    'Automatic screenshots aren’t available for this page — many sites block automated browsers or show a challenge.',
+    'Pixel Mockup couldn’t take an automatic screenshot of this page.',
+    'Many sites block automated browsers, show a captcha or login wall, or refuse the capture request — so the service returns a failure instead of a usable image.',
     REMEDIATION_UPLOAD,
     'Website capture failed.',
   ),
@@ -99,31 +128,45 @@ function isBusyErrorMessage(message: string): boolean {
   return /too many captures|429/i.test(message);
 }
 
+function isOpaqueServerMessage(raw: string): boolean {
+  return OPAQUE_SERVER_MESSAGES.has(raw.trim().toLowerCase());
+}
+
 function kindFromMessage(raw: string): CaptureErrorKind {
-  if (/blocked host/i.test(raw)) return 'blocked_host';
-  if (/failed to fetch|networkerror|load failed/i.test(raw)) {
+  const t = raw.trim();
+  if (/blocked host/i.test(t)) return 'blocked_host';
+  if (/invalid or non-http\(s\) url/i.test(t)) return 'invalid_url';
+  if (/forbidden origin/i.test(t)) return 'forbidden_origin';
+  if (/failed to fetch|networkerror|load failed/i.test(t)) {
     return 'unreachable_server';
   }
-  if (/chrome|chromium|executable|launch/i.test(raw)) return 'chrome_missing';
-  if (/timeout|took too long to load|page\.goto|TimeoutError/i.test(raw)) {
+  if (/chrome|chromium|executable|launch/i.test(t)) return 'chrome_missing';
+  if (/timeout|took too long to load|page\.goto|TimeoutError/i.test(t)) {
     return 'timeout';
   }
-  if (isBusyErrorMessage(raw)) return 'busy';
+  if (isBusyErrorMessage(t)) return 'busy';
+  if (/^capture failed$/i.test(t) || /invalid capture payload/i.test(t)) {
+    return 'generic';
+  }
   return 'generic';
 }
 
 /** Structured notice for dialogs; `summary` stays toast/a11y friendly. */
 export function classifyCaptureError(err: unknown): CaptureNotice {
-  const raw = err instanceof Error ? err.message : String(err);
+  const raw = (err instanceof Error ? err.message : String(err)).trim();
   const kind = kindFromMessage(raw);
-  if (kind === 'generic' && raw.trim()) {
-    return {
-      ...NOTICES.generic,
-      body: raw.trim(),
-      summary: raw.trim(),
-    };
+  const base = NOTICES[kind];
+
+  // Never replace the friendly body with opaque server codes like "capture failed".
+  if (!raw || isOpaqueServerMessage(raw) || kind !== 'generic') {
+    return base;
   }
-  return NOTICES[kind];
+
+  // Unknown but readable message: keep friendly what/why, attach tech detail.
+  return {
+    ...base,
+    technicalDetail: raw,
+  };
 }
 
 /** Structured notice when the URL field fails validation. */
