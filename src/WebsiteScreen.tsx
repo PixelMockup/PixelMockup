@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   captureOne,
   classifyCaptureError,
+  isCaptureAbortError,
   type CaptureNotice,
 } from './captureWebsite';
 import type { WebsiteViewport } from './websiteUrl';
@@ -50,10 +51,14 @@ export default function WebsiteScreen({
     const timer = window.setTimeout(() => {
       captureOne(url, viewport.width, viewport.height)
         .then((src) => {
-          if (latestRef.current === token) setState({ status: 'ready', src });
+          if (latestRef.current !== token) return;
+          setState({ status: 'ready', src });
         })
         .catch((err) => {
           if (latestRef.current !== token) return;
+          // Re-apply / cache clear aborts in-flight fetches — stay loading for
+          // the new URL instead of showing a sticky timeout from the old one.
+          if (isCaptureAbortError(err)) return;
           const notice = classifyCaptureError(err);
           setState({ status: 'error', notice });
           if (reportedUrlRef.current !== url) {
@@ -63,7 +68,9 @@ export default function WebsiteScreen({
         });
     }, DEBOUNCE_MS);
 
-    return () => window.clearTimeout(timer);
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, [url, viewport.width, viewport.height]);
 
   if (state.status === 'ready') {
@@ -86,7 +93,11 @@ export default function WebsiteScreen({
           <span>Loading site…</span>
         ) : (
           <>
-            <span>Couldn’t load this site</span>
+            <span>
+              {state.notice.kind === 'unreachable_server'
+                ? 'Capture unavailable — upload a screenshot'
+                : 'Couldn’t load this site'}
+            </span>
             {onRequestDetails ? (
               <button
                 type="button"

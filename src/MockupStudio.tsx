@@ -65,10 +65,12 @@ import {
 } from './imageContentBounds';
 import { loadNativeSize } from './loadImage';
 import {
+  captureUnavailableNotice,
   captureWebsiteScreenshotsCached,
   classifyCaptureError,
   classifyWebsiteInput,
   clearWebsiteCaptureCache,
+  ensureCaptureAvailable,
   type CaptureNotice,
 } from './captureWebsite';
 import {
@@ -1466,10 +1468,10 @@ export default function MockupStudio({
   const emptyDownloadConfirmRef = useRef(false);
 
   const applyWebsiteUrl = (url: string) => {
+    const n = canvasItemsRef.current.length;
     clearWebsiteCaptureCache();
     setWebsiteUrl(url);
     setWebsiteUrlDraft(url);
-    const n = canvasItemsRef.current.length;
     setCapturingHint(
       `Updating ${n} screen${n === 1 ? '' : 's'}…`,
     );
@@ -1478,19 +1480,30 @@ export default function MockupStudio({
   };
 
   const tryApplyWebsiteUrl = (raw: string) => {
-    const normalized = normalizeWebsiteUrl(raw);
-    if (!normalized) {
-      const notice = classifyWebsiteInput(raw);
-      openCaptureNotice(notice);
-      return;
-    }
-    captureNoticeUrlRef.current = null;
-    applyWebsiteUrl(normalized);
+    void (async () => {
+      const normalized = normalizeWebsiteUrl(raw);
+      if (!normalized) {
+        openCaptureNotice(classifyWebsiteInput(raw));
+        return;
+      }
+      captureNoticeUrlRef.current = null;
+      // Hosted builds: one probe, then dialog — avoid N device POSTs to a
+      // missing /__capture_website endpoint.
+      const available = await ensureCaptureAvailable();
+      if (!available) {
+        openCaptureNotice(captureUnavailableNotice(), normalized);
+      }
+      applyWebsiteUrl(normalized);
+    })();
   };
 
   const showOnDevices = async (url: string) => {
     const ok = await applyLayoutPreset('apple-lineup');
     if (!ok) return;
+    const available = await ensureCaptureAvailable();
+    if (!available) {
+      openCaptureNotice(captureUnavailableNotice(), url);
+    }
     applyWebsiteUrl(url);
   };
 

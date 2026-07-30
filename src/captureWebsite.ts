@@ -23,6 +23,7 @@ export type CaptureErrorKind =
   | 'timeout'
   | 'busy'
   | 'forbidden_origin'
+  | 'cancelled'
   | 'generic';
 
 export type CaptureNotice = {
@@ -78,9 +79,15 @@ const NOTICES: Record<CaptureErrorKind, CaptureNotice> = {
     'unreachable_server',
     'Capture isn’t available here',
     'Automatic website screenshots aren’t available on this hosted build.',
+<<<<<<< HEAD
     'Capture runs with the Vite server (`npm run dev`, `npm run preview`) or the Docker image (`docker compose up`). Static hosts such as Vercel ship the UI only — no capture endpoint.',
     'Upload your own screenshot onto the devices, or run Pixel Mockup with `npm run dev` / `docker compose up` to capture websites automatically.',
     'Website capture needs a local or Docker run (`npm run dev` or `docker compose up`). On this static host, upload a screenshot instead.',
+=======
+    'Capture only runs with the local Vite server (`npm run dev` or `npm run preview`). Preview and production hosts (such as Vercel) ship a static app with no capture endpoint.',
+    'Upload your own screenshot onto the devices, or run Pixel Mockup locally with `npm run dev` to capture websites automatically.',
+    'Website capture needs a local run (`npm run dev`). On this hosted build, upload a screenshot instead.',
+>>>>>>> c97c5b8071b2e0c70aa00ef35ec6c5ed1229c713
   ),
   chrome_missing: notice(
     'chrome_missing',
@@ -114,6 +121,14 @@ const NOTICES: Record<CaptureErrorKind, CaptureNotice> = {
     'Use the Pixel Mockup window opened by `npm run dev` or `npm run preview`, then try again. Or upload a screenshot instead.',
     'Capture request was blocked (wrong origin).',
   ),
+  cancelled: notice(
+    'cancelled',
+    'Capture cancelled',
+    'This capture was cancelled because a newer request replaced it.',
+    'Changing the website URL aborts in-flight captures so they don’t block the queue.',
+    'Wait for the new URL to finish loading on the devices.',
+    'Capture cancelled.',
+  ),
   generic: notice(
     'generic',
     'Couldn’t capture this website',
@@ -132,12 +147,27 @@ function isOpaqueServerMessage(raw: string): boolean {
   return OPAQUE_SERVER_MESSAGES.has(raw.trim().toLowerCase());
 }
 
+function isAbortError(err: unknown): boolean {
+  if (err == null || typeof err !== 'object') return false;
+  const name = 'name' in err ? String(err.name) : '';
+  if (name === 'AbortError') return true;
+  const message = 'message' in err ? String(err.message) : '';
+  return /aborted|abort(ed)? by user|The operation was aborted/i.test(message);
+}
+
 function kindFromMessage(raw: string): CaptureErrorKind {
   const t = raw.trim();
+  if (/aborted|abort(ed)? by user|The operation was aborted/i.test(t)) {
+    return 'cancelled';
+  }
   if (/blocked host/i.test(t)) return 'blocked_host';
   if (/invalid or non-http\(s\) url/i.test(t)) return 'invalid_url';
   if (/forbidden origin/i.test(t)) return 'forbidden_origin';
-  if (/failed to fetch|networkerror|load failed/i.test(t)) {
+  if (
+    /failed to fetch|networkerror|load failed|capture server unavailable/i.test(
+      t,
+    )
+  ) {
     return 'unreachable_server';
   }
   if (/chrome|chromium|executable|launch/i.test(t)) return 'chrome_missing';
@@ -153,6 +183,7 @@ function kindFromMessage(raw: string): CaptureErrorKind {
 
 /** Structured notice for dialogs; `summary` stays toast/a11y friendly. */
 export function classifyCaptureError(err: unknown): CaptureNotice {
+  if (isAbortError(err)) return NOTICES.cancelled;
   const raw = (err instanceof Error ? err.message : String(err)).trim();
   const kind = kindFromMessage(raw);
   const base = NOTICES[kind];
@@ -189,6 +220,86 @@ function cacheKey(url: string, width: number, height: number): string {
 const captureCache = new Map<string, string>();
 /** In-flight requests, so identical viewports capture only once. */
 const pending = new Map<string, Promise<string>>();
+/** Controllers for in-flight fetches; aborted on cache clear / re-apply. */
+const inFlightControllers = new Set<AbortController>();
+
+/**
+ * Hosted static builds (Vercel) have no capture middleware. Probe once in
+ * production so Apply / N devices don't hammer a missing endpoint.
+ * Dev skips the probe — the Vite plugin is always present.
+ */
+type CaptureEndpointState = 'unknown' | 'available' | 'unavailable';
+let captureEndpointState: CaptureEndpointState = 'unknown';
+let captureProbeInFlight: Promise<boolean> | null = null;
+
+const CAPTURE_UNAVAILABLE_ERROR = 'capture server unavailable';
+
+function markCaptureUnavailable(): void {
+  captureEndpointState = 'unavailable';
+}
+
+/** Structured notice when capture is known missing (hosted/static). */
+export function captureUnavailableNotice(): CaptureNotice {
+  return NOTICES.unreachable_server;
+}
+
+export function isCaptureUnavailable(): boolean {
+  return captureEndpointState === 'unavailable';
+}
+
+/** Test helper — reset the one-shot probe between cases. */
+export function resetCaptureAvailabilityForTests(): void {
+  captureEndpointState = 'unknown';
+  captureProbeInFlight = null;
+}
+
+/**
+ * Lightweight POST that never launches Chrome: empty body → JSON 400 from the
+ * Vite middleware. SPA/static hosts return HTML (or fail to parse as JSON).
+ */
+async function probeCaptureEndpoint(): Promise<boolean> {
+  try {
+    const res = await fetch(CAPTURE_WEBSITE_PATH, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({}),
+    });
+    const data = (await res.json().catch(() => null)) as {
+      error?: unknown;
+      dataUrl?: unknown;
+    } | null;
+    return (
+      data != null &&
+      typeof data === 'object' &&
+      ('error' in data || 'dataUrl' in data)
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Resolve whether `/__capture_website` exists. Safe to call from Apply before
+ * mounting device captures — subsequent calls are free after the first probe.
+ * Uses one empty POST (no Chrome) so `vite preview` still detects the plugin
+ * while static hosts (Vercel) fail fast.
+ */
+export async function ensureCaptureAvailable(): Promise<boolean> {
+  if (captureEndpointState === 'available') return true;
+  if (captureEndpointState === 'unavailable') return false;
+
+  if (!captureProbeInFlight) {
+    captureProbeInFlight = probeCaptureEndpoint()
+      .then((ok) => {
+        captureEndpointState = ok ? 'available' : 'unavailable';
+        return ok;
+      })
+      .finally(() => {
+        captureProbeInFlight = null;
+      });
+  }
+  return captureProbeInFlight;
+}
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => {
@@ -200,6 +311,7 @@ async function requestCaptureOnce(
   url: string,
   width: number,
   height: number,
+  signal?: AbortSignal,
 ): Promise<{ ok: true; dataUrl: string } | { ok: false; error: string; busy: boolean }> {
   let res: Response;
   try {
@@ -211,8 +323,15 @@ async function requestCaptureOnce(
         width: Math.max(1, Math.round(width)),
         height: Math.max(1, Math.round(height)),
       }),
+      signal,
     });
   } catch (err) {
+    if (isAbortError(err) || signal?.aborted) {
+      throw new DOMException('The operation was aborted.', 'AbortError');
+    }
+    // Network failure on a relative same-origin URL usually means the capture
+    // route isn't there (or the tab went offline). Remember for siblings.
+    markCaptureUnavailable();
     // Keep the raw network error so classifyCaptureError can map it.
     throw err instanceof Error ? err : new Error(String(err));
   }
@@ -222,7 +341,15 @@ async function requestCaptureOnce(
     error?: string;
   };
   if (!res.ok || !data.dataUrl) {
-    const error = data.error || 'capture failed';
+    // Static hosts (Vercel) often return HTML 404 for /__capture_website with
+    // no JSON error field — treat that as missing capture, not a site failure.
+    const error =
+      typeof data.error === 'string' && data.error.trim()
+        ? data.error
+        : CAPTURE_UNAVAILABLE_ERROR;
+    if (error === CAPTURE_UNAVAILABLE_ERROR) {
+      markCaptureUnavailable();
+    }
     return {
       ok: false,
       error,
@@ -239,10 +366,14 @@ async function requestCapture(
   url: string,
   width: number,
   height: number,
+  signal?: AbortSignal,
 ): Promise<string> {
   let lastError = 'capture failed';
   for (let attempt = 0; attempt <= BUSY_RETRIES; attempt++) {
-    const result = await requestCaptureOnce(url, width, height);
+    if (signal?.aborted) {
+      throw new DOMException('The operation was aborted.', 'AbortError');
+    }
+    const result = await requestCaptureOnce(url, width, height, signal);
     if (result.ok) return result.dataUrl;
     lastError = result.error;
     if (!result.busy || attempt === BUSY_RETRIES) {
@@ -256,24 +387,36 @@ async function requestCapture(
 /**
  * Capture (or reuse cached) screenshot for a url + viewport.
  * Concurrent identical requests share one network call.
+ * Short-circuits when the capture endpoint is known missing (hosted builds).
  */
-export function captureOne(
+export async function captureOne(
   url: string,
   width: number,
   height: number,
 ): Promise<string> {
+  if (captureEndpointState === 'unavailable') {
+    throw new Error(CAPTURE_UNAVAILABLE_ERROR);
+  }
+  if (captureEndpointState === 'unknown') {
+    const ok = await ensureCaptureAvailable();
+    if (!ok) throw new Error(CAPTURE_UNAVAILABLE_ERROR);
+  }
+
   const key = cacheKey(url, width, height);
   const cached = captureCache.get(key);
-  if (cached) return Promise.resolve(cached);
+  if (cached) return cached;
 
   let p = pending.get(key);
   if (!p) {
-    p = requestCapture(url, width, height)
+    const controller = new AbortController();
+    inFlightControllers.add(controller);
+    p = requestCapture(url, width, height, controller.signal)
       .then((dataUrl) => {
         captureCache.set(key, dataUrl);
         return dataUrl;
       })
       .finally(() => {
+        inFlightControllers.delete(controller);
         pending.delete(key);
       });
     pending.set(key, p);
@@ -306,6 +449,15 @@ export async function captureWebsiteScreenshotsCached(
 
 /** Clear cached captures (e.g. when the user changes the URL). */
 export function clearWebsiteCaptureCache(): void {
+  for (const controller of inFlightControllers) {
+    controller.abort();
+  }
+  inFlightControllers.clear();
   captureCache.clear();
   pending.clear();
+}
+
+/** True when an error is an intentional abort (re-apply / cache clear). */
+export function isCaptureAbortError(err: unknown): boolean {
+  return isAbortError(err) || classifyCaptureError(err).kind === 'cancelled';
 }
