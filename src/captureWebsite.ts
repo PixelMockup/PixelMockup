@@ -79,15 +79,9 @@ const NOTICES: Record<CaptureErrorKind, CaptureNotice> = {
     'unreachable_server',
     'Capture isn’t available here',
     'Automatic website screenshots aren’t available on this hosted build.',
-<<<<<<< HEAD
     'Capture runs with the Vite server (`npm run dev`, `npm run preview`) or the Docker image (`docker compose up`). Static hosts such as Vercel ship the UI only — no capture endpoint.',
     'Upload your own screenshot onto the devices, or run Pixel Mockup with `npm run dev` / `docker compose up` to capture websites automatically.',
     'Website capture needs a local or Docker run (`npm run dev` or `docker compose up`). On this static host, upload a screenshot instead.',
-=======
-    'Capture only runs with the local Vite server (`npm run dev` or `npm run preview`). Preview and production hosts (such as Vercel) ship a static app with no capture endpoint.',
-    'Upload your own screenshot onto the devices, or run Pixel Mockup locally with `npm run dev` to capture websites automatically.',
-    'Website capture needs a local run (`npm run dev`). On this hosted build, upload a screenshot instead.',
->>>>>>> c97c5b8071b2e0c70aa00ef35ec6c5ed1229c713
   ),
   chrome_missing: notice(
     'chrome_missing',

@@ -182,34 +182,7 @@ describe('captureWebsite', () => {
   it('classifyCaptureError explains unreachable capture server', () => {
     const notice = classifyCaptureError(new TypeError('Failed to fetch'));
     expect(notice.kind).toBe('unreachable_server');
-<<<<<<< HEAD
     expect(notice.summary).toMatch(/npm run dev|docker compose|upload a screenshot|static host/i);
-=======
-    expect(notice.summary).toMatch(/npm run dev|upload a screenshot|hosted/i);
-    expect(notice.reason).toMatch(/vercel|static|capture endpoint/i);
-  });
-
-  it('maps missing capture endpoint (HTML 404) to unreachable_server', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue({
-        ok: false,
-        status: 404,
-        json: async () => {
-          throw new SyntaxError('Unexpected token <');
-        },
-      }),
-    );
-
-    await expect(
-      captureWebsiteScreenshot('https://example.com/', 100, 100),
-    ).rejects.toThrow(/capture server unavailable/i);
-
-    const notice = classifyCaptureError(
-      new Error('capture server unavailable'),
-    );
-    expect(notice.kind).toBe('unreachable_server');
->>>>>>> c97c5b8071b2e0c70aa00ef35ec6c5ed1229c713
   });
 
   it('classifyCaptureError does not put raw "capture failed" in the body', () => {
