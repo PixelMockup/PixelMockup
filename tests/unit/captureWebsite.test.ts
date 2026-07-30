@@ -139,7 +139,7 @@ describe('captureWebsite', () => {
   it('classifyCaptureError explains unreachable capture server', () => {
     const notice = classifyCaptureError(new TypeError('Failed to fetch'));
     expect(notice.kind).toBe('unreachable_server');
-    expect(notice.summary).toMatch(/capture server|npm run dev/i);
+    expect(notice.summary).toMatch(/npm run dev|docker compose|upload a screenshot|static host/i);
   });
 
   it('classifyCaptureError does not put raw "capture failed" in the body', () => {

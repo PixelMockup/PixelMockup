@@ -1,0 +1,14 @@
+node_modules
+dist
+.git
+.github
+.cursor
+coverage
+test-results
+playwright-report
+blob-report
+*.log
+.env
+.env.*
+.DS_Store
+AI_AGENT_GUIDE.md
