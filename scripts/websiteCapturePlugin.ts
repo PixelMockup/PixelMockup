@@ -1,10 +1,38 @@
-import { existsSync } from 'node:fs';
+import { appendFileSync, existsSync } from 'node:fs';
 import { lookup } from 'node:dns/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Plugin } from 'vite';
 import { chromium, type Browser } from 'playwright';
 import { CAPTURE_WEBSITE_PATH } from '../src/capturePath.js';
 import { isBlockedAddress, normalizeWebsiteUrl } from '../src/websiteUrl.js';
+
+const DEBUG_LOG_PATH =
+  '/home/ravijaanthony/Documents/dev/Mockup_Studio/.cursor/debug-741bd0.log';
+
+function debugAgentLog(
+  location: string,
+  message: string,
+  data: Record<string, unknown>,
+  hypothesisId: string,
+): void {
+  // #region agent log
+  try {
+    appendFileSync(
+      DEBUG_LOG_PATH,
+      `${JSON.stringify({
+        sessionId: '741bd0',
+        location,
+        message,
+        data,
+        timestamp: Date.now(),
+        hypothesisId,
+      })}\n`,
+    );
+  } catch {
+    /* ignore debug log I/O errors */
+  }
+  // #endregion
+}
 
 type CaptureBody = {
   url?: string;
@@ -14,7 +42,7 @@ type CaptureBody = {
 
 const MAX_VIEWPORT = 4096;
 const MAX_BODY_BYTES = 64 * 1024;
-const MAX_IN_FLIGHT = 2;
+const MAX_IN_FLIGHT = 4;
 const DNS_LOOKUP_TIMEOUT_MS = 5_000;
 const GOTO_TIMEOUT_MS = 20_000;
 
@@ -134,10 +162,23 @@ function clampViewport(n: number): number | null {
   return rounded;
 }
 
+function isClientAborted(req: IncomingMessage): boolean {
+  return Boolean(req.aborted || req.destroyed);
+}
+
+function isGotoTimeoutError(err: unknown): boolean {
+  if (err == null || typeof err !== 'object') return false;
+  const name = 'name' in err ? String(err.name) : '';
+  if (name === 'TimeoutError') return true;
+  const message = 'message' in err ? String(err.message) : '';
+  return /TimeoutError|timeout/i.test(message);
+}
+
 async function captureWebsite(
   url: string,
   width: number,
   height: number,
+  res: ServerResponse,
 ): Promise<Buffer> {
   const browser = await getBrowser();
   // Fresh context with a desktop UA so responsive shells (sidebars) match a
@@ -151,7 +192,34 @@ async function captureWebsite(
       'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
   });
   const page = await context.newPage();
+  let abortedByClient = false;
+  const abortCapture = () => {
+    if (abortedByClient) return;
+    abortedByClient = true;
+    // #region agent log
+    debugAgentLog(
+      'websiteCapturePlugin.ts:abort',
+      'client disconnected; aborting capture',
+      { url, width, height },
+      'H1',
+    );
+    // #endregion
+    void page.close().catch(() => undefined);
+    void context.close().catch(() => undefined);
+  };
+  // Detect genuine client disconnect via the response stream — not the
+  // request. After readJsonBody, req is no longer readable and often fires
+  // 'close', which falsely aborted every capture.
+  const onResClose = () => {
+    if (!res.writableFinished) {
+      abortCapture();
+    }
+  };
+  res.on('close', onResClose);
   try {
+    if (abortedByClient) {
+      throw new Error('client aborted');
+    }
     // Re-check every request (including redirects) against the SSRF denylist.
     await page.route('**/*', async (route) => {
       const reqUrl = route.request().url();
@@ -169,19 +237,53 @@ async function captureWebsite(
 
     // Prefer domcontentloaded: networkidle rarely completes on modern SPAs
     // (analytics/long-poll) and burned an extra 20s before the fallback.
-    await page.goto(url, {
-      waitUntil: 'domcontentloaded',
+    // One TimeoutError retry: intermittent after queue wait (H2).
+    const gotoOpts = {
+      waitUntil: 'domcontentloaded' as const,
       timeout: GOTO_TIMEOUT_MS,
-    });
+    };
+    try {
+      await page.goto(url, gotoOpts);
+    } catch (err) {
+      if (abortedByClient) {
+        throw new Error('client aborted');
+      }
+      if (!isGotoTimeoutError(err)) throw err;
+      // #region agent log
+      debugAgentLog(
+        'websiteCapturePlugin.ts:gotoRetry',
+        'page.goto timed out; retrying once',
+        {
+          url,
+          width,
+          height,
+          errorMessage: err instanceof Error ? err.message : String(err),
+          errorName: err instanceof Error ? err.name : '',
+        },
+        'H2',
+      );
+      // #endregion
+      await page.goto(url, gotoOpts);
+    }
+    if (abortedByClient) {
+      throw new Error('client aborted');
+    }
     // Final URL must still be public (covers edge cases after navigation).
     await assertPublicHost(page.url());
     // Let fonts / late layout settle, then best-effort dismiss a modal/cookie.
     await page.waitForTimeout(900);
+    if (abortedByClient) {
+      throw new Error('client aborted');
+    }
     await page.keyboard.press('Escape').catch(() => undefined);
     await page.waitForTimeout(250);
+    if (abortedByClient) {
+      throw new Error('client aborted');
+    }
     return await page.screenshot({ type: 'png', fullPage: false });
   } finally {
-    await context.close();
+    res.off('close', onResClose);
+    await context.close().catch(() => undefined);
   }
 }
 
@@ -299,24 +401,80 @@ export function websiteCapturePlugin(): Plugin {
           return;
         }
 
+        // #region agent log
+        const waitStart = Date.now();
+        const inFlightBefore = inFlight;
+        const waitersBefore = captureWaiters.length;
+        // #endregion
         await acquireCaptureSlot();
+        // #region agent log
+        const waitMs = Date.now() - waitStart;
+        const captureStart = Date.now();
+        // #endregion
         try {
-          const png = await captureWebsite(url, width, height);
+          const png = await captureWebsite(url, width, height, res);
+          // #region agent log
+          debugAgentLog(
+            'websiteCapturePlugin.ts:capture',
+            'capture finished',
+            {
+              url,
+              width,
+              height,
+              waitMs,
+              inFlightBefore,
+              waitersBefore,
+              durationMs: Date.now() - captureStart,
+              outcome: 'success',
+            },
+            'H1,H2,H5',
+          );
+          // #endregion
           const dataUrl = `data:image/png;base64,${png.toString('base64')}`;
           respondJson(res, 200, { dataUrl });
         } catch (err) {
-          console.error('[website-capture]', err);
           const msg = err instanceof Error ? err.message : String(err);
           const name = err instanceof Error ? err.name : '';
-          if (
+          const clientAborted =
+            /client aborted/i.test(msg) || isClientAborted(req);
+          // #region agent log
+          debugAgentLog(
+            'websiteCapturePlugin.ts:capture',
+            'capture finished',
+            {
+              url,
+              width,
+              height,
+              waitMs,
+              inFlightBefore,
+              waitersBefore,
+              durationMs: Date.now() - captureStart,
+              outcome: clientAborted ? 'aborted' : 'error',
+              errorMessage: msg,
+              errorName: name,
+            },
+            'H1,H2,H5',
+          );
+          // #endregion
+          if (clientAborted) {
+            // Genuine client disconnect — not a timeout. Prefer 499 if still
+            // writable; otherwise the socket is already gone.
+            if (!res.writableEnded) {
+              respondJson(res, 499, { error: 'client aborted' });
+            }
+          } else if (res.writableEnded) {
+            // Response already closed.
+          } else if (
             name === 'TimeoutError' ||
             /timeout|page\.goto|dns lookup timeout/i.test(msg)
           ) {
+            console.error('[website-capture]', err);
             respondJson(res, 504, {
               error:
                 'Site took too long to load (timeout). Try another URL.',
             });
           } else {
+            console.error('[website-capture]', err);
             respondJson(res, 500, { error: 'capture failed' });
           }
         } finally {
