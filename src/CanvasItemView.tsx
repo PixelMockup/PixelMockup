@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import type { CanvasItem } from './MockupStudio';
+import { useLongPress } from './useLongPress';
 import { getWebsiteViewport } from './websiteUrl';
 import WebsiteScreen from './WebsiteScreen';
 import { formatDeviceDisplayName } from './deviceMeta';
@@ -50,7 +51,7 @@ type CanvasItemViewProps = Readonly<{
   websiteUrl: string | null;
   screenDrag?: { id: string } | null;
   onPointerDown: (e: React.PointerEvent, item: CanvasItem) => void;
-  onContextMenu: (e: React.MouseEvent, item: CanvasItem) => void;
+  onContextMenu: (e: React.MouseEvent | React.PointerEvent, item: CanvasItem) => void;
   onScreenPointerDown: (e: React.PointerEvent, item: CanvasItem) => void;
   onHoverStart: (id: string) => void;
   onHoverEnd: (id: string) => void;
@@ -75,6 +76,13 @@ function CanvasItemView({
   const showCaption = isSelected || isHovered;
   const zIndex = isSelected ? item.zIndex + 1000 : item.zIndex + 100;
 
+  const longPress = useLongPress(
+    (e) => {
+      onContextMenu(e, item);
+    },
+    { delay: 500 },
+  );
+
   const screen = resolveItemScreen(item);
 
   return (
@@ -84,10 +92,21 @@ function CanvasItemView({
         role="img"
         aria-label={displayName}
         title={displayName}
-        onPointerDown={(e) => onPointerDown(e, item)}
-        onContextMenu={(e) => onContextMenu(e, item)}
+        onPointerDown={(e) => {
+          longPress.onPointerDown(e);
+          onPointerDown(e, item);
+        }}
+        onPointerUp={longPress.onPointerUp}
+        onPointerMove={longPress.onPointerMove}
+        onContextMenu={(e) => {
+          longPress.onContextMenu(e);
+          onContextMenu(e, item);
+        }}
         onPointerEnter={() => onHoverStart(item.instanceId)}
-        onPointerLeave={() => onHoverEnd(item.instanceId)}
+        onPointerLeave={(e) => {
+          longPress.onPointerLeave(e);
+          onHoverEnd(item.instanceId);
+        }}
         className={[
           'ms-canvas-item',
           isSelected ? 'ms-canvas-item--selected' : '',
