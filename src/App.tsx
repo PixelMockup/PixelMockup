@@ -1,37 +1,11 @@
-import { useEffect, useState } from 'react';
-import MockupStudio from './MockupStudio';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import MobileWarning from './MobileWarning';
 import ProductTour from './ProductTour';
 import ProgressLoader from './ProgressLoader';
 import { useTourSeen } from './useTourSeen';
 import { useDeviceLibrary } from './useDeviceLibrary';
 
-const log = (
-  hypothesisId: string,
-  location: string,
-  message: string,
-  data: Record<string, unknown> = {},
-  runId = 'initial',
-) => {
-  // #region agent log
-  fetch('http://127.0.0.1:7612/ingest/24908c0c-1698-435b-8c6e-d81408b3f4b6', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Debug-Session-Id': '741bd0',
-    },
-    body: JSON.stringify({
-      sessionId: '741bd0',
-      runId,
-      hypothesisId,
-      location,
-      message,
-      data,
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
-};
+const MockupStudio = lazy(() => import('./MockupStudio'));
 
 export interface DeviceItem {
   path: string;
@@ -50,16 +24,24 @@ export interface DeviceItem {
 function App() {
   const { seen, ready, markSeen, reset } = useTourSeen();
   const [tourOpen, setTourOpen] = useState(false);
+  /** Keep shell visible from first React paint until priority assets finish. */
+  const [bootShellVisible, setBootShellVisible] = useState(true);
+  const priorityBootStarted = useRef(false);
   const {
     groupedLibrary,
     categories,
     loadedCategories,
+    loadingDevicePaths,
     isLoading,
     progress,
-    loadLibrary,
+    statusMessage,
+    loadPriorityLibrary,
     loadCategory,
+    loadDevice,
     loadCategoriesForPreset,
   } = useDeviceLibrary();
+
+  const showBootOverlay = bootShellVisible || isLoading;
 
   useEffect(() => {
     if (ready && !seen) {
@@ -68,52 +50,50 @@ function App() {
   }, [ready, seen]);
 
   useEffect(() => {
-    void loadLibrary();
-  }, [loadLibrary]);
+    if (priorityBootStarted.current) return;
+    priorityBootStarted.current = true;
+    void loadPriorityLibrary().finally(() => {
+      setBootShellVisible(false);
+    });
+  }, [loadPriorityLibrary]);
 
   const closeTour = () => {
     setTourOpen(false);
     markSeen();
   };
 
-  // #region agent log
-  if (isLoading) {
-    log('H5', 'App.tsx:55', 'App showing full-screen loader', {
-      progress,
-      loadedCategoriesCount: loadedCategories.size,
-    });
-  }
-  // #endregion
-
   return (
     <>
-      {isLoading ? (
+      {showBootOverlay ? (
         <div className="ms-progress-loader-overlay">
           <ProgressLoader
             progress={progress}
+            activeMessage={statusMessage ?? undefined}
             messages={[
-              'Loading device catalog...',
-              'Preparing mock phones...',
-              'Arranging workspace...',
+              'Loading popular devices...',
               'Almost ready...',
             ]}
           />
         </div>
       ) : null}
-      <MockupStudio
-        groupedLibrary={groupedLibrary}
-        categories={categories}
-        loadedCategories={loadedCategories}
-        libraryLoading={isLoading}
-        libraryProgress={progress}
-        onLoadLibrary={loadLibrary}
-        onLoadCategory={loadCategory}
-        onLoadCategoriesForPreset={loadCategoriesForPreset}
-        onTakeTour={() => {
-          reset();
-          setTourOpen(true);
-        }}
-      />
+      <Suspense fallback={null}>
+        <MockupStudio
+          groupedLibrary={groupedLibrary}
+          categories={categories}
+          loadedCategories={loadedCategories}
+          loadingDevicePaths={loadingDevicePaths}
+          libraryLoading={isLoading}
+          libraryProgress={progress}
+          libraryStatusMessage={statusMessage}
+          onLoadCategory={loadCategory}
+          onLoadDevice={loadDevice}
+          onLoadCategoriesForPreset={loadCategoriesForPreset}
+          onTakeTour={() => {
+            reset();
+            setTourOpen(true);
+          }}
+        />
+      </Suspense>
       <MobileWarning />
       <ProductTour
         open={tourOpen}

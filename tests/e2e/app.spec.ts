@@ -17,6 +17,10 @@ async function ensureLibraryOpen(page: Page) {
 }
 
 async function placeFirstPhone(page: Page) {
+  // Boot priority load can show an overlay that steals hit-testing.
+  await expect(page.locator('.ms-progress-loader-overlay')).toHaveCount(0, {
+    timeout: 60_000,
+  });
   await ensureLibraryOpen(page);
   const search = page.getByRole('searchbox', { name: /Search devices/i });
   await search.fill('iPhone 11 Black');
@@ -25,6 +29,15 @@ async function placeFirstPhone(page: Page) {
     .getByRole('button', { name: /iPhone 11 Black/i })
     .first();
   await expect(device).toBeVisible({ timeout: 20_000 });
+
+  // Unloaded tiles load on first click and place on the second.
+  if (await device.evaluate((el) => el.classList.contains('ms-device-tile--unloaded'))) {
+    await device.click();
+    await expect(device).not.toHaveClass(/ms-device-tile--unloaded/, {
+      timeout: 30_000,
+    });
+  }
+  await ensureLibraryOpen(page);
   await device.click();
   await expect(page.locator('.ms-canvas-item').first()).toBeVisible({
     timeout: 30_000,

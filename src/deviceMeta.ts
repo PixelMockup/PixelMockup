@@ -188,6 +188,31 @@ export function formatDeviceDisplayName(name: string | undefined): string {
   return raw.replace(/-(\d+)$/, ' -$1');
 }
 
+/**
+ * Flagship / commonly used phones that are worth pre-loading on boot.
+ * Older or less common models stay metadata-only until the user clicks them.
+ */
+export function isPriorityPhone(name: string | undefined): boolean {
+  const n = (name ?? '').toLowerCase();
+  if (!n) return false;
+
+  // Apple: iPhone X / XR / XS and 11+ (including Pro / Max / Plus).
+  // SE 2nd/3rd gen filenames are typically "iPhone SE" without a generation
+  // marker; treat all catalog SE models as priority since the older SE is rare.
+  if (/\biphone\s+(x|xr|xs)\b/.test(n)) return true;
+  if (/\biphone\s+(1[1-9]|[2-9]\d)\b/.test(n)) return true;
+  if (/\biphone\s+se\b/.test(n)) return true;
+
+  // Samsung Galaxy S7+ and Note 5+ (covers the current catalog and newer models).
+  if (/\bgalaxy\s+s([7-9]|1[0-9]|2[0-9])\b/.test(n)) return true;
+  if (/\bgalaxy\s+note\s*([5-9]|1[0-9]|20)\b/.test(n)) return true;
+
+  // Google Pixel 3+.
+  if (/\bpixel\s*([3-9]|[1-9]\d)\b/.test(n)) return true;
+
+  return false;
+}
+
 export interface SearchableDevice {
   name?: string;
   brand: string;

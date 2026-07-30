@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import './ProgressLoader.css';
 
 type ProgressLoaderProps = {
@@ -10,33 +10,11 @@ type ProgressLoaderProps = {
   intervalMs?: number;
   /** Optional accessible label for the progress bar. */
   label?: string;
-};
-
-const log = (
-  hypothesisId: string,
-  location: string,
-  message: string,
-  data: Record<string, unknown> = {},
-  runId = 'initial',
-) => {
-  // #region agent log
-  fetch('http://127.0.0.1:7612/ingest/24908c0c-1698-435b-8c6e-d81408b3f4b6', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-Debug-Session-Id': '741bd0',
-    },
-    body: JSON.stringify({
-      sessionId: '741bd0',
-      runId,
-      hypothesisId,
-      location,
-      message,
-      data,
-      timestamp: Date.now(),
-    }),
-  }).catch(() => {});
-  // #endregion
+  /**
+   * When set, show this as the visible scrolling line and animate on change
+   * (disables the multi-message timer ticker).
+   */
+  activeMessage?: string;
 };
 
 export default function ProgressLoader({
@@ -44,81 +22,63 @@ export default function ProgressLoader({
   messages,
   intervalMs = 1800,
   label = 'Loading…',
+  activeMessage,
 }: Readonly<ProgressLoaderProps>) {
   const [index, setIndex] = useState(0);
+  const [history, setHistory] = useState<string[]>(() => {
+    const trimmed = activeMessage?.trim() ?? '';
+    return trimmed !== '' ? [trimmed] : [];
+  });
   const clampedProgress = Math.min(100, Math.max(0, progress));
-  const currentMessage = messages[index] ?? '';
-  const textWindowRef = useRef<HTMLDivElement | null>(null);
+  const isDriven = activeMessage !== undefined;
 
   const uniqueMessages = useMemo(
     () => messages.filter((m) => m.trim() !== ''),
     [messages],
   );
 
-  // #region agent log
-  log('H1', 'ProgressLoader.tsx:46', 'ProgressLoader props', {
-    progress,
-    messages,
-    uniqueMessagesLength: uniqueMessages.length,
-    index,
-    intervalMs,
-  });
-  // #endregion
+  useEffect(() => {
+    if (activeMessage === undefined) return;
+    const trimmed = activeMessage.trim();
+    if (trimmed === '') return;
+    setHistory((prev) => {
+      if (prev[prev.length - 1] === trimmed) return prev;
+      return [...prev, trimmed];
+    });
+  }, [activeMessage]);
 
   useEffect(() => {
+    if (activeMessage !== undefined) return;
     if (uniqueMessages.length <= 1) return;
     const id = window.setInterval(() => {
-      setIndex((i) => {
-        const next = (i + 1) % uniqueMessages.length;
-        // #region agent log
-        log('H1', 'ProgressLoader.tsx:60', 'Message index changed', {
-          previousIndex: i,
-          nextIndex: next,
-          message: uniqueMessages[next],
-        });
-        // #endregion
-        return next;
-      });
+      setIndex((i) => (i + 1) % uniqueMessages.length);
     }, intervalMs);
     return () => window.clearInterval(id);
-  }, [uniqueMessages, intervalMs]);
+  }, [uniqueMessages, intervalMs, activeMessage]);
 
-  useEffect(() => {
-    const el = textWindowRef.current;
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const strip = el.querySelector('.ms-progress-loader__text-strip') as HTMLElement | null;
-    const stripRect = strip?.getBoundingClientRect();
-    const firstMessage = el.querySelector('.ms-progress-loader__message') as HTMLElement | null;
-    const computed = firstMessage ? window.getComputedStyle(firstMessage) : null;
-    // #region agent log
-    log('H2', 'ProgressLoader.tsx:79', 'Text window dimensions', {
-      windowWidth: rect.width,
-      windowHeight: rect.height,
-      stripWidth: stripRect?.width,
-      stripHeight: stripRect?.height,
-      messageColor: computed?.color,
-      messageFontSize: computed?.fontSize,
-      messageDisplay: computed?.display,
-      childrenCount: el.children.length,
-    });
-    // #endregion
-  }, [uniqueMessages, index]);
+  const displayMessages = isDriven ? history : uniqueMessages;
+  const displayIndex = isDriven ? Math.max(0, history.length - 1) : index;
+  const currentMessage = isDriven
+    ? (history[history.length - 1] ?? '')
+    : (uniqueMessages[index] ?? '');
 
   return (
     <div className="ms-progress-loader" role="status" aria-live="polite" aria-label={label}>
-      <div className="ms-progress-loader__text-window" ref={textWindowRef}>
+      <div className="ms-progress-loader__text-window">
         <div
           className="ms-progress-loader__text-strip"
           style={{
             transform:
-              uniqueMessages.length > 0
-                ? `translateY(-${index * (100 / uniqueMessages.length)}%)`
+              displayMessages.length > 0
+                ? `translateY(-${displayIndex * (100 / displayMessages.length)}%)`
                 : 'none',
           }}
         >
-          {uniqueMessages.map((m) => (
-            <span key={m} className="ms-progress-loader__message">
+          {displayMessages.map((m, i) => (
+            <span
+              key={isDriven ? `${i}-${m}` : m}
+              className="ms-progress-loader__message"
+            >
               {m}
             </span>
           ))}

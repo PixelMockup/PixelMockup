@@ -222,10 +222,12 @@ interface MockupStudioProps {
   groupedLibrary: Record<string, DeviceItem[]>;
   categories: string[];
   loadedCategories: Set<string>;
+  loadingDevicePaths: Set<string>;
   libraryLoading: boolean;
   libraryProgress: number;
-  onLoadLibrary: (priorityCategory?: string) => void;
+  libraryStatusMessage?: string | null;
   onLoadCategory: (category: string) => void;
+  onLoadDevice: (path: string) => Promise<DeviceItem | null>;
   onLoadCategoriesForPreset: (preset: LayoutPreset) => Promise<void>;
   onTakeTour?: () => void;
 }
@@ -378,10 +380,12 @@ export default function MockupStudio({
   groupedLibrary,
   categories,
   loadedCategories,
+  loadingDevicePaths,
   libraryLoading,
   libraryProgress,
-  onLoadLibrary,
+  libraryStatusMessage,
   onLoadCategory,
+  onLoadDevice,
   onLoadCategoriesForPreset,
   onTakeTour,
 }: Readonly<MockupStudioProps>) {
@@ -688,7 +692,16 @@ export default function MockupStudio({
   ) => {
     setPlacingPath(item.path);
     try {
-      const probe = await buildCanvasItem(item, {
+      let ready = item;
+      if (!ready.src) {
+        const loaded = await onLoadDevice(ready.path);
+        if (!loaded?.src) {
+          announce('Could not load that device.');
+          return;
+        }
+        ready = loaded;
+      }
+      const probe = await buildCanvasItem(ready, {
         x: 0,
         y: 0,
         zIndex: canvasItemsRef.current.length,
@@ -1674,7 +1687,7 @@ export default function MockupStudio({
       const next = !v;
       persistLibraryCollapsed(next);
       if (!next) {
-        onLoadLibrary(effectiveCategory ?? undefined);
+        ensureCategoryAssets(effectiveCategory);
       }
       return next;
     });
@@ -1682,10 +1695,22 @@ export default function MockupStudio({
 
   const devicesDrawerOpen = !libraryCollapsed;
 
+  const ensureCategoryAssets = (category: string | null | undefined) => {
+    if (!category || loadedCategories.has(category)) return;
+    // Phones and watches stay on-demand; only bulk-load common categories.
+    if (
+      category === 'computers' ||
+      category === 'displays' ||
+      category === 'tablets'
+    ) {
+      onLoadCategory(category);
+    }
+  };
+
   const openDevicesPicker = () => {
     setLibraryCollapsed(false);
     persistLibraryCollapsed(false);
-    onLoadLibrary(effectiveCategory ?? undefined);
+    ensureCategoryAssets(effectiveCategory);
     queueMicrotask(() => searchInputRef.current?.focus());
   };
 
@@ -1819,6 +1844,7 @@ export default function MockupStudio({
           libraryLoading={libraryLoading}
           libraryProgress={libraryProgress}
           loadedCategories={loadedCategories}
+          loadingDevicePaths={loadingDevicePaths}
           onClose={() => {
             setLibraryCollapsed(true);
             persistLibraryCollapsed(true);
@@ -1827,9 +1853,7 @@ export default function MockupStudio({
             setCategoryFilter(c);
             setSelectedProduct(null);
             setSearchQuery('');
-            if (!loadedCategories.has(c)) {
-              onLoadCategory(c);
-            }
+            ensureCategoryAssets(c);
           }}
           onBrandAll={() => {
             setSelectedBrand(null);
@@ -1850,6 +1874,7 @@ export default function MockupStudio({
             setSearchQuery('');
           }}
           onAddDevice={(item) => void handleAddAndSelect(item)}
+          onLoadDevice={(path) => void onLoadDevice(path)}
           onResizePointerDown={onResizePointerDown}
           onResizePointerMove={onResizePointerMove}
           onResizePointerUp={onResizePointerUp}
@@ -1907,10 +1932,9 @@ export default function MockupStudio({
               <div className="ms-progress-loader-stage">
                 <ProgressLoader
                   progress={libraryProgress}
+                  activeMessage={libraryStatusMessage ?? undefined}
                   messages={[
                     'Placing devices...',
-                    'Loading mock phones...',
-                    'Arranging your scene...',
                     'Almost ready...',
                   ]}
                 />

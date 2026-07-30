@@ -29,6 +29,7 @@ interface LibraryPanelProps {
   libraryLoading: boolean;
   libraryProgress: number;
   loadedCategories: Set<string>;
+  loadingDevicePaths: Set<string>;
   onClose: () => void;
   onCategoryChange: (category: string) => void;
   onBrandAll: () => void;
@@ -38,6 +39,7 @@ interface LibraryPanelProps {
   onSearchChange: (query: string) => void;
   onClearFilters: () => void;
   onAddDevice: (item: DeviceItem) => void;
+  onLoadDevice: (path: string) => void;
   onResizePointerDown: (e: React.PointerEvent) => void;
   onResizePointerMove: (e: React.PointerEvent) => void;
   onResizePointerUp: () => void;
@@ -88,6 +90,7 @@ export default function LibraryPanel({
   libraryLoading,
   libraryProgress,
   loadedCategories,
+  loadingDevicePaths,
   onClose,
   onCategoryChange,
   onBrandAll,
@@ -97,6 +100,7 @@ export default function LibraryPanel({
   onSearchChange,
   onClearFilters,
   onAddDevice,
+  onLoadDevice,
   onResizePointerDown,
   onResizePointerMove,
   onResizePointerUp,
@@ -161,13 +165,21 @@ export default function LibraryPanel({
           <div className="ms-chip-row">
             {categories.map((category) => {
               const loaded = loadedCategories.has(category);
+              const bulk =
+                category === 'computers' ||
+                category === 'displays' ||
+                category === 'tablets';
               return (
                 <FilterChip
                   key={category}
                   label={category}
                   active={!searchIsGlobal && effectiveCategory === category}
-                  loading={!loaded}
-                  title={loaded ? category : `${category} — click to load`}
+                  loading={bulk && !loaded && libraryLoading}
+                  title={
+                    loaded || !bulk
+                      ? category
+                      : `${category} — loading…`
+                  }
                   onClick={() => onCategoryChange(category)}
                 />
               );
@@ -298,32 +310,69 @@ export default function LibraryPanel({
                 <div className="ms-device-grid">
                   {visibleItems.map((item) => {
                     const placing = placingPath === item.path;
+                    const unloaded = !item.src;
+                    const loadingAsset = loadingDevicePaths.has(item.path);
                     const label = formatDeviceDisplayName(item.name);
                     return (
                       <button
                         key={item.path}
                         type="button"
-                        className="ms-device-tile"
-                        disabled={placingPath != null}
-                        aria-busy={placing}
-                        aria-label={label}
-                        title={`${label} — click or drag onto the canvas`}
-                        draggable={placingPath == null}
+                        className={`ms-device-tile${unloaded ? ' ms-device-tile--unloaded' : ''}${loadingAsset ? ' ms-device-tile--loading' : ''}`}
+                        disabled={placingPath != null || loadingAsset}
+                        aria-busy={placing || loadingAsset}
+                        aria-label={
+                          unloaded
+                            ? `${label} — tap to download`
+                            : label
+                        }
+                        title={
+                          unloaded
+                            ? `${label} — tap to download this device`
+                            : `${label} — click or drag onto the canvas`
+                        }
+                        draggable={placingPath == null && !unloaded}
                         onDragStart={(e) => {
+                          if (unloaded) {
+                            e.preventDefault();
+                            return;
+                          }
                           e.dataTransfer.setData(LIBRARY_DRAG_MIME, item.path);
                           e.dataTransfer.setData('text/plain', item.path);
                           e.dataTransfer.effectAllowed = 'copy';
                         }}
-                        onClick={() => onAddDevice(item)}
+                        onClick={() => {
+                          if (unloaded) {
+                            onLoadDevice(item.path);
+                            return;
+                          }
+                          onAddDevice(item);
+                        }}
                       >
-                        <img
-                          src={item.src}
-                          alt=""
-                          draggable={false}
-                          loading="lazy"
-                          decoding="async"
-                        />
-                        <span>{placing ? 'Placing…' : label}</span>
+                        {unloaded ? (
+                          <span className="ms-device-tile__placeholder" aria-hidden>
+                            <span className="ms-device-tile__placeholder-icon" />
+                          </span>
+                        ) : (
+                          <img
+                            src={item.src}
+                            alt=""
+                            draggable={false}
+                            loading="lazy"
+                            decoding="async"
+                          />
+                        )}
+                        {loadingAsset ? (
+                          <span className="ms-device-tile__spinner" aria-hidden />
+                        ) : null}
+                        <span>
+                          {placing
+                            ? 'Placing…'
+                            : loadingAsset
+                              ? 'Loading…'
+                              : unloaded
+                                ? 'Tap to load'
+                                : label}
+                        </span>
                       </button>
                     );
                   })}
