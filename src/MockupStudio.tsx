@@ -65,10 +65,12 @@ import {
 } from './imageContentBounds';
 import { loadNativeSize } from './loadImage';
 import {
+  captureUnavailableNotice,
   captureWebsiteScreenshotsCached,
   classifyCaptureError,
   classifyWebsiteInput,
   clearWebsiteCaptureCache,
+  ensureCaptureAvailable,
   type CaptureNotice,
 } from './captureWebsite';
 import {
@@ -1467,23 +1469,6 @@ export default function MockupStudio({
 
   const applyWebsiteUrl = (url: string) => {
     const n = canvasItemsRef.current.length;
-    // #region agent log
-    fetch('http://127.0.0.1:7612/ingest/24908c0c-1698-435b-8c6e-d81408b3f4b6', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Debug-Session-Id': '741bd0',
-      },
-      body: JSON.stringify({
-        sessionId: '741bd0',
-        location: 'MockupStudio.tsx:applyWebsiteUrl',
-        message: 'applyWebsiteUrl',
-        data: { url, deviceCount: n },
-        timestamp: Date.now(),
-        hypothesisId: 'H3',
-      }),
-    }).catch(() => {});
-    // #endregion
     clearWebsiteCaptureCache();
     setWebsiteUrl(url);
     setWebsiteUrlDraft(url);
@@ -1495,19 +1480,30 @@ export default function MockupStudio({
   };
 
   const tryApplyWebsiteUrl = (raw: string) => {
-    const normalized = normalizeWebsiteUrl(raw);
-    if (!normalized) {
-      const notice = classifyWebsiteInput(raw);
-      openCaptureNotice(notice);
-      return;
-    }
-    captureNoticeUrlRef.current = null;
-    applyWebsiteUrl(normalized);
+    void (async () => {
+      const normalized = normalizeWebsiteUrl(raw);
+      if (!normalized) {
+        openCaptureNotice(classifyWebsiteInput(raw));
+        return;
+      }
+      captureNoticeUrlRef.current = null;
+      // Hosted builds: one probe, then dialog — avoid N device POSTs to a
+      // missing /__capture_website endpoint.
+      const available = await ensureCaptureAvailable();
+      if (!available) {
+        openCaptureNotice(captureUnavailableNotice(), normalized);
+      }
+      applyWebsiteUrl(normalized);
+    })();
   };
 
   const showOnDevices = async (url: string) => {
     const ok = await applyLayoutPreset('apple-lineup');
     if (!ok) return;
+    const available = await ensureCaptureAvailable();
+    if (!available) {
+      openCaptureNotice(captureUnavailableNotice(), url);
+    }
     applyWebsiteUrl(url);
   };
 

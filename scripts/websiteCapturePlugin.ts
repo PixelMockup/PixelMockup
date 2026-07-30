@@ -1,38 +1,10 @@
-import { appendFileSync, existsSync } from 'node:fs';
+import { existsSync } from 'node:fs';
 import { lookup } from 'node:dns/promises';
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Plugin } from 'vite';
 import { chromium, type Browser } from 'playwright';
 import { CAPTURE_WEBSITE_PATH } from '../src/capturePath.js';
 import { isBlockedAddress, normalizeWebsiteUrl } from '../src/websiteUrl.js';
-
-const DEBUG_LOG_PATH =
-  '/home/ravijaanthony/Documents/dev/Mockup_Studio/.cursor/debug-741bd0.log';
-
-function debugAgentLog(
-  location: string,
-  message: string,
-  data: Record<string, unknown>,
-  hypothesisId: string,
-): void {
-  // #region agent log
-  try {
-    appendFileSync(
-      DEBUG_LOG_PATH,
-      `${JSON.stringify({
-        sessionId: '741bd0',
-        location,
-        message,
-        data,
-        timestamp: Date.now(),
-        hypothesisId,
-      })}\n`,
-    );
-  } catch {
-    /* ignore debug log I/O errors */
-  }
-  // #endregion
-}
 
 type CaptureBody = {
   url?: string;
@@ -196,14 +168,6 @@ async function captureWebsite(
   const abortCapture = () => {
     if (abortedByClient) return;
     abortedByClient = true;
-    // #region agent log
-    debugAgentLog(
-      'websiteCapturePlugin.ts:abort',
-      'client disconnected; aborting capture',
-      { url, width, height },
-      'H1',
-    );
-    // #endregion
     void page.close().catch(() => undefined);
     void context.close().catch(() => undefined);
   };
@@ -249,20 +213,6 @@ async function captureWebsite(
         throw new Error('client aborted');
       }
       if (!isGotoTimeoutError(err)) throw err;
-      // #region agent log
-      debugAgentLog(
-        'websiteCapturePlugin.ts:gotoRetry',
-        'page.goto timed out; retrying once',
-        {
-          url,
-          width,
-          height,
-          errorMessage: err instanceof Error ? err.message : String(err),
-          errorName: err instanceof Error ? err.name : '',
-        },
-        'H2',
-      );
-      // #endregion
       await page.goto(url, gotoOpts);
     }
     if (abortedByClient) {
@@ -401,35 +351,9 @@ export function websiteCapturePlugin(): Plugin {
           return;
         }
 
-        // #region agent log
-        const waitStart = Date.now();
-        const inFlightBefore = inFlight;
-        const waitersBefore = captureWaiters.length;
-        // #endregion
         await acquireCaptureSlot();
-        // #region agent log
-        const waitMs = Date.now() - waitStart;
-        const captureStart = Date.now();
-        // #endregion
         try {
           const png = await captureWebsite(url, width, height, res);
-          // #region agent log
-          debugAgentLog(
-            'websiteCapturePlugin.ts:capture',
-            'capture finished',
-            {
-              url,
-              width,
-              height,
-              waitMs,
-              inFlightBefore,
-              waitersBefore,
-              durationMs: Date.now() - captureStart,
-              outcome: 'success',
-            },
-            'H1,H2,H5',
-          );
-          // #endregion
           const dataUrl = `data:image/png;base64,${png.toString('base64')}`;
           respondJson(res, 200, { dataUrl });
         } catch (err) {
@@ -437,25 +361,6 @@ export function websiteCapturePlugin(): Plugin {
           const name = err instanceof Error ? err.name : '';
           const clientAborted =
             /client aborted/i.test(msg) || isClientAborted(req);
-          // #region agent log
-          debugAgentLog(
-            'websiteCapturePlugin.ts:capture',
-            'capture finished',
-            {
-              url,
-              width,
-              height,
-              waitMs,
-              inFlightBefore,
-              waitersBefore,
-              durationMs: Date.now() - captureStart,
-              outcome: clientAborted ? 'aborted' : 'error',
-              errorMessage: msg,
-              errorName: name,
-            },
-            'H1,H2,H5',
-          );
-          // #endregion
           if (clientAborted) {
             // Genuine client disconnect — not a timeout. Prefer 499 if still
             // writable; otherwise the socket is already gone.
