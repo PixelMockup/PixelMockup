@@ -1,17 +1,25 @@
 import { useEffect, useRef, useState } from 'react';
-import { captureOne, describeCaptureError } from './captureWebsite';
+import {
+  captureOne,
+  classifyCaptureError,
+  type CaptureNotice,
+} from './captureWebsite';
 import type { WebsiteViewport } from './websiteUrl';
 
 interface WebsiteScreenProps {
   url: string;
   viewport: WebsiteViewport;
   title: string;
+  /** Called once per URL when capture fails (for a styled notice dialog). */
+  onCaptureFailed?: (notice: CaptureNotice) => void;
+  /** Opens the full guidance dialog from the inline hint. */
+  onRequestDetails?: (notice: CaptureNotice) => void;
 }
 
 type ScreenState =
   | { status: 'loading' }
   | { status: 'ready'; src: string }
-  | { status: 'error'; message: string };
+  | { status: 'error'; notice: CaptureNotice };
 
 const DEBOUNCE_MS = 300;
 
@@ -24,15 +32,20 @@ export default function WebsiteScreen({
   url,
   viewport,
   title,
+  onCaptureFailed,
+  onRequestDetails,
 }: Readonly<WebsiteScreenProps>) {
   const [state, setState] = useState<ScreenState>({ status: 'loading' });
-
   const latestRef = useRef(0);
+  const reportedUrlRef = useRef<string | null>(null);
+  const onCaptureFailedRef = useRef(onCaptureFailed);
+  onCaptureFailedRef.current = onCaptureFailed;
 
   useEffect(() => {
     const token = latestRef.current + 1;
     latestRef.current = token;
     setState({ status: 'loading' });
+    reportedUrlRef.current = null;
 
     const timer = window.setTimeout(() => {
       captureOne(url, viewport.width, viewport.height)
@@ -40,8 +53,12 @@ export default function WebsiteScreen({
           if (latestRef.current === token) setState({ status: 'ready', src });
         })
         .catch((err) => {
-          if (latestRef.current === token) {
-            setState({ status: 'error', message: describeCaptureError(err) });
+          if (latestRef.current !== token) return;
+          const notice = classifyCaptureError(err);
+          setState({ status: 'error', notice });
+          if (reportedUrlRef.current !== url) {
+            reportedUrlRef.current = url;
+            onCaptureFailedRef.current?.(notice);
           }
         });
     }, DEBOUNCE_MS);
@@ -56,16 +73,38 @@ export default function WebsiteScreen({
           src={state.src}
           alt={title}
           draggable={false}
-          className="ms-canvas-item__website-img" />
+          className="ms-canvas-item__website-img"
+        />
       </div>
     );
   }
 
   return (
     <div className="ms-canvas-item__website">
-      <output className="ms-canvas-item__website-hint">
-        {state.status === 'loading' ? 'Loading site…' : state.message}
-      </output>
+      <div className="ms-canvas-item__website-hint">
+        {state.status === 'loading' ? (
+          <span>Loading site…</span>
+        ) : (
+          <>
+            <span>Couldn’t load this site</span>
+            {onRequestDetails ? (
+              <button
+                type="button"
+                className="ms-canvas-item__website-details"
+                onPointerDown={(e) => {
+                  e.stopPropagation();
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onRequestDetails(state.notice);
+                }}
+              >
+                Details
+              </button>
+            ) : null}
+          </>
+        )}
+      </div>
     </div>
   );
 }

@@ -6,6 +6,7 @@ type StatusShellProps = {
   layerHint: string | null;
   setLayerHint: (hint: string | null) => void;
   statusMessage: string | null;
+  statusTone?: 'info' | 'error';
 };
 
 export default function StatusShell({
@@ -14,6 +15,7 @@ export default function StatusShell({
   layerHint,
   setLayerHint,
   statusMessage,
+  statusTone = 'info',
 }: StatusShellProps) {
   return (
     <>
@@ -45,7 +47,14 @@ export default function StatusShell({
       ) : null}
 
       {statusMessage ? (
-        <output className="ms-toast">
+        <output
+          className={[
+            'ms-toast',
+            statusTone === 'error' ? 'ms-toast--error' : '',
+          ]
+            .filter(Boolean)
+            .join(' ')}
+        >
           {statusMessage}
         </output>
       ) : null}

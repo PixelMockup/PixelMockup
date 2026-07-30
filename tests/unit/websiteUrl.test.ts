@@ -6,6 +6,7 @@ import {
   isValidWebsiteUrl,
   normalizeWebsiteUrl,
   websiteHostname,
+  websiteInputIssue,
 } from '../../src/websiteUrl';
 
 describe('normalizeWebsiteUrl', () => {
@@ -58,6 +59,14 @@ describe('normalizeWebsiteUrl', () => {
   it('isValidWebsiteUrl mirrors normalize', () => {
     expect(isValidWebsiteUrl('https://a.co')).toBe(true);
     expect(isValidWebsiteUrl('not a url')).toBe(false);
+  });
+
+  it('websiteInputIssue distinguishes blocked hosts from invalid input', () => {
+    expect(websiteInputIssue('https://example.com')).toBeNull();
+    expect(websiteInputIssue('http://127.0.0.1/')).toBe('blocked_host');
+    expect(websiteInputIssue('http://localhost/')).toBe('blocked_host');
+    expect(websiteInputIssue('')).toBe('invalid_url');
+    expect(websiteInputIssue('ftp://example.com')).toBe('invalid_url');
   });
 });
 
