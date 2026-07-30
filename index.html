@@ -59,8 +59,11 @@
           <div style="font-weight: 600; font-size: 1.05rem; color: #0f172a">
             Pixel Mockup
           </div>
-          <div style="font-weight: 500; font-size: 0.95rem; color: #334155">
-            Starting workspace…
+          <div
+            id="ms-boot-status"
+            style="font-weight: 500; font-size: 0.95rem; color: #334155"
+          >
+            Downloading app…
           </div>
           <div
             style="
@@ -72,28 +75,33 @@
             "
           >
             <div
+              id="ms-boot-bar"
               style="
-                width: 35%;
+                width: 3%;
                 height: 100%;
                 border-radius: 999px;
                 background: linear-gradient(90deg, #0f766e, #14b8a6);
-                animation: ms-boot-pulse 1.2s ease-in-out infinite;
+                transition: width 300ms ease-out;
               "
             ></div>
           </div>
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              width: 100%;
+              font-size: 0.75rem;
+              color: #64748b;
+              font-variant-numeric: tabular-nums;
+            "
+          >
+            <span id="ms-boot-eta"></span>
+            <span id="ms-boot-pct">0%</span>
+          </div>
         </div>
       </div>
-      <style>
-        @keyframes ms-boot-pulse {
-          0% {
-            transform: translateX(-120%);
-          }
-          100% {
-            transform: translateX(320%);
-          }
-        }
-      </style>
     </div>
+    <script src="/boot-progress.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
