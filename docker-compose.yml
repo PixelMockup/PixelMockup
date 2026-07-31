@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    ports:
+      - '4173:4173'
+    environment:
+      HOST: '0.0.0.0'
+      PORT: '4173'
+      PIXEL_MOCKUP_DISABLE_SANDBOX: '1'
+      # Matches Dockerfile system Chromium (not Playwright’s bundled browser).
+      PIXEL_MOCKUP_CHROME: '/usr/bin/chromium'
+    # SSRF denylist stays on (do not set PIXEL_MOCKUP_ALLOW_PRIVATE_HOSTS unless needed).

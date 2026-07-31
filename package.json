@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
+    "start": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:unit": "vitest run tests/unit tests/components tests/accessibility tests/integration",

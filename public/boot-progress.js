@@ -76,7 +76,7 @@
         list.getEntries().forEach(noteResource);
       });
       po.observe({ type: 'resource', buffered: true });
-    } catch (e) {
+    } catch {
       /* older browsers */
     }
   }
