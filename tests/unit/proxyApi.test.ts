@@ -15,11 +15,11 @@ type FakeRes = {
   statusCode: number;
   body: unknown;
   headers: Record<string, string>;
-  chunks: string[];
+  chunks: Array<string | Uint8Array>;
   status: (code: number) => FakeRes;
   setHeader: (name: string, value: string) => void;
   writeHead: (statusCode: number, headers?: Record<string, string>) => void;
-  write: (chunk: string) => void;
+  write: (chunk: string | Uint8Array) => void;
   end: (chunk?: string) => void;
   json: (body: unknown) => void;
   send: (body: unknown) => void;
@@ -75,6 +75,27 @@ function streamedBody(html: string, chunkSize = 24) {
   };
 }
 
+function byteBody(bytes: Uint8Array) {
+  let offset = 0;
+  return {
+    getReader: () => ({
+      read: async () => {
+        if (offset >= bytes.length) return { done: true } as const;
+        const value = bytes.slice(offset, Math.min(offset + 32, bytes.length));
+        offset += value.length;
+        return { done: false as const, value };
+      },
+      releaseLock: () => {},
+    }),
+  };
+}
+
+function bytesOf(res: FakeRes): Buffer {
+  return Buffer.concat(
+    res.chunks.map((c) => (typeof c === 'string' ? Buffer.from(c) : Buffer.from(c))),
+  );
+}
+
 function htmlResponse(
   html: string,
   init: {
@@ -104,7 +125,9 @@ function htmlResponse(
 }
 
 function htmlOf(res: FakeRes): string {
-  return res.chunks.join('');
+  return res.chunks
+    .map((c) => (typeof c === 'string' ? c : new TextDecoder('utf-8').decode(c)))
+    .join('');
 }
 
 const PROXY_URL = '/api/proxy?url=https%3A%2F%2Fexample.com%2F';
@@ -155,7 +178,7 @@ describe('api/proxy handler', () => {
     expect(res.statusCode).toBe(200);
     expect(res.headers['Content-Type']).toBe('text/html; charset=utf-8');
     expect(res.headers['Cache-Control']).toBe(
-      'public, max-age=60, s-maxage=300',
+      'public, max-age=30, s-maxage=60',
     );
     expect(htmlOf(res)).toContain(
       '<html><head><base href="https://example.com/">',
@@ -163,6 +186,54 @@ describe('api/proxy handler', () => {
     expect(htmlOf(res)).toContain('__msSiteProgress');
     // No redirect happened — the final URL must not be re-validated.
     expect(vi.mocked(lookup)).toHaveBeenCalledTimes(1);
+  });
+
+  it('injects the storage sandbox shim before site scripts', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        htmlResponse(
+          '<html><head><script src="/app.js"></script></head></html>',
+        ),
+      ),
+    );
+
+    const res = createRes();
+    await handler(
+      { method: 'GET', url: proxyUrlFor('shim.example'), headers: {} },
+      res,
+    );
+    expect(res.statusCode).toBe(200);
+    const out = htmlOf(res);
+    const shimAt = out.indexOf('ms-storage-shim');
+    expect(shimAt).toBeGreaterThan(-1);
+    // The shim must run before any site head script executes.
+    expect(out.indexOf('<script src="/api/proxy?url=')).toBeGreaterThan(
+      shimAt,
+    );
+    expect(out).toContain("shim('localStorage')");
+    expect(out).toContain("shim('sessionStorage')");
+    expect(out).toContain("Object.defineProperty(Document.prototype, 'cookie'");
+  });
+
+  it('sends browser-like headers on the upstream fetch', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      htmlResponse('<html><head></head></html>'),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const res = createRes();
+    await handler(
+      { method: 'GET', url: proxyUrlFor('headers.example'), headers: {} },
+      res,
+    );
+    expect(res.statusCode).toBe(200);
+    const init = fetchMock.mock.calls[0][1] as {
+      headers: Record<string, string>;
+    };
+    expect(init.headers['User-Agent']).toContain('Chrome/');
+    expect(init.headers['Accept']).toContain('text/html');
+    expect(init.headers['Accept-Language']).toContain('en-US');
   });
 
   it('bases relative links on the page directory', async () => {
@@ -355,25 +426,193 @@ describe('api/proxy handler', () => {
     expect(res.body).toEqual({ error: 'blocked host' });
   });
 
-  it('rejects non-HTML responses', async () => {
+  it('passes binary subresources through with long CDN caching', async () => {
+    const png = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue(
-        htmlResponse('not html', { contentType: 'image/png' }),
-      ),
+      vi.fn().mockResolvedValue({
+        ok: true,
+        url: 'https://assets.example/logo.png',
+        body: byteBody(png),
+        headers: {
+          get: (name: string) =>
+            name.toLowerCase() === 'content-type'
+              ? 'image/png'
+              : name.toLowerCase() === 'content-length'
+                ? null
+                : null,
+        },
+        text: async () => '',
+      }),
     );
 
     const res = createRes();
     await handler(
       {
         method: 'GET',
-        url: '/api/proxy?url=https%3A%2F%2Fexample.com%2Flogo.png',
+        url: `/api/proxy?url=${encodeURIComponent(
+          'https://assets.example/logo.png',
+        )}`,
         headers: {},
       },
       res,
     );
-    expect(res.statusCode).toBe(415);
-    expect(res.body).toEqual({ error: 'unsupported content type' });
+    expect(res.statusCode).toBe(200);
+    expect(res.headers['Content-Type']).toBe('image/png');
+    expect(res.headers['Cache-Control']).toBe(
+      'public, max-age=60, s-maxage=3600',
+    );
+    expect(bytesOf(res).equals(Buffer.from(png))).toBe(true);
+  });
+
+  it('rewrites same-host subresources through the proxy and leaves third-party hosts alone', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        htmlResponse(
+          '<html><head>' +
+            '<link rel="stylesheet" href="/css/all.css">' +
+            '<script src="/vendor/x.js"></script>' +
+            '<script src="https://cdn.jsdelivr.net/other.js"></script>' +
+            '<script src="https://rewrite.example/vendor/y.js"></script>' +
+            '</head><body>' +
+            '<img src="img/a.png" srcset="img/a.png 1x, img/b.png 2x">' +
+            '<img src="data:image/svg+xml;base64,AAAA">' +
+            '<a href="/about">About</a>' +
+            '<a href="#section">Jump</a>' +
+            '<a href="mailto:x@y.z">Mail</a>' +
+            '</body></html>',
+        ),
+      ),
+    );
+
+    const res = createRes();
+    await handler(
+      { method: 'GET', url: proxyUrlFor('rewrite.example'), headers: {} },
+      res,
+    );
+    expect(res.statusCode).toBe(200);
+    const out = htmlOf(res);
+    const pfx = (path: string) =>
+      `/api/proxy?url=${encodeURIComponent(`https://rewrite.example${path}`)}`;
+    expect(out).toContain(`href="${pfx('/css/all.css')}"`);
+    expect(out).toContain(`src="${pfx('/vendor/x.js')}"`);
+    expect(out).toContain(`src="${pfx('/vendor/y.js')}"`);
+    // Third-party host stays untouched.
+    expect(out).toContain('src="https://cdn.jsdelivr.net/other.js"');
+    // srcset candidates are rewritten individually.
+    expect(out).toContain(`srcset="${pfx('/img/a.png')} 1x, ${pfx('/img/b.png')} 2x"`);
+    // data:/fragment/mailto are never proxied.
+    expect(out).toContain('src="data:image/svg+xml;base64,AAAA"');
+    expect(out).toContain('href="#section"');
+    expect(out).toContain('href="mailto:x@y.z"');
+    // Same-host anchors are proxied so in-site navigation stays consistent.
+    expect(out).toContain(`href="${pfx('/about')}"`);
+  });
+
+  it('never double-proxies an already rewritten url', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        htmlResponse(
+          '<html><head></head><body><img src="/api/proxy?url=https%3A%2F%2Fonce.example%2Fimg.png"></body></html>',
+        ),
+      ),
+    );
+
+    const res = createRes();
+    await handler(
+      { method: 'GET', url: proxyUrlFor('once.example'), headers: {} },
+      res,
+    );
+    expect(res.statusCode).toBe(200);
+    const out = htmlOf(res);
+    expect(out.split('src="/api/proxy?url=https%3A%2F%2Fonce.example%2Fimg.png"').length - 1).toBe(1);
+  });
+
+  it('strips the target CSP meta tag so the injected scripts can run', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        htmlResponse(
+          '<html><head><meta http-equiv="Content-Security-Policy" content="script-src \'self\'"></head></html>',
+        ),
+      ),
+    );
+
+    const res = createRes();
+    await handler(
+      { method: 'GET', url: proxyUrlFor('csp.example'), headers: {} },
+      res,
+    );
+    expect(res.statusCode).toBe(200);
+    expect(htmlOf(res)).not.toContain('Content-Security-Policy');
+    expect(htmlOf(res)).toContain('ms-site-progress');
+  });
+
+  it('rewrites url() references in proxied same-host stylesheets', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        url: 'https://css.example/vendor/fa/css/all.min.css',
+        body: streamedBody(
+          "@font-face{src:url('../webfonts/fa-solid-900.woff2')}\n" +
+            ".icon{background:url('/img/sprite.png')}\n" +
+            "@import 'https://css.example/other.css';",
+        ),
+        headers: {
+          get: (name: string) =>
+            name.toLowerCase() === 'content-type'
+              ? 'text/css; charset=utf-8'
+              : name.toLowerCase() === 'content-length'
+                ? null
+                : null,
+        },
+        text: async () => '',
+      }),
+    );
+
+    const res = createRes();
+    await handler(
+      {
+        method: 'GET',
+        url: `/api/proxy?url=${encodeURIComponent(
+          'https://css.example/vendor/fa/css/all.min.css',
+        )}`,
+        headers: {},
+      },
+      res,
+    );
+    expect(res.statusCode).toBe(200);
+    expect(res.headers['Content-Type']).toBe('text/css; charset=utf-8');
+    const out = htmlOf(res);
+    const pfx = (path: string) =>
+      `/api/proxy?url=${encodeURIComponent(`https://css.example${path}`)}`;
+    expect(out).toContain(`url('${pfx('/vendor/fa/webfonts/fa-solid-900.woff2')}')`);
+    expect(out).toContain(`url('${pfx('/img/sprite.png')}')`);
+    expect(out).toContain(`@import "${pfx('/other.css')}"`);
+  });
+
+  it('allows referers that differ only by port', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      htmlResponse('<html><head></head></html>'),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    const res = createRes();
+    await handler(
+      {
+        method: 'GET',
+        url: proxyUrlFor('port.example'),
+        headers: {
+          referer: 'https://pixelmockup.vercel.app:8443/preview',
+          host: 'pixelmockup.vercel.app',
+        },
+      },
+      res,
+    );
+    expect(res.statusCode).toBe(200);
   });
 
   it('rejects pages that exceed the body size limit', async () => {
