@@ -27,6 +27,7 @@
     "src/websiteUrl.ts",
     "src/presencePath.ts",
     "src/presenceStore.ts",
-    "api/presence.ts"
+    "api/presence.ts",
+    "api/proxy.ts"
   ]
 }

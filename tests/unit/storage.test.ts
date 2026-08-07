@@ -68,6 +68,13 @@ describe('storageGet / storageSet', () => {
     expect(localStorage.getItem('pixelMockup.theme')).toBe('dark');
   });
 
+  it('accepts website preview mode values', () => {
+    storageSet('pixelMockup.websitePreviewMode', 'iframe');
+    expect(localStorage.getItem('pixelMockup.websitePreviewMode')).toBe('iframe');
+    storageSet('pixelMockup.websitePreviewMode', 'embed');
+    expect(localStorage.getItem('pixelMockup.websitePreviewMode')).toBe('iframe');
+  });
+
   it('rejects writes to keys outside the namespace', () => {
     storageSet('evil.key', 'dark');
     expect(localStorage.getItem('evil.key')).toBeNull();

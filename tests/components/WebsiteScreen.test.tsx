@@ -1,24 +1,52 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import {
+  render,
+  screen,
+  waitFor,
+  fireEvent,
+  act,
+} from '@testing-library/react';
 import WebsiteScreen from '../../src/WebsiteScreen';
 import {
   clearWebsiteCaptureCache,
   resetCaptureAvailabilityForTests,
 } from '../../src/captureWebsite';
+import {
+  resetProxyAvailabilityForTests,
+  setProxyAvailableForTests,
+} from '../../src/websiteProxy';
 
 const VIEWPORT = { width: 390, height: 844 };
+
+/** Dispatch a postMessage-style event from the device frame (or elsewhere). */
+function sendSiteProgress(
+  frame: HTMLIFrameElement,
+  pct: number,
+  source?: Window | null,
+) {
+  fireEvent(
+    window,
+    new MessageEvent('message', {
+      data: { marker: '__msSiteProgress', phase: 'parsing', pct },
+      source: source === undefined ? frame.contentWindow : source,
+    }),
+  );
+}
 
 describe('WebsiteScreen', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     clearWebsiteCaptureCache();
     resetCaptureAvailabilityForTests();
+    resetProxyAvailabilityForTests();
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllGlobals();
     clearWebsiteCaptureCache();
     resetCaptureAvailabilityForTests();
+    resetProxyAvailabilityForTests();
   });
 
   it('shows loading, then the captured screenshot', async () => {
@@ -59,6 +87,7 @@ describe('WebsiteScreen', () => {
 
     const onCaptureFailed = vi.fn();
     const onRequestDetails = vi.fn();
+    const onSwitchToIframe = vi.fn();
 
     render(
       <WebsiteScreen
@@ -67,6 +96,7 @@ describe('WebsiteScreen', () => {
         title="Site"
         onCaptureFailed={onCaptureFailed}
         onRequestDetails={onRequestDetails}
+        onSwitchToIframe={onSwitchToIframe}
       />,
     );
 
@@ -77,15 +107,176 @@ describe('WebsiteScreen', () => {
     });
 
     expect(screen.getByRole('button', { name: 'Details' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Use live iframe' }),
+    ).toBeInTheDocument();
     await waitFor(() => {
       expect(onCaptureFailed).toHaveBeenCalled();
     });
     expect(onCaptureFailed.mock.calls[0][0].kind).toBe('unreachable_server');
 
+    fireEvent.click(screen.getByRole('button', { name: 'Use live iframe' }));
+    expect(onSwitchToIframe).toHaveBeenCalled();
+
     fireEvent.click(screen.getByRole('button', { name: 'Details' }));
     expect(onRequestDetails).toHaveBeenCalledWith(
       expect.objectContaining({ kind: 'unreachable_server' }),
     );
+  });
+
+  it('starts the proxied load optimistically before the probe resolves', () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({ ok: true, json: async () => ({ ok: true }) }),
+    );
+
+    render(
+      <WebsiteScreen
+        url="https://example.com/"
+        viewport={VIEWPORT}
+        title="Site"
+        previewMode="iframe"
+      />,
+    );
+
+    const frame = screen.getByTitle('Site') as HTMLIFrameElement;
+    expect(frame.tagName).toBe('IFRAME');
+    expect(frame.getAttribute('src')).toBe(
+      '/api/proxy?url=https%3A%2F%2Fexample.com%2F',
+    );
+    expect(
+      screen.getByText(/live preview — some sites still break/i),
+    ).toBeInTheDocument();
+    // Proxied content is same-origin with the app — keep it isolated.
+    expect(frame.getAttribute('sandbox')).not.toContain('allow-same-origin');
+  });
+
+  it('shows a per-device loading bar until the iframe loads', async () => {
+    setProxyAvailableForTests(true);
+
+    render(
+      <WebsiteScreen
+        url="https://example.com/"
+        viewport={VIEWPORT}
+        title="Site"
+        previewMode="iframe"
+      />,
+    );
+
+    const frame = screen.getByTitle('Site') as HTMLIFrameElement;
+    await waitFor(() => {
+      expect(frame.getAttribute('src')).toBe(
+        '/api/proxy?url=https%3A%2F%2Fexample.com%2F',
+      );
+    });
+    await act(async () => {});
+    expect(screen.getByText(/Loading site…/i)).toBeInTheDocument();
+
+    fireEvent.load(frame);
+    await waitFor(() => {
+      expect(screen.queryByText(/Loading site…/i)).not.toBeInTheDocument();
+    });
+  });
+
+  it('shows determinate progress reported by the proxied page', async () => {
+    setProxyAvailableForTests(true);
+
+    render(
+      <WebsiteScreen
+        url="https://example.com/"
+        viewport={VIEWPORT}
+        title="Site"
+        previewMode="iframe"
+      />,
+    );
+
+    const frame = screen.getByTitle('Site') as HTMLIFrameElement;
+    await act(async () => {});
+
+    sendSiteProgress(frame, 40);
+    expect(screen.getByText(/Loading site… 40%/i)).toBeInTheDocument();
+    const bar = document.querySelector(
+      '.ms-canvas-item__website-loading-bar--determinate',
+    ) as HTMLElement | null;
+    expect(bar?.style.width).toBe('40%');
+
+    sendSiteProgress(frame, 100);
+    await waitFor(() => {
+      expect(screen.queryByText(/Loading site…/i)).not.toBeInTheDocument();
+    });
+  });
+
+  it('ignores progress messages from other sources', () => {
+    setProxyAvailableForTests(true);
+
+    render(
+      <WebsiteScreen
+        url="https://example.com/"
+        viewport={VIEWPORT}
+        title="Site"
+        previewMode="iframe"
+      />,
+    );
+
+    const frame = screen.getByTitle('Site') as HTMLIFrameElement;
+    sendSiteProgress(frame, 40, window);
+    expect(screen.getByText(/Loading site…/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Loading site… 40%/i)).not.toBeInTheDocument();
+  });
+
+  it('auto-hides the loading bar after the slow-load timeout', async () => {
+    vi.useFakeTimers();
+    setProxyAvailableForTests(true);
+
+    render(
+      <WebsiteScreen
+        url="https://example.com/"
+        viewport={VIEWPORT}
+        title="Site"
+        previewMode="iframe"
+      />,
+    );
+
+    await act(async () => {});
+    expect(screen.getByText(/Loading site…/i)).toBeInTheDocument();
+
+    act(() => {
+      vi.advanceTimersByTime(12_000);
+    });
+    expect(screen.queryByText(/Loading site…/i)).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/live preview — some sites still break/i),
+    ).toBeInTheDocument();
+  });
+
+  it('falls back to the raw url when the proxy is unavailable', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue({
+        ok: true,
+        json: async () => {
+          throw new Error('not json');
+        },
+      }),
+    );
+
+    render(
+      <WebsiteScreen
+        url="https://example.com/"
+        viewport={VIEWPORT}
+        title="Site"
+        previewMode="iframe"
+      />,
+    );
+
+    const frame = screen.getByTitle('Site') as HTMLIFrameElement;
+    await waitFor(() => {
+      expect(frame.getAttribute('src')).toBe('https://example.com/');
+    });
+    expect(
+      screen.getByText(/live preview — some sites block embedding/i),
+    ).toBeInTheDocument();
+    expect(frame.getAttribute('sandbox')).toContain('allow-same-origin');
   });
 
   it('stays loading on AbortError (no timeout/error UI)', async () => {
