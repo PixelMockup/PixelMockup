@@ -2,9 +2,11 @@ import { useEffect, useRef, useState } from 'react';
 import {
   AlignHorizontalJustifyCenter,
   AlignVerticalJustifyCenter,
+  AppWindow,
   Download,
   Globe,
   HelpCircle,
+  Image,
   Keyboard,
   LayoutTemplate,
   Magnet,
@@ -23,6 +25,7 @@ import {
   type ExportResolution,
   type SizeScaleId,
 } from './deviceScale';
+import type { WebsitePreviewMode } from './useWebsitePreviewMode';
 
 const EXPORT_FORMATS = new Set<ExportFormat>(['png', 'jpg']);
 const EXPORT_RESOLUTIONS = new Set<ExportResolution>([
@@ -64,6 +67,8 @@ type MobileDockProps = {
   hasSelection: boolean;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
+  websitePreviewMode: WebsitePreviewMode;
+  onToggleWebsitePreviewMode: () => void;
   onOpenShortcuts: () => void;
   onTakeTour?: () => void;
 };
@@ -116,6 +121,8 @@ export default function MobileDock({
   hasSelection,
   theme,
   onToggleTheme,
+  websitePreviewMode,
+  onToggleWebsitePreviewMode,
   onOpenShortcuts,
   onTakeTour,
 }: Readonly<MobileDockProps>) {
@@ -274,6 +281,29 @@ export default function MobileDock({
                   <Moon size={16} strokeWidth={1.75} aria-hidden />
                 )}
                 {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                className="ms-menu__item ms-menu__item--with-icon"
+                title={
+                  websitePreviewMode === 'iframe'
+                    ? 'Switch to Playwright screenshots when capture is available'
+                    : 'Embed the site live (works on static hosts; many sites block this)'
+                }
+                onClick={() => {
+                  onToggleWebsitePreviewMode();
+                  setSettingsOpen(false);
+                }}
+              >
+                {websitePreviewMode === 'iframe' ? (
+                  <Image size={16} strokeWidth={1.75} aria-hidden />
+                ) : (
+                  <AppWindow size={16} strokeWidth={1.75} aria-hidden />
+                )}
+                {websitePreviewMode === 'iframe'
+                  ? 'Screenshot capture'
+                  : 'Live iframe preview'}
               </button>
               <button
                 type="button"

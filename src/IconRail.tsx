@@ -1,7 +1,9 @@
 import {
   AlignHorizontalJustifyCenter,
   AlignVerticalJustifyCenter,
+  AppWindow,
   HelpCircle,
+  Image,
   Keyboard,
   LayoutTemplate,
   Magnet,
@@ -19,6 +21,7 @@ import {
   type ArtboardFormatId,
   type SizeScaleId,
 } from './deviceScale';
+import type { WebsitePreviewMode } from './useWebsitePreviewMode';
 
 type Props = {
   devicesOpen: boolean;
@@ -42,6 +45,8 @@ type Props = {
   canReorder: boolean;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
+  websitePreviewMode: WebsitePreviewMode;
+  onToggleWebsitePreviewMode: () => void;
   onOpenShortcuts: () => void;
   onTakeTour?: () => void;
   layoutsRef: React.RefObject<HTMLDivElement | null>;
@@ -70,6 +75,8 @@ export default function IconRail({
   canReorder,
   theme,
   onToggleTheme,
+  websitePreviewMode,
+  onToggleWebsitePreviewMode,
   onOpenShortcuts,
   onTakeTour,
   layoutsRef,
@@ -306,6 +313,29 @@ export default function IconRail({
                 <Moon size={16} strokeWidth={1.75} aria-hidden />
               )}
               {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              className="ms-menu__item ms-menu__item--with-icon"
+              title={
+                websitePreviewMode === 'iframe'
+                  ? 'Switch to Playwright screenshots when capture is available'
+                  : 'Embed the site live (works on static hosts; many sites block this)'
+              }
+              onClick={() => {
+                onToggleWebsitePreviewMode();
+                setSettingsOpen(false);
+              }}
+            >
+              {websitePreviewMode === 'iframe' ? (
+                <Image size={16} strokeWidth={1.75} aria-hidden />
+              ) : (
+                <AppWindow size={16} strokeWidth={1.75} aria-hidden />
+              )}
+              {websitePreviewMode === 'iframe'
+                ? 'Screenshot capture'
+                : 'Live iframe preview'}
             </button>
             <button
               type="button"

@@ -12,6 +12,7 @@ import {
 } from './deviceScreens';
 import type { ContentBounds } from './imageContentBounds';
 import type { CaptureNotice } from './captureWebsite';
+import type { WebsitePreviewMode } from './useWebsitePreviewMode';
 
 function contentCropImgStyle(
   bounds: ContentBounds,
@@ -50,6 +51,7 @@ type CanvasItemViewProps = Readonly<{
   artboardW: number;
   artboardH: number;
   websiteUrl: string | null;
+  websitePreviewMode?: WebsitePreviewMode;
   screenDrag?: { id: string } | null;
   onPointerDown: (e: React.PointerEvent, item: CanvasItem) => void;
   onContextMenu: (e: React.MouseEvent | React.PointerEvent, item: CanvasItem) => void;
@@ -58,6 +60,7 @@ type CanvasItemViewProps = Readonly<{
   onHoverEnd: (id: string) => void;
   onWebsiteCaptureFailed?: (notice: CaptureNotice) => void;
   onWebsiteCaptureDetails?: (notice: CaptureNotice) => void;
+  onSwitchToIframePreview?: () => void;
 }>;
 
 function CanvasItemView({
@@ -68,6 +71,7 @@ function CanvasItemView({
   artboardW,
   artboardH,
   websiteUrl,
+  websitePreviewMode = 'screenshot',
   screenDrag,
   onPointerDown,
   onContextMenu,
@@ -76,6 +80,7 @@ function CanvasItemView({
   onHoverEnd,
   onWebsiteCaptureFailed,
   onWebsiteCaptureDetails,
+  onSwitchToIframePreview,
 }: CanvasItemViewProps) {
   const displayName = formatDeviceDisplayName(item.name);
   const showCaption = isSelected || isHovered;
@@ -142,10 +147,12 @@ function CanvasItemView({
             screen={screen}
             isSelected={isSelected}
             websiteUrl={websiteUrl}
+            websitePreviewMode={websitePreviewMode}
             screenDrag={screenDrag}
             onScreenPointerDown={onScreenPointerDown}
             onWebsiteCaptureFailed={onWebsiteCaptureFailed}
             onWebsiteCaptureDetails={onWebsiteCaptureDetails}
+            onSwitchToIframePreview={onSwitchToIframePreview}
           />
           <img
             src={item.screenImageSrc && item.punchedSrc ? item.punchedSrc : item.src}
@@ -174,19 +181,23 @@ function CanvasItemScreen({
   screen,
   isSelected,
   websiteUrl,
+  websitePreviewMode = 'screenshot',
   screenDrag,
   onScreenPointerDown,
   onWebsiteCaptureFailed,
   onWebsiteCaptureDetails,
+  onSwitchToIframePreview,
 }: Readonly<{
   item: CanvasItem;
   screen: DeviceScreenRect | null;
   isSelected: boolean;
   websiteUrl: string | null;
+  websitePreviewMode?: WebsitePreviewMode;
   screenDrag?: { id: string } | null;
   onScreenPointerDown: (e: React.PointerEvent, item: CanvasItem) => void;
   onWebsiteCaptureFailed?: (notice: CaptureNotice) => void;
   onWebsiteCaptureDetails?: (notice: CaptureNotice) => void;
+  onSwitchToIframePreview?: () => void;
 }>) {
   if (!screen) return null;
   if (item.screenImageSrc) {
@@ -243,8 +254,10 @@ function CanvasItemScreen({
           url={websiteUrl}
           viewport={viewport}
           title={`Website on ${formatDeviceDisplayName(item.name)}`}
+          previewMode={websitePreviewMode}
           onCaptureFailed={onWebsiteCaptureFailed}
           onRequestDetails={onWebsiteCaptureDetails}
+          onSwitchToIframe={onSwitchToIframePreview}
         />
       </div>
     );

@@ -136,9 +136,9 @@ npx playwright install chromium
 
 | How you run | Live URL capture? |
 | --- | --- |
-| `npm run dev` / `npm run preview` | Yes |
-| `docker compose up` | Yes |
-| Vercel preview / production | No — upload a screenshot instead |
+| `npm run dev` / `npm run preview` | Yes (Playwright screenshots) |
+| `docker compose up` | Yes (Playwright screenshots) |
+| Vercel preview / production | No capture API — use **Settings → Live iframe preview** for an on-canvas embed, or upload a screenshot |
 
 ```bash
 npm run dev
@@ -155,7 +155,8 @@ Tips:
 - Test with a simple public site such as `https://example.com`.
 - Some hosts (including some Vercel deployments) may time out under headless Chrome even when they open fine in a normal browser — try another URL.
 - Multiple device sizes are captured a few at a time and wait in line (you may see “Loading site…” longer); they should not fail with “too many captures.”
-- The static Vercel site does **not** run the capture API for visitors.
+- The static Vercel site does **not** run the capture API for visitors. Iframe preview is for on-canvas viewing only; export still needs a captured or uploaded screenshot.
+- On Vercel, iframe preview runs through the built-in `/api/proxy` serverless function, which fetches the page server-side and injects a `<base>` tag — so sites that send `X-Frame-Options` / `CSP frame-ancestors` render instead of showing a blank frame. Very JS-heavy SPAs, cookie-gated pages, or pages with HTML over ~4 MB may still render partially; the frame falls back to the direct URL when the proxy isn't present (local dev / Docker).
 
 ### Deploy the Docker image
 
