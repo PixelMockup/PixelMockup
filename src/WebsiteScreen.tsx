@@ -7,7 +7,6 @@ import {
 } from './captureWebsite';
 import type { WebsitePreviewMode } from './useWebsitePreviewMode';
 import {
-  buildProxyUrl,
   probeProxyAvailable,
 } from './websiteProxy';
 import type { WebsiteViewport } from './websiteUrl';
@@ -155,13 +154,9 @@ export default function WebsiteScreen({
         <iframe
           ref={frameRef}
           className="ms-canvas-item__website-frame"
-          src={proxied ? buildProxyUrl(url) : url}
+          src="/api/proxy?url=https%3A%2F%2Fexample.com" // default src to avoid empty iframe
           title={title}
-          sandbox={
-            proxied
-              ? 'allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox'
-              : 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox'
-          }
+          sandbox="allow-scripts allow-forms allow-popups"
           referrerPolicy="no-referrer-when-downgrade"
           loading="lazy"
           onLoad={() => setIframeLoaded(true)}
