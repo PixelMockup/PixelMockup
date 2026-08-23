@@ -293,6 +293,29 @@ describe('api/proxy handler', () => {
     expect(vi.mocked(lookup)).toHaveBeenCalledTimes(1);
   });
 
+  it('keeps separate cache entries per app origin (aliases embed their own host)', async () => {
+    const fetchMock = vi.fn().mockImplementation(() =>
+      htmlResponse('<html><head><script src="/app.js"></script></head></html>'),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const url = proxyUrlFor('origin.example');
+
+    const res1 = createRes();
+    await handler(
+      { method: 'GET', url, headers: { host: 'one.vercel.app' } },
+      res1,
+    );
+    const res2 = createRes();
+    await handler(
+      { method: 'GET', url, headers: { host: 'two.vercel.app' } },
+      res2,
+    );
+
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(htmlOf(res1)).toContain('//one.vercel.app/api/proxy?url=');
+    expect(htmlOf(res2)).toContain('//two.vercel.app/api/proxy?url=');
+  });
+
   it('reuses the DNS validation for later requests to the same host', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       htmlResponse('<html><head><title>t</title></head></html>'),
@@ -488,13 +511,19 @@ describe('api/proxy handler', () => {
 
     const res = createRes();
     await handler(
-      { method: 'GET', url: proxyUrlFor('rewrite.example'), headers: {} },
+      {
+        method: 'GET',
+        url: proxyUrlFor('rewrite.example'),
+        headers: { host: 'app.local' },
+      },
       res,
     );
     expect(res.statusCode).toBe(200);
     const out = htmlOf(res);
     const pfx = (path: string) =>
-      `/api/proxy?url=${encodeURIComponent(`https://rewrite.example${path}`)}`;
+      `//app.local/api/proxy?url=${encodeURIComponent(
+        `https://rewrite.example${path}`,
+      )}`;
     expect(out).toContain(`href="${pfx('/css/all.css')}"`);
     expect(out).toContain(`src="${pfx('/vendor/x.js')}"`);
     expect(out).toContain(`src="${pfx('/vendor/y.js')}"`);
@@ -508,6 +537,35 @@ describe('api/proxy handler', () => {
     expect(out).toContain('href="mailto:x@y.z"');
     // Same-host anchors are proxied so in-site navigation stays consistent.
     expect(out).toContain(`href="${pfx('/about')}"`);
+  });
+
+  it('rewritten urls stay on the app host despite the injected target base tag', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        htmlResponse(
+          '<html><head><script src="/vendor/app.js"></script></head></html>',
+        ),
+      ),
+    );
+
+    const res = createRes();
+    await handler(
+      {
+        method: 'GET',
+        url: proxyUrlFor('base.example'),
+        headers: { host: 'app.local' },
+      },
+      res,
+    );
+    expect(res.statusCode).toBe(200);
+    const out = htmlOf(res);
+    // The injected <base> points at the target — but rewritten URLs resolve
+    // onto the app origin when the browser applies that base.
+    const src = /src="(.*?app\.local.*?)"/.exec(out);
+    expect(src).not.toBeNull();
+    expect(new URL(src![1], 'https://base.example/').hostname).toBe('app.local');
+    expect(src![1]).toContain('/api/proxy?url=');
   });
 
   it('never double-proxies an already rewritten url', async () => {
@@ -580,7 +638,7 @@ describe('api/proxy handler', () => {
         url: `/api/proxy?url=${encodeURIComponent(
           'https://css.example/vendor/fa/css/all.min.css',
         )}`,
-        headers: {},
+        headers: { host: 'app.local' },
       },
       res,
     );
@@ -588,7 +646,7 @@ describe('api/proxy handler', () => {
     expect(res.headers['Content-Type']).toBe('text/css; charset=utf-8');
     const out = htmlOf(res);
     const pfx = (path: string) =>
-      `/api/proxy?url=${encodeURIComponent(`https://css.example${path}`)}`;
+      `//app.local/api/proxy?url=${encodeURIComponent(`https://css.example${path}`)}`;
     expect(out).toContain(`url('${pfx('/vendor/fa/webfonts/fa-solid-900.woff2')}')`);
     expect(out).toContain(`url('${pfx('/img/sprite.png')}')`);
     expect(out).toContain(`@import "${pfx('/other.css')}"`);

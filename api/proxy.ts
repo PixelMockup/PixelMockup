@@ -282,18 +282,35 @@ function cachePage(target: string, html: string): void {
 const PROXY_PREFIX = '/api/proxy?url=';
 
 /**
+ * The app's own origin as a protocol-relative prefix (e.g. `//app.vercel.app`),
+ * taken from the Host header of the proxied request. Rewritten resource URLs
+ * must be absolute: the injected <base href="https://site/"> would otherwise
+ * re-anchor a root-relative /api/proxy URL onto the TARGET site, breaking it.
+ * Only simple host/port characters are accepted; anything else falls back to
+ * a relative URL (which still works when no <base> can interfere — tests).
+ */
+function appOriginFor(host: string | undefined): string {
+  if (host && /^[A-Za-z0-9.\-:[\]]+$/.test(host)) return `//${host}`;
+  return '';
+}
+
+/**
  * Rewrite a single resource URL to route it through our same-origin proxy, or
  * return null to leave it untouched. Only same-host http(s) URLs are proxied —
  * third-party hosts (CDNs, Google Fonts) already send CORS headers, and this
  * keeps Vercel function invocations proportional to the site's own assets.
  */
-function rewriteResourceUrl(value: string, base: URL): string | null {
+function rewriteResourceUrl(
+  value: string,
+  base: URL,
+  appOrigin: string,
+): string | null {
   const trimmed = value.trim();
   if (!trimmed) return null;
   if (/^(data:|blob:|javascript:|mailto:|tel:|about:|#)/i.test(trimmed)) {
     return null;
   }
-  if (trimmed.startsWith(PROXY_PREFIX)) return null; // already proxied
+  if (trimmed.includes('/api/proxy?url=')) return null; // already proxied
   let resolved: URL;
   try {
     resolved = new URL(trimmed, base);
@@ -304,13 +321,13 @@ function rewriteResourceUrl(value: string, base: URL): string | null {
     return null;
   }
   if (resolved.hostname !== base.hostname) return null;
-  return PROXY_PREFIX + encodeURIComponent(resolved.href);
+  return `${appOrigin}${PROXY_PREFIX}${encodeURIComponent(resolved.href)}`;
 }
 
 const REWRITE_ATTR_RE =
   /\b(src|href|data|poster|action|srcset)\s*=\s*("([^"]*)"|'([^']*)'|([^\s"'=<>`]+))/gi;
 
-function rewriteSrcset(value: string, base: URL): string {
+function rewriteSrcset(value: string, base: URL, appOrigin: string): string {
   const parts = value.split(',');
   const out = parts.map((part) => {
     const trimmed = part.trim();
@@ -318,24 +335,24 @@ function rewriteSrcset(value: string, base: URL): string {
     const sp = trimmed.search(/\s/);
     const url = sp === -1 ? trimmed : trimmed.slice(0, sp);
     const desc = sp === -1 ? '' : trimmed.slice(sp);
-    const rw = rewriteResourceUrl(url, base);
+    const rw = rewriteResourceUrl(url, base, appOrigin);
     return rw == null ? part : rw + desc;
   });
   return out.join(', ');
 }
 
-function rewriteAttrs(attrs: string, base: URL): string {
+function rewriteAttrs(attrs: string, base: URL, appOrigin: string): string {
   return attrs.replace(REWRITE_ATTR_RE, (m, name, _quote, dq, sq, bare) => {
     const value = (dq ?? sq ?? bare ?? '').trim();
     if (!value) return m;
     const quote = dq != null ? '"' : sq != null ? "'" : '';
     if (name.toLowerCase() === 'srcset') {
       if (/\bdata:/i.test(value)) return m;
-      const joined = rewriteSrcset(value, base);
+      const joined = rewriteSrcset(value, base, appOrigin);
       if (joined === value) return m;
       return `${name}=${quote}${joined}${quote}`;
     }
-    const rw = rewriteResourceUrl(value, base);
+    const rw = rewriteResourceUrl(value, base, appOrigin);
     if (rw == null) return m;
     return `${name}=${quote}${rw}${quote}`;
   });
@@ -347,7 +364,7 @@ function rewriteAttrs(attrs: string, base: URL): string {
  * CORS-blocked once the document's origin changes). Also strips the target's
  * own CSP meta tags — they'd block our injected scripts under the new origin.
  */
-function rewriteHtml(html: string, baseHref: string): string {
+function rewriteHtml(html: string, baseHref: string, appOrigin: string): string {
   const base = new URL(baseHref);
   html = html.replace(/<meta\b[^>]*>/gi, (tag) =>
     /http-equiv\s*=\s*("|')?\s*content-security-policy(\b|-report-only)?/i.test(
@@ -359,7 +376,7 @@ function rewriteHtml(html: string, baseHref: string): string {
   return html.replace(
     /<(script|link|img|source|iframe|video|audio|object|embed|form|a)\b([^>]*)>/gi,
     (_tag, name: string, attrs: string) =>
-      `<${name}${rewriteAttrs(attrs, base)}>`,
+      `<${name}${rewriteAttrs(attrs, base, appOrigin)}>`,
   );
 }
 
@@ -367,13 +384,13 @@ function rewriteHtml(html: string, baseHref: string): string {
  * Rewrite url(...) / @import references inside a proxied same-host stylesheet
  * (e.g. FontAwesome webfonts) through the proxy as well.
  */
-function rewriteCss(css: string, cssUrl: string): string {
+function rewriteCss(css: string, cssUrl: string, appOrigin: string): string {
   const base = new URL(cssUrl);
   let out = css.replace(
     /url\(\s*("([^"]*)"|'([^']*)'|([^)]*?))\s*\)/gi,
     (m, _quote, dq, sq, bare) => {
       const value = (dq ?? sq ?? bare ?? '').trim();
-      const rw = rewriteResourceUrl(value, base);
+      const rw = rewriteResourceUrl(value, base, appOrigin);
       if (rw == null) return m;
       const quote = dq != null ? '"' : sq != null ? "'" : '';
       return `url(${quote}${rw}${quote})`;
@@ -383,7 +400,7 @@ function rewriteCss(css: string, cssUrl: string): string {
     /@import\s+(?:"([^"]*)"|'([^']*)')/gi,
     (m, dq: string | undefined, sq: string | undefined) => {
       const value = (dq ?? sq ?? '').trim();
-      const rw = rewriteResourceUrl(value, base);
+      const rw = rewriteResourceUrl(value, base, appOrigin);
       if (rw == null) return m;
       return `@import "${rw}"`;
     },
@@ -485,6 +502,7 @@ async function fetchUpstream(target: string): Promise<Response> {
 async function fetchAndStream(
   target: string,
   res: VercelResponse,
+  appOrigin: string,
 ): Promise<string | null> {
   let response: Response;
   try {
@@ -518,7 +536,11 @@ async function fetchAndStream(
     }
     const baseHref = baseHrefFor(target);
     const html = injectBaseTag(
-      rewriteHtml(new TextDecoder('utf-8').decode(bytes), baseHref),
+      rewriteHtml(
+        new TextDecoder('utf-8').decode(bytes),
+        baseHref,
+        appOrigin,
+      ),
       baseHref,
     );
     safeSend(res, 200, HTML_HEADERS, html);
@@ -535,7 +557,11 @@ async function fetchAndStream(
       respondJson(res, 413, { error: 'stylesheet too large' });
       return null;
     }
-    const css = rewriteCss(new TextDecoder('utf-8').decode(bytes), target);
+    const css = rewriteCss(
+      new TextDecoder('utf-8').decode(bytes),
+      target,
+      appOrigin,
+    );
     safeSend(res, 200, { ...ASSET_HEADERS, 'Content-Type': contentType }, css);
     return null;
   }
@@ -610,20 +636,25 @@ export async function handler(
     });
     return;
   }
-  const cached = pageCache.get(target);
+  // Absolute proxy URLs embedded in the rewritten page must point at the app
+  // origin the browser is actually on (the injected <base> would otherwise
+  // re-anchor relative paths onto the target site).
+  const appOrigin = appOriginFor(headerValue(req.headers, 'host'));
+  const key = `${appOrigin}\u0000${target}`;
+  const cached = pageCache.get(key);
   if (cached && cached.expires > Date.now()) {
     // Refresh LRU position. Cache hits skip DNS entirely.
-    pageCache.delete(target);
-    pageCache.set(target, cached);
+    pageCache.delete(key);
+    pageCache.set(key, cached);
     sendCachedHtml(res, cached.html);
     return;
   }
-  if (cached) pageCache.delete(target);
+  if (cached) pageCache.delete(key);
 
   // Dedupe the whole job (DNS validation + upstream fetch + rewrite) so
   // concurrent devices share one request — registered before the first
   // await so no two requests can slip past the check.
-  let job = inFlight.get(target);
+  let job = inFlight.get(key);
   if (!job) {
     job = (async () => {
       try {
@@ -632,18 +663,18 @@ export async function handler(
         respondJson(res, 400, { error: 'blocked host' });
         return null;
       }
-      return fetchAndStream(target, res);
+      return fetchAndStream(target, res, appOrigin);
     })();
-    inFlight.set(target, job);
+    inFlight.set(key, job);
   }
 
   try {
     const html = await job;
     // The creator's response was written by the job itself (stream or error
     // JSON); joined requests must answer their own device.
-    const isCreator = inFlight.get(target) === job;
+    const isCreator = inFlight.get(key) === job;
     if (html) {
-      if (isCreator) cachePage(target, html);
+      if (isCreator) cachePage(key, html);
       else sendCachedHtml(res, html);
     } else if (!isCreator) {
       respondJson(res, 502, { error: 'Failed to fetch website' });
@@ -653,7 +684,7 @@ export async function handler(
     // rejection cascade into this device's response.
     respondJson(res, 502, { error: 'Failed to fetch website' });
   } finally {
-    if (inFlight.get(target) === job) inFlight.delete(target);
+    if (inFlight.get(key) === job) inFlight.delete(key);
   }
 }
 
