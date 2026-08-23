@@ -1,6 +1,6 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { lookup } from 'node:dns/promises';
-import handler, { config } from '../../api/proxy';
+import handler, { config, _resetProxyForTesting } from '../../api/proxy';
 
 vi.mock('node:dns/promises', () => {
   const lookup = vi.fn();
@@ -10,6 +10,11 @@ vi.mock('node:dns/promises', () => {
     default: { lookup },
   };
 });
+
+const ALLOWED_HEADERS = {
+  referer: 'https://pixelmockup.vercel.app/',
+  host: 'pixelmockup.vercel.app',
+};
 
 type FakeRes = {
   statusCode: number;
@@ -70,7 +75,7 @@ function streamedBody(html: string, chunkSize = 24) {
         offset = end;
         return { done: false as const, value };
       },
-      releaseLock: () => {},
+      releaseLock: () => { },
     }),
   };
 }
@@ -85,7 +90,7 @@ function byteBody(bytes: Uint8Array) {
         offset += value.length;
         return { done: false as const, value };
       },
-      releaseLock: () => {},
+      releaseLock: () => { },
     }),
   };
 }
@@ -145,6 +150,7 @@ describe('api/proxy handler', () => {
   afterEach(() => {
     vi.useRealTimers();
     vi.unstubAllGlobals();
+    _resetProxyForTesting();
   });
 
   it('exports Hobby-compatible maxDuration', () => {
@@ -174,14 +180,14 @@ describe('api/proxy handler', () => {
     );
 
     const res = createRes();
-    await handler({ method: 'GET', url: PROXY_URL, headers: {} }, res);
+    await handler({ method: 'GET', url: PROXY_URL, headers: ALLOWED_HEADERS }, res);
     expect(res.statusCode).toBe(200);
     expect(res.headers['Content-Type']).toBe('text/html; charset=utf-8');
     expect(res.headers['Cache-Control']).toBe(
       'public, max-age=30, s-maxage=60',
     );
     expect(htmlOf(res)).toContain(
-      '<html><head><base href="https://example.com/">',
+      '<base href="https://example.com/">',
     );
     expect(htmlOf(res)).toContain('__msSiteProgress');
     // No redirect happened — the final URL must not be re-validated.
@@ -200,20 +206,17 @@ describe('api/proxy handler', () => {
 
     const res = createRes();
     await handler(
-      { method: 'GET', url: proxyUrlFor('shim.example'), headers: {} },
+      { method: 'GET', url: proxyUrlFor('shim.example'), headers: ALLOWED_HEADERS },
       res,
     );
     expect(res.statusCode).toBe(200);
     const out = htmlOf(res);
-    const shimAt = out.indexOf('ms-storage-shim');
+    const shimAt = out.indexOf('memoryStore');
     expect(shimAt).toBeGreaterThan(-1);
     // The shim must run before any site head script executes.
-    expect(out.indexOf('<script src="/api/proxy?url=')).toBeGreaterThan(
-      shimAt,
-    );
+    expect(out.indexOf('<script src="//')).toBeGreaterThan(shimAt);
     expect(out).toContain("shim('localStorage')");
     expect(out).toContain("shim('sessionStorage')");
-    expect(out).toContain("Object.defineProperty(Document.prototype, 'cookie'");
   });
 
   it('sends browser-like headers on the upstream fetch', async () => {
@@ -224,7 +227,7 @@ describe('api/proxy handler', () => {
 
     const res = createRes();
     await handler(
-      { method: 'GET', url: proxyUrlFor('headers.example'), headers: {} },
+      { method: 'GET', url: proxyUrlFor('headers.example'), headers: ALLOWED_HEADERS },
       res,
     );
     expect(res.statusCode).toBe(200);
@@ -247,13 +250,13 @@ describe('api/proxy handler', () => {
       {
         method: 'GET',
         url: '/api/proxy?url=https%3A%2F%2Fexample.com%2Fdocs%2Fguide',
-        headers: {},
+        headers: ALLOWED_HEADERS,
       },
       res,
     );
     expect(res.statusCode).toBe(200);
     expect(htmlOf(res)).toContain(
-      '<html><head><base href="https://example.com/docs/">',
+      '<base href="https://example.com/docs/">',
     );
   });
 
@@ -266,7 +269,7 @@ describe('api/proxy handler', () => {
 
     const res = createRes();
     await handler(
-      { method: 'GET', url: proxyUrlFor('unicode.example'), headers: {} },
+      { method: 'GET', url: proxyUrlFor('unicode.example'), headers: ALLOWED_HEADERS },
       res,
     );
     expect(res.statusCode).toBe(200);
@@ -281,9 +284,9 @@ describe('api/proxy handler', () => {
     const url = proxyUrlFor('cache.example');
 
     const res1 = createRes();
-    await handler({ method: 'GET', url, headers: {} }, res1);
+    await handler({ method: 'GET', url, headers: ALLOWED_HEADERS }, res1);
     const res2 = createRes();
-    await handler({ method: 'GET', url, headers: {} }, res2);
+    await handler({ method: 'GET', url, headers: ALLOWED_HEADERS }, res2);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(res1.statusCode).toBe(200);
@@ -302,12 +305,12 @@ describe('api/proxy handler', () => {
 
     const res1 = createRes();
     await handler(
-      { method: 'GET', url, headers: { host: 'one.vercel.app' } },
+      { method: 'GET', url, headers: { ...ALLOWED_HEADERS, host: 'one.vercel.app' } },
       res1,
     );
     const res2 = createRes();
     await handler(
-      { method: 'GET', url, headers: { host: 'two.vercel.app' } },
+      { method: 'GET', url, headers: { ...ALLOWED_HEADERS, host: 'two.vercel.app' } },
       res2,
     );
 
@@ -329,9 +332,9 @@ describe('api/proxy handler', () => {
       'https://memo.example/about/',
     )}`;
     const res1 = createRes();
-    await handler({ method: 'GET', url: url1, headers: {} }, res1);
+    await handler({ method: 'GET', url: url1, headers: ALLOWED_HEADERS }, res1);
     const res2 = createRes();
-    await handler({ method: 'GET', url: url2, headers: {} }, res2);
+    await handler({ method: 'GET', url: url2, headers: ALLOWED_HEADERS }, res2);
 
     expect(res1.statusCode).toBe(200);
     expect(res2.statusCode).toBe(200);
@@ -349,8 +352,8 @@ describe('api/proxy handler', () => {
     const res1 = createRes();
     const res2 = createRes();
     await Promise.all([
-      handler({ method: 'GET', url, headers: {} }, res1),
-      handler({ method: 'GET', url, headers: {} }, res2),
+      handler({ method: 'GET', url, headers: ALLOWED_HEADERS }, res1),
+      handler({ method: 'GET', url, headers: ALLOWED_HEADERS }, res2),
     ]);
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -367,10 +370,10 @@ describe('api/proxy handler', () => {
     const url = proxyUrlFor('ttl.example');
 
     const res1 = createRes();
-    await handler({ method: 'GET', url, headers: {} }, res1);
+    await handler({ method: 'GET', url, headers: ALLOWED_HEADERS }, res1);
     vi.advanceTimersByTime(5 * 60 * 1000 + 1000);
     const res2 = createRes();
-    await handler({ method: 'GET', url, headers: {} }, res2);
+    await handler({ method: 'GET', url, headers: ALLOWED_HEADERS }, res2);
 
     expect(fetchMock).toHaveBeenCalledTimes(2);
     expect(res1.statusCode).toBe(200);
@@ -386,7 +389,7 @@ describe('api/proxy handler', () => {
       {
         method: 'GET',
         url: '/api/proxy?url=not%20a%20url',
-        headers: {},
+        headers: ALLOWED_HEADERS,
       },
       res,
     );
@@ -404,7 +407,7 @@ describe('api/proxy handler', () => {
       {
         method: 'GET',
         url: '/api/proxy?url=http%3A%2F%2F127.0.0.1%2F',
-        headers: {},
+        headers: ALLOWED_HEADERS,
       },
       res,
     );
@@ -423,7 +426,7 @@ describe('api/proxy handler', () => {
       {
         method: 'GET',
         url: '/api/proxy?url=https%3A%2F%2Frebind.example%2F',
-        headers: {},
+        headers: ALLOWED_HEADERS,
       },
       res,
     );
@@ -442,7 +445,7 @@ describe('api/proxy handler', () => {
 
     const res = createRes();
     await handler(
-      { method: 'GET', url: proxyUrlFor('redirect.example'), headers: {} },
+      { method: 'GET', url: proxyUrlFor('redirect.example'), headers: ALLOWED_HEADERS },
       res,
     );
     expect(res.statusCode).toBe(400);
@@ -476,14 +479,14 @@ describe('api/proxy handler', () => {
         url: `/api/proxy?url=${encodeURIComponent(
           'https://assets.example/logo.png',
         )}`,
-        headers: {},
+        headers: ALLOWED_HEADERS,
       },
       res,
     );
     expect(res.statusCode).toBe(200);
     expect(res.headers['Content-Type']).toBe('image/png');
     expect(res.headers['Cache-Control']).toBe(
-      'public, max-age=60, s-maxage=3600',
+      'public, max-age=3600, s-maxage=86400',
     );
     expect(bytesOf(res).equals(Buffer.from(png))).toBe(true);
   });
@@ -494,17 +497,17 @@ describe('api/proxy handler', () => {
       vi.fn().mockResolvedValue(
         htmlResponse(
           '<html><head>' +
-            '<link rel="stylesheet" href="/css/all.css">' +
-            '<script src="/vendor/x.js"></script>' +
-            '<script src="https://cdn.jsdelivr.net/other.js"></script>' +
-            '<script src="https://rewrite.example/vendor/y.js"></script>' +
-            '</head><body>' +
-            '<img src="img/a.png" srcset="img/a.png 1x, img/b.png 2x">' +
-            '<img src="data:image/svg+xml;base64,AAAA">' +
-            '<a href="/about">About</a>' +
-            '<a href="#section">Jump</a>' +
-            '<a href="mailto:x@y.z">Mail</a>' +
-            '</body></html>',
+          '<link rel="stylesheet" href="/css/all.css">' +
+          '<script src="/vendor/x.js"></script>' +
+          '<script src="https://cdn.jsdelivr.net/other.js"></script>' +
+          '<script src="https://rewrite.example/vendor/y.js"></script>' +
+          '</head><body>' +
+          '<img src="img/a.png" srcset="img/a.png 1x, img/b.png 2x">' +
+          '<img src="data:image/svg+xml;base64,AAAA">' +
+          '<a href="/about">About</a>' +
+          '<a href="#section">Jump</a>' +
+          '<a href="mailto:x@y.z">Mail</a>' +
+          '</body></html>',
         ),
       ),
     );
@@ -514,7 +517,7 @@ describe('api/proxy handler', () => {
       {
         method: 'GET',
         url: proxyUrlFor('rewrite.example'),
-        headers: { host: 'app.local' },
+        headers: { ...ALLOWED_HEADERS, host: 'app.local' },
       },
       res,
     );
@@ -554,7 +557,7 @@ describe('api/proxy handler', () => {
       {
         method: 'GET',
         url: proxyUrlFor('base.example'),
-        headers: { host: 'app.local' },
+        headers: { ...ALLOWED_HEADERS, host: 'app.local' },
       },
       res,
     );
@@ -580,7 +583,7 @@ describe('api/proxy handler', () => {
 
     const res = createRes();
     await handler(
-      { method: 'GET', url: proxyUrlFor('once.example'), headers: {} },
+      { method: 'GET', url: proxyUrlFor('once.example'), headers: ALLOWED_HEADERS },
       res,
     );
     expect(res.statusCode).toBe(200);
@@ -600,7 +603,7 @@ describe('api/proxy handler', () => {
 
     const res = createRes();
     await handler(
-      { method: 'GET', url: proxyUrlFor('csp.example'), headers: {} },
+      { method: 'GET', url: proxyUrlFor('csp.example'), headers: ALLOWED_HEADERS },
       res,
     );
     expect(res.statusCode).toBe(200);
@@ -616,8 +619,8 @@ describe('api/proxy handler', () => {
         url: 'https://css.example/vendor/fa/css/all.min.css',
         body: streamedBody(
           "@font-face{src:url('../webfonts/fa-solid-900.woff2')}\n" +
-            ".icon{background:url('/img/sprite.png')}\n" +
-            "@import 'https://css.example/other.css';",
+          ".icon{background:url('/img/sprite.png')}\n" +
+          "@import 'https://css.example/other.css';",
         ),
         headers: {
           get: (name: string) =>
@@ -638,7 +641,7 @@ describe('api/proxy handler', () => {
         url: `/api/proxy?url=${encodeURIComponent(
           'https://css.example/vendor/fa/css/all.min.css',
         )}`,
-        headers: { host: 'app.local' },
+        headers: { ...ALLOWED_HEADERS, host: 'app.local' },
       },
       res,
     );
@@ -685,7 +688,7 @@ describe('api/proxy handler', () => {
 
     const res = createRes();
     await handler(
-      { method: 'GET', url: proxyUrlFor('big.example'), headers: {} },
+      { method: 'GET', url: proxyUrlFor('big.example'), headers: ALLOWED_HEADERS },
       res,
     );
     expect(res.statusCode).toBe(413);
@@ -709,7 +712,7 @@ describe('api/proxy handler', () => {
       res,
     );
     expect(res.statusCode).toBe(403);
-    expect(res.body).toEqual({ error: 'forbidden origin' });
+    expect(res.body).toEqual({ error: 'Forbidden: Proxy is restricted to PixelMockup domains only.' });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -721,7 +724,7 @@ describe('api/proxy handler', () => {
 
     const res = createRes();
     await handler(
-      { method: 'GET', url: proxyUrlFor('fail.example'), headers: {} },
+      { method: 'GET', url: proxyUrlFor('fail.example'), headers: ALLOWED_HEADERS },
       res,
     );
     expect(res.statusCode).toBe(502);

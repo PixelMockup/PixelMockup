@@ -8,6 +8,7 @@ import {
 import type { WebsitePreviewMode } from './useWebsitePreviewMode';
 import {
   probeProxyAvailable,
+  buildProxyUrl,
 } from './websiteProxy';
 import type { WebsiteViewport } from './websiteUrl';
 
@@ -154,7 +155,7 @@ export default function WebsiteScreen({
         <iframe
           ref={frameRef}
           className="ms-canvas-item__website-frame"
-          src="/api/proxy?url=https%3A%2F%2Fexample.com" // default src to avoid empty iframe
+          src={proxied ? buildProxyUrl(url) : url}
           title={title}
           sandbox="allow-scripts allow-forms allow-popups"
           referrerPolicy="no-referrer-when-downgrade"

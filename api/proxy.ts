@@ -101,6 +101,8 @@ const SITE_PROGRESS_SCRIPT = `<script id="ms-site-progress">(function () {
 type CachedPage = { html: string; expires: number };
 
 const pageCache = new Map<string, CachedPage>();
+const inFlight = new Map<string, Promise<string | null>>();
+const dnsValidated = new Set<string>();
 
 function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
   return new Promise((resolve, reject) => {
@@ -137,6 +139,11 @@ function headerValue(headers: VercelRequest['headers'], name: string): string | 
   const raw = headers[name];
   if (Array.isArray(raw)) return raw[0];
   return typeof raw === 'string' ? raw : undefined;
+}
+
+function appOriginFor(host: string | undefined): string {
+  if (host && /^[A-Za-z0-9.\-:[\]]+$/.test(host)) return `//${host}`;
+  return '';
 }
 
 async function assertPublicHost(url: string): Promise<void> {
@@ -186,7 +193,7 @@ function cachePage(target: string, html: string): void {
  * ROBUST HTML REWRITER using Cheerio
  * Fixes SRI, srcset, inline styles, and injects critical shims.
  */
-function rewriteHtml(html: string, targetUrl: string): string {
+function rewriteHtml(html: string, targetUrl: string, appOrigin: string = ''): string {
   const $ = cheerio.load(html);
   const url = new URL(targetUrl);
   const baseHref = new URL('.', url).href;
@@ -198,11 +205,13 @@ function rewriteHtml(html: string, targetUrl: string): string {
   const proxify = (val: string | undefined): string => {
     if (!val) return '';
     val = val.trim();
-    if (/^(data|blob|javascript|mailto|tel|about|#):/i.test(val)) return val;
+    if (/^(data|blob|javascript|mailto|tel|about):/i.test(val) || val.startsWith('#')) return val;
     try {
       const resolved = new URL(val, url);
       if (resolved.protocol !== 'http:' && resolved.protocol !== 'https:') return val;
-      return `/api/proxy?url=${encodeURIComponent(resolved.href)}`;
+      if (resolved.hostname !== url.hostname) return val;
+      if (resolved.href.includes('/api/proxy?url=')) return val;
+      return `${appOrigin}/api/proxy?url=${encodeURIComponent(resolved.href)}`;
     } catch {
       return val;
     }
@@ -289,23 +298,24 @@ function rewriteHtml(html: string, targetUrl: string): string {
   return $.html();
 }
 
-function rewriteCss(css: string, cssUrl: string): string {
+function rewriteCss(css: string, cssUrl: string, appOrigin: string = ''): string {
   const url = new URL(cssUrl);
   const proxify = (val: string): string => {
     try {
       const resolved = new URL(val, url);
       if (resolved.protocol !== 'http:' && resolved.protocol !== 'https:') return val;
-      return `/api/proxy?url=${encodeURIComponent(resolved.href)}`;
+      if (resolved.href.includes('/api/proxy?url=')) return val;
+      return `${appOrigin}/api/proxy?url=${encodeURIComponent(resolved.href)}`;
     } catch {
       return val;
     }
   };
 
-  let out = css.replace(/url\(\s*(['"]?)(.*?)\1\s*\)/gi, (quote, innerUrl) => {
+  let out = css.replace(/url\(\s*(['"]?)(.*?)\1\s*\)/gi, (match, quote, innerUrl) => {
     return `url(${quote}${proxify(innerUrl)}${quote})`;
   });
 
-  out = out.replace(/@import\s+(?:"([^"]*)"|'([^']*)')/gi, (dq, sq) => {
+  out = out.replace(/@import\s+(?:"([^"]*)"|'([^']*)')/gi, (match, dq, sq) => {
     const value = dq || sq;
     return `@import "${proxify(value)}"`;
   });
@@ -358,7 +368,10 @@ async function fetchUpstream(target: string): Promise<Response> {
     });
 
     if (response.url !== target) {
-      await assertPublicHost(response.url);
+      const { hostname: redirectHost } = new URL(response.url);
+      if (isBlockedAddress(redirectHost)) {
+        throw new Error('blocked host');
+      }
     }
     return response;
   } catch (err) {
@@ -382,7 +395,6 @@ export async function handler(
     return;
   }
 
-  // 1. STRICT AUP CHECK
   if (!isRequestAuthorized(req)) {
     respondJson(res, 403, { error: 'Forbidden: Proxy is restricted to PixelMockup domains only.' });
     return;
@@ -399,98 +411,114 @@ export async function handler(
     return;
   }
 
-  try {
-    await assertPublicHost(target);
-  } catch {
-    respondJson(res, 400, { error: 'blocked host' });
-    return;
-  }
+  const appOrigin = appOriginFor(headerValue(req.headers, 'host'));
+  const cacheKey = `${appOrigin}\u0000${target}`;
 
-  // 2. Check cache first
-  const cached = pageCache.get(target);
+  const cached = pageCache.get(cacheKey);
   if (cached && cached.expires > Date.now()) {
-    pageCache.delete(target);
-    pageCache.set(target, cached); // Refresh LRU position
+    pageCache.delete(cacheKey);
+    pageCache.set(cacheKey, cached);
     sendCachedHtml(res, cached.html);
     return;
   }
-  if (cached) pageCache.delete(target);
+  if (cached) pageCache.delete(cacheKey);
 
-  // 3. Fetch upstream
-  let response: Response;
+  let job = inFlight.get(cacheKey);
+  if (!job) {
+    job = (async () => {
+      const hostname = new URL(target).hostname;
+      if (!dnsValidated.has(hostname)) {
+        try {
+          await assertPublicHost(target);
+          dnsValidated.add(hostname);
+        } catch {
+          return { error: 'blocked host' as const };
+        }
+      }
+
+      let response: Response;
+      try {
+        response = await fetchUpstream(target);
+      } catch (err) {
+        if (err instanceof Error && err.message === 'blocked host') {
+          return { error: 'blocked host' as const };
+        }
+        return { error: 'fetch failed' as const };
+      }
+
+      const contentType = response.headers.get('content-type') ?? '';
+      const contentLength = Number(response.headers.get('content-length') ?? '0');
+      const isHtml = /text\/html|application\/xhtml\+xml/i.test(contentType);
+      const isCss = /text\/css/i.test(contentType);
+
+      if (isHtml) {
+        if (contentLength > MAX_BODY_BYTES) return { error: 'page too large' as const };
+        const bytes = await readAllBytes(response, MAX_BODY_BYTES);
+        if (!bytes) return { error: 'page too large' as const };
+        return { html: rewriteHtml(new TextDecoder('utf-8').decode(bytes), target, appOrigin) };
+      }
+
+      if (isCss) {
+        if (contentLength > MAX_BODY_BYTES) return { error: 'stylesheet too large' as const };
+        const bytes = await readAllBytes(response, MAX_BODY_BYTES);
+        if (!bytes) return { error: 'stylesheet too large' as const };
+        return { css: rewriteCss(new TextDecoder('utf-8').decode(bytes), target, appOrigin), contentType };
+      }
+
+      if (contentLength > MAX_BINARY_BYTES) return { error: 'resource too large' as const };
+      const bytes = await readAllBytes(response, MAX_BINARY_BYTES);
+      if (!bytes) return { error: 'resource too large' as const };
+      return { binary: bytes, contentType: contentType || 'application/octet-stream' };
+    })();
+    inFlight.set(cacheKey, job);
+  }
+
   try {
-    response = await fetchUpstream(target);
+    const result = await job;
+    const isCreator = inFlight.get(cacheKey) === job;
+
+    if (!isCreator) {
+      if (result && 'html' in result) {
+        sendCachedHtml(res, result.html);
+      } else {
+        respondJson(res, 502, { error: 'Failed to fetch website' });
+      }
+      return;
+    }
+
+    if (result && 'error' in result) {
+      const status = result.error === 'blocked host' ? 400
+        : result.error === 'page too large' ? 413
+        : result.error === 'stylesheet too large' ? 413
+        : result.error === 'resource too large' ? 413
+        : 502;
+      respondJson(res, status, { error: result.error === 'fetch failed' ? 'Failed to fetch website' : result.error });
+      return;
+    }
+
+    if (result && 'html' in result) {
+      cachePage(cacheKey, result.html);
+      sendCachedHtml(res, result.html);
+    } else if (result && 'css' in result) {
+      res.writeHead(200, { ...ASSET_HEADERS, 'Content-Type': result.contentType });
+      res.write(result.css);
+      res.end();
+    } else if (result && 'binary' in result) {
+      res.writeHead(200, { ...ASSET_HEADERS, 'Content-Type': result.contentType });
+      res.write(result.binary);
+      res.end();
+    }
   } catch {
     respondJson(res, 502, { error: 'Failed to fetch website' });
-    return;
+  } finally {
+    if (inFlight.get(cacheKey) === job) inFlight.delete(cacheKey);
   }
-
-  const contentType = response.headers.get('content-type') ?? '';
-  const contentLength = Number(response.headers.get('content-length') ?? '0');
-  const isHtml = /text\/html|application\/xhtml\+xml/i.test(contentType);
-  const isCss = /text\/css/i.test(contentType);
-
-  // 4. Route by content type
-  if (isHtml) {
-    if (contentLength > MAX_BODY_BYTES) {
-      respondJson(res, 413, { error: 'page too large' });
-      return;
-    }
-    const bytes = await readAllBytes(response, MAX_BODY_BYTES);
-    if (!bytes) {
-      respondJson(res, 413, { error: 'page too large' });
-      return;
-    }
-
-    const html = rewriteHtml(new TextDecoder('utf-8').decode(bytes), target);
-    cachePage(target, html);
-
-    res.writeHead(200, HTML_HEADERS);
-    res.write(html);
-    res.end();
-    return;
-  }
-
-  if (isCss) {
-    if (contentLength > MAX_BODY_BYTES) {
-      respondJson(res, 413, { error: 'stylesheet too large' });
-      return;
-    }
-    const bytes = await readAllBytes(response, MAX_BODY_BYTES);
-    if (!bytes) {
-      respondJson(res, 413, { error: 'stylesheet too large' });
-      return;
-    }
-
-    const css = rewriteCss(new TextDecoder('utf-8').decode(bytes), target);
-
-    res.writeHead(200, {
-      ...ASSET_HEADERS,
-      'Content-Type': contentType,
-    });
-    res.write(css);
-    res.end();
-    return;
-  }
-
-  // Binary passthrough (images, fonts, etc.)
-  if (contentLength > MAX_BINARY_BYTES) {
-    respondJson(res, 413, { error: 'resource too large' });
-    return;
-  }
-  const bytes = await readAllBytes(response, MAX_BINARY_BYTES);
-  if (!bytes) {
-    respondJson(res, 413, { error: 'resource too large' });
-    return;
-  }
-
-  res.writeHead(200, {
-    ...ASSET_HEADERS,
-    'Content-Type': contentType || 'application/octet-stream',
-  });
-  res.write(bytes);
-  res.end();
 }
 
 export const config = { maxDuration: 60 };
+export function _resetProxyForTesting() {
+  pageCache.clear();
+  inFlight.clear();
+  dnsValidated.clear();
+}
 export default handler;
