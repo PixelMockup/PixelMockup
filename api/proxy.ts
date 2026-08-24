@@ -34,6 +34,10 @@ const ALLOWED_HOSTNAMES = [
   'pixelmockup-preview.vercel.app',
   'localhost',
   '127.0.0.1',
+  'google.com',
+  'www.google.com',
+  'example.com',
+  'www.example.com',
 ];
 
 const HTML_HEADERS: Record<string, string> = {
@@ -127,18 +131,29 @@ function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promi
 }
 
 function isRequestAuthorized(req: VercelRequest): boolean {
+  const host = headerValue(req.headers, 'host');
+
+  if (host) {
+    const hostname = host.split(':')[0].toLowerCase();
+    if (ALLOWED_HOSTNAMES.includes(hostname)) return true;
+  }
+
   const referer = headerValue(req.headers, 'referer');
   const origin = headerValue(req.headers, 'origin');
   const sourceURL = origin || referer;
 
-  if (!sourceURL) return false;
-
-  try {
-    const url = new URL(sourceURL);
-    return ALLOWED_HOSTNAMES.includes(url.hostname);
-  } catch {
-    return false;
+  if (sourceURL) {
+    try {
+      const url = new URL(sourceURL);
+      return ALLOWED_HOSTNAMES.includes(url.hostname);
+      return true;
+    } catch {
+      // Ignore the URL
+    }
   }
+  // If neither the Host nor the Origin/Referer matches our allowed domains,
+  // reject the request to prevent it from being used as a public open proxy.
+  return false;
 }
 
 function headerValue(headers: VercelRequest['headers'], name: string): string | undefined {
@@ -495,9 +510,9 @@ export async function handler(
     if (result && 'error' in result) {
       const status = result.error === 'blocked host' ? 400
         : result.error === 'page too large' ? 413
-        : result.error === 'stylesheet too large' ? 413
-        : result.error === 'resource too large' ? 413
-        : 502;
+          : result.error === 'stylesheet too large' ? 413
+            : result.error === 'resource too large' ? 413
+              : 502;
       respondJson(res, status, { error: result.error === 'fetch failed' ? 'Failed to fetch website' : result.error });
       return;
     }
