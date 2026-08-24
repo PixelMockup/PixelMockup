@@ -100,8 +100,14 @@ const SITE_PROGRESS_SCRIPT = `<script id="ms-site-progress">(function () {
 
 type CachedPage = { html: string; expires: number };
 
+type JobResult =
+  | { error: string }
+  | { html: string }
+  | { css: string; contentType: string }
+  | { binary: Uint8Array; contentType: string };
+
 const pageCache = new Map<string, CachedPage>();
-const inFlight = new Map<string, Promise<string | null>>();
+const inFlight = new Map<string, Promise<JobResult>>();
 const dnsValidated = new Set<string>();
 
 function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promise<T> {
@@ -311,11 +317,11 @@ function rewriteCss(css: string, cssUrl: string, appOrigin: string = ''): string
     }
   };
 
-  let out = css.replace(/url\(\s*(['"]?)(.*?)\1\s*\)/gi, (match, quote, innerUrl) => {
+  let out = css.replace(/url\(\s*(['"]?)(.*?)\1\s*\)/gi, (_match, quote, innerUrl) => {
     return `url(${quote}${proxify(innerUrl)}${quote})`;
   });
 
-  out = out.replace(/@import\s+(?:"([^"]*)"|'([^']*)')/gi, (match, dq, sq) => {
+  out = out.replace(/@import\s+(?:"([^"]*)"|'([^']*)')/gi, (_match, dq, sq) => {
     const value = dq || sq;
     return `@import "${proxify(value)}"`;
   });
