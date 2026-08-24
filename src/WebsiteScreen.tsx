@@ -110,9 +110,7 @@ export default function WebsiteScreen({
     void probeProxyAvailable().then((ok) => {
       if (!cancelled) setProxyAvailable(ok);
     });
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [previewMode]);
 
   // Per-device loading bar: reset on URL / src changes, auto-hide after a

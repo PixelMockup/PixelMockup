@@ -131,13 +131,6 @@ function withTimeout<T>(promise: Promise<T>, ms: number, message: string): Promi
 }
 
 function isRequestAuthorized(req: VercelRequest): boolean {
-  const host = headerValue(req.headers, 'host');
-
-  if (host) {
-    const hostname = host.split(':')[0].toLowerCase();
-    if (ALLOWED_HOSTNAMES.includes(hostname)) return true;
-  }
-
   const referer = headerValue(req.headers, 'referer');
   const origin = headerValue(req.headers, 'origin');
   const sourceURL = origin || referer;
@@ -145,14 +138,18 @@ function isRequestAuthorized(req: VercelRequest): boolean {
   if (sourceURL) {
     try {
       const url = new URL(sourceURL);
-      return ALLOWED_HOSTNAMES.includes(url.hostname);
-      return true;
+      if (ALLOWED_HOSTNAMES.includes(url.hostname)) return true;
     } catch {
-      // Ignore the URL
+      return false;
     }
+    return false;
   }
-  // If neither the Host nor the Origin/Referer matches our allowed domains,
-  // reject the request to prevent it from being used as a public open proxy.
+
+  const host = headerValue(req.headers, 'host');
+  if (host) {
+    const hostname = host.split(':')[0].toLowerCase();
+    if (ALLOWED_HOSTNAMES.includes(hostname)) return true;
+  }
   return false;
 }
 
