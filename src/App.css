@@ -350,6 +350,55 @@
   gap: 8px;
 }
 
+.ms-menu__separator {
+  height: 1px;
+  background: var(--ms-border);
+  margin: 4px 0;
+}
+
+.ms-menu__label {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 11px;
+  color: var(--ms-text-muted);
+  padding: 0 4px;
+  line-height: 1.3;
+}
+
+.ms-menu__select {
+  width: 100%;
+  padding: 5px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--ms-text);
+  background: var(--ms-surface);
+  border: 1px solid var(--ms-border);
+  border-radius: var(--ms-radius);
+  outline: none;
+  cursor: pointer;
+}
+
+.ms-menu__select:focus-visible {
+  border-color: var(--ms-accent);
+}
+
+.ms-menu__input {
+  width: 100%;
+  padding: 5px 8px;
+  font-size: 12px;
+  font-family: inherit;
+  color: var(--ms-text);
+  background: var(--ms-surface);
+  border: 1px solid var(--ms-border);
+  border-radius: var(--ms-radius);
+  outline: none;
+}
+
+.ms-menu__input:focus-visible {
+  border-color: var(--ms-accent);
+}
+
 /* —— Selection inspector —— */
 .ms-selection-inspector {
   position: absolute;

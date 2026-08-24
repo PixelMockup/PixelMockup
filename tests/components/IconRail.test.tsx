@@ -25,8 +25,12 @@ const defaultProps = {
   canReorder: false,
   theme: 'light' as const,
   onToggleTheme: vi.fn(),
-  websitePreviewMode: 'screenshot' as const,
-  onToggleWebsitePreviewMode: vi.fn(),
+  screenshotProvider: 'playwright' as const,
+  onScreenshotProviderChange: vi.fn(),
+  screenshotApiKey: '',
+  onScreenshotApiKeyChange: vi.fn(),
+  microlinkApiKey: '',
+  onMicrolinkApiKeyChange: vi.fn(),
   onOpenShortcuts: vi.fn(),
   onTakeTour: vi.fn(),
   layoutsRef: createRef<HTMLDivElement>(),
@@ -39,13 +43,11 @@ describe('IconRail', () => {
     expect(screen.getByRole('button', { name: /^Settings$/i })).toBeInTheDocument();
   });
 
-  it('opens the settings menu with theme, preview mode, shortcuts, and tour items', () => {
+  it('opens the settings menu with theme, screenshot provider, shortcuts, and tour items', () => {
     render(<IconRail {...defaultProps} />);
     fireEvent.click(screen.getByRole('button', { name: /^Settings$/i }));
     expect(screen.getByRole('menuitem', { name: /Dark mode/i })).toBeInTheDocument();
-    expect(
-      screen.getByRole('menuitem', { name: /Live iframe preview/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Screenshot provider/i)).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: /Keyboard shortcuts/i })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: /Take tour/i })).toBeInTheDocument();
   });
@@ -56,19 +58,6 @@ describe('IconRail', () => {
     fireEvent.click(screen.getByRole('button', { name: /^Settings$/i }));
     fireEvent.click(screen.getByRole('menuitem', { name: /Dark mode/i }));
     expect(onToggleTheme).toHaveBeenCalledTimes(1);
-  });
-
-  it('toggles website preview mode from the settings menu', () => {
-    const onToggleWebsitePreviewMode = vi.fn();
-    render(
-      <IconRail
-        {...defaultProps}
-        onToggleWebsitePreviewMode={onToggleWebsitePreviewMode}
-      />,
-    );
-    fireEvent.click(screen.getByRole('button', { name: /^Settings$/i }));
-    fireEvent.click(screen.getByRole('menuitem', { name: /Live iframe preview/i }));
-    expect(onToggleWebsitePreviewMode).toHaveBeenCalledTimes(1);
   });
 
   it('opens shortcuts from the settings menu', () => {

@@ -2,11 +2,9 @@ import { useEffect, useRef, useState } from 'react';
 import {
   AlignHorizontalJustifyCenter,
   AlignVerticalJustifyCenter,
-  AppWindow,
   Download,
   Globe,
   HelpCircle,
-  Image,
   Keyboard,
   LayoutTemplate,
   Magnet,
@@ -25,7 +23,7 @@ import {
   type ExportResolution,
   type SizeScaleId,
 } from './deviceScale';
-import type { WebsitePreviewMode } from './useWebsitePreviewMode';
+import type { ScreenshotProvider } from './screenshotProviders';
 
 const EXPORT_FORMATS = new Set<ExportFormat>(['png', 'jpg']);
 const EXPORT_RESOLUTIONS = new Set<ExportResolution>([
@@ -67,8 +65,12 @@ type MobileDockProps = {
   hasSelection: boolean;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
-  websitePreviewMode: WebsitePreviewMode;
-  onToggleWebsitePreviewMode: () => void;
+  screenshotProvider: ScreenshotProvider;
+  onScreenshotProviderChange: (provider: ScreenshotProvider) => void;
+  screenshotApiKey: string;
+  onScreenshotApiKeyChange: (key: string) => void;
+  microlinkApiKey: string;
+  onMicrolinkApiKeyChange: (key: string) => void;
   onOpenShortcuts: () => void;
   onTakeTour?: () => void;
 };
@@ -121,8 +123,12 @@ export default function MobileDock({
   hasSelection,
   theme,
   onToggleTheme,
-  websitePreviewMode,
-  onToggleWebsitePreviewMode,
+  screenshotProvider,
+  onScreenshotProviderChange,
+  screenshotApiKey,
+  onScreenshotApiKeyChange,
+  microlinkApiKey,
+  onMicrolinkApiKeyChange,
   onOpenShortcuts,
   onTakeTour,
 }: Readonly<MobileDockProps>) {
@@ -282,29 +288,47 @@ export default function MobileDock({
                 )}
                 {theme === 'dark' ? 'Light mode' : 'Dark mode'}
               </button>
-              <button
-                type="button"
-                role="menuitem"
-                className="ms-menu__item ms-menu__item--with-icon"
-                title={
-                  websitePreviewMode === 'iframe'
-                    ? 'Switch to Playwright screenshots when capture is available'
-                    : 'Embed the site live (works on static hosts; many sites block this)'
-                }
-                onClick={() => {
-                  onToggleWebsitePreviewMode();
-                  setSettingsOpen(false);
+              <div className="ms-menu__separator" aria-hidden />
+              <div className="ms-menu__label">Screenshot provider</div>
+              <select
+                className="ms-menu__select"
+                value={screenshotProvider}
+                onChange={(e) => {
+                  onScreenshotProviderChange(
+                    (e.target.value as string) === 'playwright' ? 'playwright'
+                      : (e.target.value as string) === 'screenshotapi' ? 'screenshotapi'
+                      : 'microlink'
+                  );
                 }}
               >
-                {websitePreviewMode === 'iframe' ? (
-                  <Image size={16} strokeWidth={1.75} aria-hidden />
-                ) : (
-                  <AppWindow size={16} strokeWidth={1.75} aria-hidden />
-                )}
-                {websitePreviewMode === 'iframe'
-                  ? 'Screenshot capture'
-                  : 'Live iframe preview'}
-              </button>
+                <option value="playwright">Local (Playwright)</option>
+                <option value="screenshotapi">ScreenshotAPI</option>
+                <option value="microlink">Microlink</option>
+              </select>
+              {screenshotProvider === 'screenshotapi' && (
+                <label className="ms-menu__label" style={{ marginTop: 4 }}>
+                  API key
+                  <input
+                    className="ms-menu__input"
+                    type="password"
+                    placeholder="screenshotapi.to key"
+                    value={screenshotApiKey}
+                    onChange={(e) => onScreenshotApiKeyChange(e.target.value)}
+                  />
+                </label>
+              )}
+              {screenshotProvider === 'microlink' && (
+                <label className="ms-menu__label" style={{ marginTop: 4 }}>
+                  API key
+                  <input
+                    className="ms-menu__input"
+                    type="password"
+                    placeholder="Microlink API key (optional)"
+                    value={microlinkApiKey}
+                    onChange={(e) => onMicrolinkApiKeyChange(e.target.value)}
+                  />
+                </label>
+              )}
               <button
                 type="button"
                 role="menuitem"

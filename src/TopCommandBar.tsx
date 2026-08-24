@@ -43,6 +43,7 @@ type Props = {
   downloadMenuOpen: boolean;
   onDownloadMenuOpenChange: (open: boolean) => void;
   downloadMenuRef: React.RefObject<HTMLDivElement | null>;
+  credits: { screenshotapi: number | null; microlink: number | null };
   /** Concurrent anonymous users; null when presence backend is unavailable. */
   activeUsers: number | null;
 };
@@ -74,6 +75,7 @@ export default function TopCommandBar({
   downloadMenuOpen,
   onDownloadMenuOpenChange,
   downloadMenuRef,
+  credits,
   activeUsers,
 }: Readonly<Props>) {
   return (
@@ -131,6 +133,28 @@ export default function TopCommandBar({
       )}
 
       <div className="ms-top-command__end">
+        {credits.screenshotapi != null ? (
+          <span
+            className="ms-presence-pill"
+            role="status"
+            aria-live="polite"
+            title="ScreenshotAPI credits remaining"
+          >
+            <span className="ms-presence-pill__dot" aria-hidden />
+            {credits.screenshotapi} SA
+          </span>
+        ) : null}
+        {credits.microlink != null ? (
+          <span
+            className="ms-presence-pill"
+            role="status"
+            aria-live="polite"
+            title="Microlink credits remaining"
+          >
+            <span className="ms-presence-pill__dot" aria-hidden />
+            {credits.microlink} ML
+          </span>
+        ) : null}
         {activeUsers != null ? (
           <span
             className="ms-presence-pill"

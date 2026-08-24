@@ -6,6 +6,13 @@
 
 import { CAPTURE_WEBSITE_PATH } from './capturePath';
 import { websiteInputIssue } from './websiteUrl';
+import {
+  type ScreenshotProvider,
+  captureWithProvider,
+  getScreenshotProvider,
+  getScreenshotApiKey,
+  getMicrolinkApiKey,
+} from './screenshotProviders';
 
 export { CAPTURE_WEBSITE_PATH };
 
@@ -210,6 +217,18 @@ function cacheKey(url: string, width: number, height: number): string {
   return `${url}|${Math.round(width)}x${Math.round(height)}`;
 }
 
+function cloudCacheKey(url: string, width: number, height: number, provider: ScreenshotProvider): string {
+  return `${provider}|${url}|${Math.round(width)}x${Math.round(height)}`;
+}
+
+/** Callback to update credit counts in the UI. */
+let creditUpdateCallback: ((provider: string, remaining: number | null) => void) | null = null;
+
+/** Register a callback for credit updates after each cloud capture. */
+export function onCreditsUpdate(cb: (provider: string, remaining: number | null) => void): void {
+  creditUpdateCallback = cb;
+}
+
 /** Resolved data URLs, keyed by url|WxH (shared by preview + export). */
 const captureCache = new Map<string, string>();
 /** In-flight requests, so identical viewports capture only once. */
@@ -381,13 +400,20 @@ async function requestCapture(
 /**
  * Capture (or reuse cached) screenshot for a url + viewport.
  * Concurrent identical requests share one network call.
- * Short-circuits when the capture endpoint is known missing (hosted builds).
+ * Routes through cloud providers when selected, otherwise uses local Playwright.
  */
 export async function captureOne(
   url: string,
   width: number,
   height: number,
 ): Promise<string> {
+  const provider = getScreenshotProvider();
+
+  if (provider === 'screenshotapi' || provider === 'microlink') {
+    return captureCloud(url, width, height, provider);
+  }
+
+  // Playwright (local dev)
   if (captureEndpointState === 'unavailable') {
     throw new Error(CAPTURE_UNAVAILABLE_ERROR);
   }
@@ -411,6 +437,39 @@ export async function captureOne(
       })
       .finally(() => {
         inFlightControllers.delete(controller);
+        pending.delete(key);
+      });
+    pending.set(key, p);
+  }
+  return p;
+}
+
+/**
+ * Capture via a cloud screenshot provider (ScreenshotAPI or Microlink).
+ * Uses a separate cache keyed by provider to avoid cross-provider collisions.
+ */
+async function captureCloud(
+  url: string,
+  width: number,
+  height: number,
+  provider: ScreenshotProvider,
+): Promise<string> {
+  const key = cloudCacheKey(url, width, height, provider);
+  const cached = captureCache.get(key);
+  if (cached) return cached;
+
+  let p = pending.get(key);
+  if (!p) {
+    const apiKey = provider === 'screenshotapi' ? getScreenshotApiKey() : getMicrolinkApiKey();
+    p = captureWithProvider(url, width, height, provider, apiKey || undefined)
+      .then((result) => {
+        captureCache.set(key, result.dataUrl);
+        if (result.creditsRemaining != null && creditUpdateCallback) {
+          creditUpdateCallback(provider, result.creditsRemaining);
+        }
+        return result.dataUrl;
+      })
+      .finally(() => {
         pending.delete(key);
       });
     pending.set(key, p);
