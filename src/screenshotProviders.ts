@@ -7,11 +7,24 @@ import { storageGet, storageSet } from './storage';
 
 export type ScreenshotProvider = 'playwright' | 'screenshotapi' | 'microlink';
 
+interface ScreenshotResult {
+  dataUrl: string;
+  provider: ScreenshotProvider;
+}
+
+export interface ProviderConfig {
+  apiKey?: string;
+  provider: ScreenshotProvider;
+}
+
 const STORAGE_KEY = 'pixelMockup.screenshotProvider';
 const SCREENSHOTAPI_KEY_STORAGE = 'pixelMockup.screenshotApiKey';
 const MICROLINK_KEY_STORAGE = 'pixelMockup.microlinkApiKey';
+const SCREENSHOT_API_ENDPOINT = 'https://shot.screenshotapi.net/screenshot';
+const MICROLINK_ENDPOINT = 'https://api.microlink.io';
 
 const PROVIDER_VALUES = new Set<ScreenshotProvider>(['playwright', 'screenshotapi', 'microlink']);
+
 
 export function getScreenshotProvider(): ScreenshotProvider {
   const raw = storageGet(STORAGE_KEY, STORAGE_KEY);
@@ -47,6 +60,183 @@ export interface CaptureResult {
 }
 
 /**
+ * Capture using Microlink.io
+ * Docs: https://microlink.io/docs/api/getting-started/overview
+ * Free tier: 100 req/day per IP, no API key required
+ */
+async function captureWithMicrolink(
+  url: string,
+  width: number,
+  height: number,
+  apiKey?: string
+): Promise<string> {
+  const params = new URLSearchParams({
+    url: url,
+    screenshot: 'true',
+    'screenshot.type': 'png',
+    'screenshot.width': String(width),
+    'screenshot.height': String(height),
+    embed: 'screenshot.url',
+  });
+
+  if (apiKey) {
+    params.set('apiKey', apiKey);
+  }
+
+  const response = await fetch(`${MICROLINK_ENDPOINT}?${params}`);
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`Microlink error: ${response.status} - ${error}`);
+  }
+
+  const data = await response.json();
+
+  // Microlink returns { data: { screenshot: { url: "..." } } }
+  const screenshotUrl = data?.data?.screenshot?.url;
+
+  if (!screenshotUrl) {
+    throw new Error('Microlink response missing screenshot URL');
+  }
+
+  // Fetch the actual image from the returned URL
+  const imageResponse = await fetch(screenshotUrl);
+  if (!imageResponse.ok) {
+    throw new Error(`Failed to fetch Microlink screenshot: ${imageResponse.status}`);
+  }
+
+  const blob = await imageResponse.blob();
+  return await blobToDataUrl(blob);
+}
+
+/**
+ * Convert Blob to data URL
+ */
+async function blobToDataUrl(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+/**
+ * Local Playwright capture via Vite middleware
+ * Only works when running `npm run dev` or `npm run preview`
+ */
+async function captureWithLocalPlaywright(
+  url: string,
+  width: number,
+  height: number
+): Promise<string> {
+  const CAPTURE_ENDPOINT = '/__capture_website';
+
+  const response = await fetch(CAPTURE_ENDPOINT, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url, width, height }),
+  });
+
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    throw new Error(data.error || `Playwright capture failed: ${response.status}`);
+  }
+
+  const data = await response.json();
+
+  if (!data.dataUrl || !data.dataUrl.startsWith('data:image/png;base64,')) {
+    throw new Error('Invalid capture payload from Playwright');
+  }
+
+  return data.dataUrl;
+}
+
+/**
+ * Main capture function with fallback logic
+ * 
+ * @param url - Target URL to capture
+ * @param width - Viewport width
+ * @param height - Viewport height
+ * @param userConfig - User's preferred provider/API key (optional)
+ * @param appApiKey - App's default ScreenshotAPI key (optional)
+*/
+
+export async function captureWithFallback(
+  url: string,
+  width: number,
+  height: number,
+  userConfig?: ProviderConfig,
+  appApiKey?: string
+): Promise<ScreenshotResult> {
+  const errors: Array<{ provider: string; error: string }> = [];
+
+  // Priority 1: User's preferred provider
+  if (userConfig?.apiKey && userConfig.provider === 'screenshotapi') {
+    try {
+      const dataUrl = await captureWithScreenshotApi(url, width, height, userConfig.apiKey);
+      return { dataUrl, provider: 'screenshotapi' };
+    } catch (err) {
+      errors.push({
+        provider: 'screenshotapi (user key)',
+        error: err instanceof Error ? err.message : String(err)
+      });
+    }
+  }
+
+  if (userConfig?.apiKey && userConfig.provider === 'microlink') {
+    try {
+      const dataUrl = await captureWithMicrolink(url, width, height, userConfig.apiKey);
+      return { dataUrl, provider: 'microlink' };
+    } catch (err) {
+      errors.push({
+        provider: 'microlink (user key)',
+        error: err instanceof Error ? err.message : String(err)
+      });
+    }
+  }
+
+  // Priority 2: Try local Playwright (only works in dev with npm run dev)
+  try {
+    const dataUrl = await captureWithLocalPlaywright(url, width, height);
+    return { dataUrl, provider: 'playwright' };
+  } catch (err) {
+    errors.push({
+      provider: 'playwright',
+      error: err instanceof Error ? err.message : String(err)
+    });
+  }
+
+  // Priority 3: App's default ScreenshotAPI key
+  if (appApiKey) {
+    try {
+      const dataUrl = await captureWithScreenshotApi(url, width, height, appApiKey);
+      return { dataUrl, provider: 'screenshotapi' };
+    } catch (err) {
+      errors.push({
+        provider: 'screenshotapi (app key)',
+        error: err instanceof Error ? err.message : String(err)
+      });
+    }
+  }
+
+  // Priority 4: Microlink free tier (no key needed)
+  try {
+    const dataUrl = await captureWithMicrolink(url, width, height);
+    return { dataUrl, provider: 'microlink' };
+  } catch (err) {
+    errors.push({
+      provider: 'microlink',
+      error: err instanceof Error ? err.message : String(err)
+    });
+  }
+
+  // All providers failed
+  const errorSummary = errors.map(e => `${e.provider}: ${e.error}`).join('\n');
+  throw new Error(`All screenshot providers failed:\n${errorSummary}`);
+}
+
+/**
  * Convert raw image bytes to a data URL.
  */
 function bytesToDataUrl(bytes: ArrayBuffer, mime: string): string {
@@ -74,6 +264,38 @@ export async function captureWithProvider(
     return captureMicrolink(url, width, height, userApiKey);
   }
   throw new Error('Use captureOne() from captureWebsite.ts for playwright provider');
+}
+
+/**
+ * Capture using ScreenshotAPI.net
+ * Docs: https://screenshotapi.net/documentation
+ */
+async function captureWithScreenshotApi(
+  url: string,
+  width: number,
+  height: number,
+  apiKey: string
+): Promise<string> {
+  const params = new URLSearchParams({
+    token: apiKey,
+    url: url,
+    width: String(width),
+    height: String(height),
+    output: 'image',
+    file_type: 'png',
+    wait_for_event: 'load',
+    fresh: 'false', // Use cached if available
+  });
+
+  const response = await fetch(`${SCREENSHOT_API_ENDPOINT}?${params}`);
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`ScreenshotAPI error: ${response.status} - ${error}`);
+  }
+
+  const blob = await response.blob();
+  return await blobToDataUrl(blob);
 }
 
 async function captureScreenshotApi(

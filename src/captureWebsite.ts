@@ -3,11 +3,12 @@
  * middleware, with a shared cache so the canvas preview and export reuse
  * the same bytes for a given url + viewport.
  */
-
 import { CAPTURE_WEBSITE_PATH } from './capturePath';
 import { websiteInputIssue } from './websiteUrl';
 import {
   type ScreenshotProvider,
+  type ProviderConfig,
+  captureWithFallback,
   captureWithProvider,
   getScreenshotProvider,
   getScreenshotApiKey,
@@ -16,8 +17,8 @@ import {
 
 export { CAPTURE_WEBSITE_PATH };
 
-const BUSY_RETRIES = 2;
-const BUSY_RETRY_DELAYS_MS = [500, 1000] as const;
+// const BUSY_RETRIES = 2;
+// const BUSY_RETRY_DELAYS_MS = [500, 1000] as const;
 
 const REMEDIATION_UPLOAD =
   'Try a public site that loads without a captcha or login wall, or take your own screenshot and upload it onto the device screens.';
@@ -58,6 +59,10 @@ function notice(
 ): CaptureNotice {
   return { kind, title, body, reason, remediation, summary };
 }
+
+const USER_PROVIDER_KEY = 'pixelMockup_screenshotProvider';
+const USER_API_KEY = 'pixelMockup_screenshotApiKey';
+const APP_SCREENSHOT_API_KEY = 'YOUR_DEFAULT_SCREENSHOT_API_KEY_HERE'; // Replace with your actual key
 
 const OPAQUE_SERVER_MESSAGES = new Set([
   'capture failed',
@@ -139,6 +144,23 @@ const NOTICES: Record<CaptureErrorKind, CaptureNotice> = {
     'Website capture failed.',
   ),
 };
+
+/**
+ * Get user's configured provider from localStorage
+ */
+function getUserConfig(): ProviderConfig | undefined {
+  try {
+    const provider = localStorage.getItem(USER_PROVIDER_KEY) as ProviderConfig['provider'] | null;
+    const apiKey = localStorage.getItem(USER_API_KEY);
+
+    if (provider && apiKey) {
+      return { provider, apiKey };
+    }
+  } catch {
+    // localStorage might not be available
+  }
+  return undefined;
+}
 
 function isBusyErrorMessage(message: string): boolean {
   return /too many captures|429/i.test(message);
@@ -314,88 +336,88 @@ export async function ensureCaptureAvailable(): Promise<boolean> {
   return captureProbeInFlight;
 }
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, ms);
-  });
-}
+// function sleep(ms: number): Promise<void> {
+//   return new Promise((resolve) => {
+//     window.setTimeout(resolve, ms);
+//   });
+// }
 
-async function requestCaptureOnce(
-  url: string,
-  width: number,
-  height: number,
-  signal?: AbortSignal,
-): Promise<{ ok: true; dataUrl: string } | { ok: false; error: string; busy: boolean }> {
-  let res: Response;
-  try {
-    res = await fetch(CAPTURE_WEBSITE_PATH, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        url,
-        width: Math.max(1, Math.round(width)),
-        height: Math.max(1, Math.round(height)),
-      }),
-      signal,
-    });
-  } catch (err) {
-    if (isAbortError(err) || signal?.aborted) {
-      throw new DOMException('The operation was aborted.', 'AbortError');
-    }
-    // Network failure on a relative same-origin URL usually means the capture
-    // route isn't there (or the tab went offline). Remember for siblings.
-    markCaptureUnavailable();
-    // Keep the raw network error so classifyCaptureError can map it.
-    throw err instanceof Error ? err : new Error(String(err));
-  }
+// async function requestCaptureOnce(
+//   url: string,
+//   width: number,
+//   height: number,
+//   signal?: AbortSignal,
+// ): Promise<{ ok: true; dataUrl: string } | { ok: false; error: string; busy: boolean }> {
+//   let res: Response;
+//   try {
+//     res = await fetch(CAPTURE_WEBSITE_PATH, {
+//       method: 'POST',
+//       headers: { 'Content-Type': 'application/json' },
+//       body: JSON.stringify({
+//         url,
+//         width: Math.max(1, Math.round(width)),
+//         height: Math.max(1, Math.round(height)),
+//       }),
+//       signal,
+//     });
+//   } catch (err) {
+//     if (isAbortError(err) || signal?.aborted) {
+//       throw new DOMException('The operation was aborted.', 'AbortError');
+//     }
+//     // Network failure on a relative same-origin URL usually means the capture
+//     // route isn't there (or the tab went offline). Remember for siblings.
+//     markCaptureUnavailable();
+//     // Keep the raw network error so classifyCaptureError can map it.
+//     throw err instanceof Error ? err : new Error(String(err));
+//   }
 
-  const data = (await res.json().catch(() => ({}))) as {
-    dataUrl?: string;
-    error?: string;
-  };
-  if (!res.ok || !data.dataUrl) {
-    // Static hosts (Vercel) often return HTML 404 for /__capture_website with
-    // no JSON error field — treat that as missing capture, not a site failure.
-    const error =
-      typeof data.error === 'string' && data.error.trim()
-        ? data.error
-        : CAPTURE_UNAVAILABLE_ERROR;
-    if (error === CAPTURE_UNAVAILABLE_ERROR) {
-      markCaptureUnavailable();
-    }
-    return {
-      ok: false,
-      error,
-      busy: res.status === 429 || isBusyErrorMessage(error),
-    };
-  }
-  if (!data.dataUrl.startsWith('data:image/png;base64,')) {
-    throw new Error('invalid capture payload');
-  }
-  return { ok: true, dataUrl: data.dataUrl };
-}
+//   const data = (await res.json().catch(() => ({}))) as {
+//     dataUrl?: string;
+//     error?: string;
+//   };
+//   if (!res.ok || !data.dataUrl) {
+//     // Static hosts (Vercel) often return HTML 404 for /__capture_website with
+//     // no JSON error field — treat that as missing capture, not a site failure.
+//     const error =
+//       typeof data.error === 'string' && data.error.trim()
+//         ? data.error
+//         : CAPTURE_UNAVAILABLE_ERROR;
+//     if (error === CAPTURE_UNAVAILABLE_ERROR) {
+//       markCaptureUnavailable();
+//     }
+//     return {
+//       ok: false,
+//       error,
+//       busy: res.status === 429 || isBusyErrorMessage(error),
+//     };
+//   }
+//   if (!data.dataUrl.startsWith('data:image/png;base64,')) {
+//     throw new Error('invalid capture payload');
+//   }
+//   return { ok: true, dataUrl: data.dataUrl };
+// }
 
-async function requestCapture(
-  url: string,
-  width: number,
-  height: number,
-  signal?: AbortSignal,
-): Promise<string> {
-  let lastError = 'capture failed';
-  for (let attempt = 0; attempt <= BUSY_RETRIES; attempt++) {
-    if (signal?.aborted) {
-      throw new DOMException('The operation was aborted.', 'AbortError');
-    }
-    const result = await requestCaptureOnce(url, width, height, signal);
-    if (result.ok) return result.dataUrl;
-    lastError = result.error;
-    if (!result.busy || attempt === BUSY_RETRIES) {
-      throw new Error(lastError);
-    }
-    await sleep(BUSY_RETRY_DELAYS_MS[attempt] ?? 1000);
-  }
-  throw new Error(lastError);
-}
+// async function requestCapture(
+//   url: string,
+//   width: number,
+//   height: number,
+//   signal?: AbortSignal,
+// ): Promise<string> {
+//   let lastError = 'capture failed';
+//   for (let attempt = 0; attempt <= BUSY_RETRIES; attempt++) {
+//     if (signal?.aborted) {
+//       throw new DOMException('The operation was aborted.', 'AbortError');
+//     }
+//     const result = await requestCaptureOnce(url, width, height, signal);
+//     if (result.ok) return result.dataUrl;
+//     lastError = result.error;
+//     if (!result.busy || attempt === BUSY_RETRIES) {
+//       throw new Error(lastError);
+//     }
+//     await sleep(BUSY_RETRY_DELAYS_MS[attempt] ?? 1000);
+//   }
+//   throw new Error(lastError);
+// }
 
 /**
  * Capture (or reuse cached) screenshot for a url + viewport.
@@ -430,15 +452,31 @@ export async function captureOne(
   if (!p) {
     const controller = new AbortController();
     inFlightControllers.add(controller);
-    p = requestCapture(url, width, height, controller.signal)
-      .then((dataUrl) => {
-        captureCache.set(key, dataUrl);
-        return dataUrl;
-      })
-      .finally(() => {
+
+    p = (async () => {
+      try {
+        const userConfig = getUserConfig();
+        const result = await captureWithFallback(url, width, height, userConfig, APP_SCREENSHOT_API_KEY);
+
+        console.log(`Screenshot captured via: ${result.provider}`);
+        captureCache.set(key, result.dataUrl);
+        return result.dataUrl;
+      } finally {
         inFlightControllers.delete(controller);
         pending.delete(key);
-      });
+      }
+    })();
+
+    //   p = requestCapture(url, width, height, controller.signal)
+    //     .then((dataUrl) => {
+    //       captureCache.set(key, dataUrl);
+    //       return dataUrl;
+    //     })
+    //     .finally(() => {
+    //       inFlightControllers.delete(controller);
+    //       pending.delete(key);
+    //     });
+
     pending.set(key, p);
   }
   return p;
