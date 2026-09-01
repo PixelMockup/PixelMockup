@@ -452,48 +452,12 @@ export default function MockupStudio({
   const [microlinkApiKeyState, setMicrolinkApiKeyState] = useState(
     getMicrolinkApiKey,
   );
-  const { credits, updateCredits, updateMicrolinkUsage } = useCredits();
+  const { credits, updateCredits } = useCredits();
 
   useEffect(() => {
     onCreditsUpdate(updateCredits);
   }, [updateCredits]);
 
-  useEffect(() => {
-    let cancelled = false;
-    const refresh = async () => {
-      try {
-        const res = await fetch('/api/validate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ provider: 'microlink' }),
-        });
-        if (!res.ok) return;
-        const data = (await res.json()) as {
-          remaining?: number;
-          limit?: number;
-          resetAt?: number;
-          tier?: string;
-          reason?: string;
-        };
-        if (cancelled) return;
-        updateMicrolinkUsage({
-          remaining: data.remaining ?? null,
-          limit: data.limit ?? null,
-          resetAt: data.resetAt ?? null,
-          tier: data.tier,
-          reason: data.reason,
-        });
-      } catch {
-        // ignore — pill simply stays hidden
-      }
-    };
-    void refresh();
-    const id = window.setInterval(() => void refresh(), 60_000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(id);
-    };
-  }, [updateMicrolinkUsage]);
 
   const handleScreenshotApiKeyChange = useCallback((key: string) => {
     setScreenshotApiKeyState(key);

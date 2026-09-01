@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { Provider, SaStatus, MlStatus } from '../types/screenshot';
+import type { Provider, SaStatus } from '../types/screenshot';
 import { formatResetTime } from '../utils/formatResetTime';
 import {
   getScreenshotProvider,
@@ -9,6 +9,7 @@ import {
   getMicrolinkApiKey,
   setMicrolinkApiKey,
 } from '../screenshotProviders';
+import { useCredits } from '../useCredits';
 
 interface ScreenshotSettingsProps {
   isOpen: boolean;
@@ -20,42 +21,20 @@ const SCREENSHOT_API_KEYS_URL = 'https://screenshotapi.to';
 const MICROLINK_KEYS_URL = 'https://microlink.io/docs';
 
 export default function ScreenshotSettings({ isOpen, onClose, onNotify }: ScreenshotSettingsProps) {
+  // This is updated automatically by `captureWebsite.ts` after actual captures, costing ZERO extra API calls.
+  const { credits } = useCredits();
   const [view, setView] = useState<Provider>(() =>
     getScreenshotProvider() === 'screenshotapi' ? 'screenshotapi' : 'microlink',
   );
   const [saKey, setSaKeyState] = useState(getScreenshotApiKey);
   const [mlKey, setMlKeyState] = useState(getMicrolinkApiKey);
   const [saStatus, setSaStatus] = useState<SaStatus>({ valid: null });
-  const [mlStatus, setMlStatus] = useState<MlStatus>({ valid: null });
-  const [resetTick, setResetTick] = useState(0);
+  const [_resetTick, setResetTick] = useState(0);
 
-  const validateMicrolink = useCallback(async (personalKey?: string) => {
-    setMlStatus((s) => ({ ...s, valid: null, loading: true }));
-    try {
-      const res = await fetch('/api/validate', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ provider: 'microlink', key: personalKey || undefined }),
-      });
-      if (!res.ok) {
-        setMlStatus({ valid: false, reason: 'error', loading: false });
-        return;
-      }
-      const data = await res.json();
-      setMlStatus({
-        valid: data.valid ?? false,
-        remaining: data.remaining ?? undefined,
-        limit: data.limit ?? undefined,
-        resetAt: data.resetAt ?? undefined,
-        reason: data.reason ?? undefined,
-        tier: data.tier ?? undefined,
-        usesSharedKey: data.usesSharedKey ?? false,
-        loading: false,
-      });
-    } catch {
-      setMlStatus({ valid: false, reason: 'network_error', loading: false });
-    }
-  }, []);
+  // Derive Microlink status directly from the live credits state
+  const ml = credits.microlink;
+  const mlExhausted = ml.remaining != null && ml.remaining <= 0;
+  const usingPersonalMlKey = ml.tier === 'free' || ml.tier === 'pro';
 
   useEffect(() => {
     if (!isOpen) return;
@@ -64,16 +43,13 @@ export default function ScreenshotSettings({ isOpen, onClose, onNotify }: Screen
     setSaKeyState(getScreenshotApiKey());
     setMlKeyState(getMicrolinkApiKey());
     setSaStatus({ valid: null });
-    setMlStatus({ valid: null });
-    void validateMicrolink(undefined);
-  }, [isOpen, validateMicrolink]);
+  }, [isOpen]);
 
   useEffect(() => {
     if (!isOpen) return;
-    if (mlStatus.resetAt == null) return;
     const id = window.setInterval(() => setResetTick((t) => t + 1), 30_000);
     return () => window.clearInterval(id);
-  }, [isOpen, mlStatus.resetAt, resetTick]);
+  }, [isOpen, ml.resetAt, setResetTick]);
 
   const handleSaKeyChange = useCallback((key: string) => {
     setSaKeyState(key);
@@ -110,16 +86,6 @@ export default function ScreenshotSettings({ isOpen, onClose, onNotify }: Screen
     }
   }, [saKey]);
 
-  const handleMlKeyValidate = useCallback(async () => {
-    setMlStatus((s) => ({ ...s, valid: null, loading: true }));
-    const key = mlKey || undefined;
-    if (!key) {
-      void validateMicrolink(undefined);
-      return;
-    }
-    void validateMicrolink(key);
-  }, [mlKey, validateMicrolink]);
-
   const handleViewScreenshotApi = useCallback(() => {
     setView('screenshotapi');
   }, []);
@@ -145,10 +111,6 @@ export default function ScreenshotSettings({ isOpen, onClose, onNotify }: Screen
   }, [onNotify, onClose]);
 
   if (!isOpen) return null;
-
-  const usingPersonalMlKey = mlStatus.valid === true && mlStatus.usesSharedKey === false;
-  const mlExhausted = mlStatus.valid === false &&
-    (mlStatus.reason === 'quota_exhausted' || (mlStatus.remaining != null && mlStatus.remaining <= 0));
 
   return (
     <dialog
@@ -269,39 +231,27 @@ export default function ScreenshotSettings({ isOpen, onClose, onNotify }: Screen
                     value={mlKey}
                     onChange={(e) => handleMlKeyChange(e.target.value)}
                   />
-                  <button
-                    type="button"
-                    className="ms-ss-validate-btn"
-                    disabled={mlStatus.loading}
-                    onClick={() => void handleMlKeyValidate()}
-                  >
-                    {mlStatus.loading ? 'Checking...' : 'Validate'}
-                  </button>
-                </div>
-                <div className={`ms-ss-status${mlStatus.valid === true ? ' ok' : ''}${mlStatus.valid === false ? ' error' : ''}`}>
-                  {mlStatus.valid === true && !usingPersonalMlKey && 'Shared key connected'}
-                  {mlStatus.valid === true && usingPersonalMlKey && `Your key connected${mlStatus.tier ? ` — ${mlStatus.tier} tier` : ''}`}
-                  {mlStatus.valid === false && mlStatus.reason === 'invalid_key' && 'Invalid API key'}
-                  {mlStatus.valid === false && mlStatus.reason === 'network_error' && 'Network error'}
-                  {mlStatus.valid === false && mlStatus.reason === 'error' && 'Validation failed'}
-                  {mlStatus.valid == null && !mlStatus.loading && (
-                    <span className="ms-ss-status-hint">Leave empty to use the shared key</span>
-                  )}
                 </div>
 
-                {mlStatus.remaining != null && (
+                {ml.remaining != null ? (
                   <div className={`ms-ss-usage${mlExhausted ? ' ms-ss-usage--exhausted' : ''}`}>
                     <span className="ms-ss-usage__value">
-                      {mlStatus.limit != null
-                        ? `${mlStatus.remaining}/${mlStatus.limit}`
-                        : `${mlStatus.remaining}`}
+                      {ml.limit != null
+                        ? `${ml.remaining}/${ml.limit}`
+                        : `${ml.remaining}`}
                     </span>
                     <span className="ms-ss-usage__label">
                       {usingPersonalMlKey ? 'available on your key' : 'available on shared key'}
                     </span>
-                    {mlStatus.resetAt != null && (
-                      <span className="ms-ss-usage__reset">{formatResetTime(mlStatus.resetAt)}</span>
+                    {ml.resetAt != null && (
+                      <span className="ms-ss-usage__reset">{formatResetTime(ml.resetAt)}</span>
                     )}
+                  </div>
+                ) : (
+                  <div className="ms-ss-status">
+                    <span className="ms-ss-status-hint">
+                      Usage will appear here after your first screenshot capture.
+                    </span>
                   </div>
                 )}
                 {mlExhausted && (
