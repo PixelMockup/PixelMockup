@@ -1,6 +1,7 @@
 import {
   AlignHorizontalJustifyCenter,
   AlignVerticalJustifyCenter,
+  KeyRound,
   HelpCircle,
   Keyboard,
   LayoutTemplate,
@@ -19,7 +20,6 @@ import {
   type ArtboardFormatId,
   type SizeScaleId,
 } from './deviceScale';
-import type { ScreenshotProvider } from './screenshotProviders';
 
 type Props = {
   devicesOpen: boolean;
@@ -43,12 +43,7 @@ type Props = {
   canReorder: boolean;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
-  screenshotProvider: ScreenshotProvider;
-  onScreenshotProviderChange: (provider: ScreenshotProvider) => void;
-  screenshotApiKey: string;
-  onScreenshotApiKeyChange: (key: string) => void;
-  microlinkApiKey: string;
-  onMicrolinkApiKeyChange: (key: string) => void;
+  onOpenScreenshotSettings: () => void;
   onOpenShortcuts: () => void;
   onTakeTour?: () => void;
   layoutsRef: React.RefObject<HTMLDivElement | null>;
@@ -77,12 +72,7 @@ export default function IconRail({
   canReorder,
   theme,
   onToggleTheme,
-  screenshotProvider,
-  onScreenshotProviderChange,
-  screenshotApiKey,
-  onScreenshotApiKeyChange,
-  microlinkApiKey,
-  onMicrolinkApiKeyChange,
+  onOpenScreenshotSettings,
   onOpenShortcuts,
   onTakeTour,
   layoutsRef,
@@ -321,46 +311,18 @@ export default function IconRail({
               {theme === 'dark' ? 'Light mode' : 'Dark mode'}
             </button>
             <div className="ms-menu__separator" aria-hidden />
-            <div className="ms-menu__label">Screenshot provider</div>
-            <select
-              className="ms-menu__select"
-              value={screenshotProvider}
-              onChange={(e) => {
-                onScreenshotProviderChange(
-                  (e.target.value as string) === 'playwright' ? 'playwright'
-                    : (e.target.value as string) === 'screenshotapi' ? 'screenshotapi'
-                    : 'microlink'
-                );
+            <button
+              type="button"
+              role="menuitem"
+              className="ms-menu__item ms-menu__item--with-icon"
+              onClick={() => {
+                onOpenScreenshotSettings();
+                setSettingsOpen(false);
               }}
             >
-              <option value="playwright">Local (Playwright)</option>
-              <option value="screenshotapi">ScreenshotAPI</option>
-              <option value="microlink">Microlink</option>
-            </select>
-            {screenshotProvider === 'screenshotapi' && (
-              <label className="ms-menu__label" style={{ marginTop: 4 }}>
-                API key
-                <input
-                  className="ms-menu__input"
-                  type="password"
-                  placeholder="screenshotapi.to key"
-                  value={screenshotApiKey}
-                  onChange={(e) => onScreenshotApiKeyChange(e.target.value)}
-                />
-              </label>
-            )}
-            {screenshotProvider === 'microlink' && (
-              <label className="ms-menu__label" style={{ marginTop: 4 }}>
-                API key
-                <input
-                  className="ms-menu__input"
-                  type="password"
-                  placeholder="Microlink API key (optional)"
-                  value={microlinkApiKey}
-                  onChange={(e) => onMicrolinkApiKeyChange(e.target.value)}
-                />
-              </label>
-            )}
+              <KeyRound size={16} strokeWidth={1.75} aria-hidden />
+              API &amp; keys
+            </button>
             <button
               type="button"
               role="menuitem"

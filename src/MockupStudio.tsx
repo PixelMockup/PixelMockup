@@ -94,6 +94,7 @@ import {
   type LayoutPreset,
 } from './layoutPresets';
 import KeybindingsPanel from './KeybindingsPanel';
+import ScreenshotSettings from './components/ScreenshotSettings';
 import ContextMenu, { type ContextMenuState } from './ContextMenu';
 import LibraryPanel, {
   LIBRARY_W_MAX,
@@ -112,7 +113,6 @@ import {
 } from './keybindings';
 import { storageGet, storageSet } from './storage';
 import { useKeybindings } from './useKeybindings';
-import { usePresence } from './usePresence';
 import { useTheme } from './useTheme';
 import { useWebsitePreviewMode } from './useWebsitePreviewMode';
 import { useCredits } from './useCredits';
@@ -414,11 +414,11 @@ export default function MockupStudio({
     websitePreviewMode,
     setWebsitePreviewMode,
   } = useWebsitePreviewMode();
-  const activeUsers = usePresence();
   const [bindings, setBindings] = useState<BindingMap>(() =>
     loadBindingsForPlatform(platform),
   );
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [screenshotSettingsOpen, setScreenshotSettingsOpen] = useState(false);
   const [libraryWidth, setLibraryWidth] = useState(readLibraryWidth);
   const [viewZoom, setViewZoom] = useState<ViewZoom>('fit');
   const [snapGuides, setSnapGuides] = useState<SnapGuides>(NO_GUIDES);
@@ -452,11 +452,48 @@ export default function MockupStudio({
   const [microlinkApiKeyState, setMicrolinkApiKeyState] = useState(
     getMicrolinkApiKey,
   );
-  const { credits, updateCredits } = useCredits();
+  const { credits, updateCredits, updateMicrolinkUsage } = useCredits();
 
   useEffect(() => {
     onCreditsUpdate(updateCredits);
   }, [updateCredits]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const refresh = async () => {
+      try {
+        const res = await fetch('/api/validate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ provider: 'microlink' }),
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as {
+          remaining?: number;
+          limit?: number;
+          resetAt?: number;
+          tier?: string;
+          reason?: string;
+        };
+        if (cancelled) return;
+        updateMicrolinkUsage({
+          remaining: data.remaining ?? null,
+          limit: data.limit ?? null,
+          resetAt: data.resetAt ?? null,
+          tier: data.tier,
+          reason: data.reason,
+        });
+      } catch {
+        // ignore — pill simply stays hidden
+      }
+    };
+    void refresh();
+    const id = window.setInterval(() => void refresh(), 60_000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(id);
+    };
+  }, [updateMicrolinkUsage]);
 
   const handleScreenshotApiKeyChange = useCallback((key: string) => {
     setScreenshotApiKeyState(key);
@@ -1925,7 +1962,7 @@ export default function MockupStudio({
         onDownloadMenuOpenChange={setExportMenuOpen}
         downloadMenuRef={downloadMenuRef}
         credits={credits}
-        activeUsers={activeUsers}
+        onOpenScreenshotSettings={() => setScreenshotSettingsOpen(true)}
       />
 
       <div className="ms-body">
@@ -1954,12 +1991,7 @@ export default function MockupStudio({
           canReorder={canBringForward || canPushBackward}
           theme={theme}
           onToggleTheme={toggleTheme}
-          screenshotProvider={screenshotProvider}
-          onScreenshotProviderChange={handleScreenshotProviderChange}
-          screenshotApiKey={screenshotApiKeyState}
-          onScreenshotApiKeyChange={handleScreenshotApiKeyChange}
-          microlinkApiKey={microlinkApiKeyState}
-          onMicrolinkApiKeyChange={handleMicrolinkApiKeyChange}
+          onOpenScreenshotSettings={() => setScreenshotSettingsOpen(true)}
           onOpenShortcuts={() => setShortcutsOpen(true)}
           onTakeTour={onTakeTour}
           layoutsRef={layoutsMenuRef}
@@ -2231,6 +2263,12 @@ export default function MockupStudio({
         bindings={bindings}
         onBindingsChange={setBindings}
         platform={platform}
+      />
+
+      <ScreenshotSettings
+        isOpen={screenshotSettingsOpen}
+        onClose={() => setScreenshotSettingsOpen(false)}
+        onNotify={(msg, tone) => announce(msg, tone)}
       />
 
       {contextMenu ? (

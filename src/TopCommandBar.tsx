@@ -1,6 +1,8 @@
 import { Download, Ellipsis, X } from 'lucide-react';
 import BrandMark from './BrandMark';
 import type { ExportFormat, ExportResolution } from './deviceScale';
+import type { CreditState } from './useCredits';
+import { formatResetTime } from './utils/formatResetTime';
 
 const EXPORT_FORMATS = new Set<ExportFormat>(['png', 'jpg']);
 const EXPORT_RESOLUTIONS = new Set<ExportResolution>([
@@ -43,9 +45,8 @@ type Props = {
   downloadMenuOpen: boolean;
   onDownloadMenuOpenChange: (open: boolean) => void;
   downloadMenuRef: React.RefObject<HTMLDivElement | null>;
-  credits: { screenshotapi: number | null; microlink: number | null };
-  /** Concurrent anonymous users; null when presence backend is unavailable. */
-  activeUsers: number | null;
+  credits: CreditState;
+  onOpenScreenshotSettings: () => void;
 };
 
 function downloadLabel(downloading: boolean, softEmptyDownload: boolean): string {
@@ -76,8 +77,11 @@ export default function TopCommandBar({
   onDownloadMenuOpenChange,
   downloadMenuRef,
   credits,
-  activeUsers,
+  onOpenScreenshotSettings,
 }: Readonly<Props>) {
+  const ml = credits.microlink;
+  const mlExhausted = ml.remaining !== null && ml.remaining <= 0;
+
   return (
     <header className="ms-top-command">
       <BrandMark />
@@ -144,28 +148,36 @@ export default function TopCommandBar({
             {credits.screenshotapi} SA
           </span>
         ) : null}
-        {credits.microlink != null ? (
-          <span
-            className="ms-presence-pill"
-            role="status"
-            aria-live="polite"
-            title="Microlink credits remaining"
+        {credits.microlink.remaining != null ? (
+          <button
+            type="button"
+            className={[
+              'ms-presence-pill',
+              'ms-presence-pill--clickable',
+              mlExhausted ? 'ms-presence-pill--exhausted' : '',
+            ]
+              .filter(Boolean)
+              .join(' ')}
+            role="button"
+            title={
+              mlExhausted
+                ? 'Shared Microlink key is used up for today — click for details'
+                : 'Microlink shared key availability — click to manage'
+            }
+            aria-label="Microlink shared key usage — click to open API and keys"
+            onClick={onOpenScreenshotSettings}
           >
             <span className="ms-presence-pill__dot" aria-hidden />
-            {credits.microlink} ML
-          </span>
+            {mlExhausted ? (
+              <>Microlink used{ml.resetAt != null ? ` — ${formatResetTime(ml.resetAt)}` : ''}</>
+            ) : (
+              <>
+                {(ml.limit != null ? `${ml.remaining}/${ml.limit} ` : `${ml.remaining} `)}Microlink
+              </>
+            )}
+          </button>
         ) : null}
-        {activeUsers != null ? (
-          <span
-            className="ms-presence-pill"
-            role="status"
-            aria-live="polite"
-            title="People using Pixel Mockup right now"
-          >
-            <span className="ms-presence-pill__dot" aria-hidden />
-            {activeUsers} online
-          </span>
-        ) : null}
+
 
         <div className="ms-download-cluster" ref={downloadMenuRef}>
           <button

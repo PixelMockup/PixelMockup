@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
-import { presencePlugin } from './scripts/presencePlugin.js';
 import { websiteCapturePlugin } from './scripts/websiteCapturePlugin.js';
+import { apiPlugin } from './scripts/apiPlugin.js';
 
 /** Loopback by default; Docker/set HOST=0.0.0.0 to listen on all interfaces. */
 const host = process.env.HOST ?? '127.0.0.1';
@@ -15,5 +15,5 @@ export default defineConfig({
     ...(Number.isFinite(port) && port > 0 ? { port } : {}),
   },
   preview: { host, port: previewPort },
-  plugins: [react(), websiteCapturePlugin(), presencePlugin()],
+  plugins: [react(), websiteCapturePlugin(), apiPlugin()],
 });

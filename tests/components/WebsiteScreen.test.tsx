@@ -11,6 +11,7 @@ import {
   clearWebsiteCaptureCache,
   resetCaptureAvailabilityForTests,
 } from '../../src/captureWebsite';
+import { setScreenshotProvider } from '../../src/screenshotProviders';
 import {
   resetProxyAvailabilityForTests,
   setProxyAvailableForTests,
@@ -38,6 +39,7 @@ describe('WebsiteScreen', () => {
     vi.restoreAllMocks();
     clearWebsiteCaptureCache();
     resetCaptureAvailabilityForTests();
+    setScreenshotProvider('playwright');
     resetProxyAvailabilityForTests();
   });
 

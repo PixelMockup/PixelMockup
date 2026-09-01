@@ -244,10 +244,20 @@ function cloudCacheKey(url: string, width: number, height: number, provider: Scr
 }
 
 /** Callback to update credit counts in the UI. */
-let creditUpdateCallback: ((provider: string, remaining: number | null) => void) | null = null;
+let creditUpdateCallback: ((
+  provider: string,
+  remaining: number | null,
+  extras?: { limit?: number | null; resetAt?: number | null },
+) => void) | null = null;
 
 /** Register a callback for credit updates after each cloud capture. */
-export function onCreditsUpdate(cb: (provider: string, remaining: number | null) => void): void {
+export function onCreditsUpdate(
+  cb: (
+    provider: string,
+    remaining: number | null,
+    extras?: { limit?: number | null; resetAt?: number | null },
+  ) => void,
+): void {
   creditUpdateCallback = cb;
 }
 
@@ -268,10 +278,6 @@ let captureEndpointState: CaptureEndpointState = 'unknown';
 let captureProbeInFlight: Promise<boolean> | null = null;
 
 const CAPTURE_UNAVAILABLE_ERROR = 'capture server unavailable';
-
-function markCaptureUnavailable(): void {
-  captureEndpointState = 'unavailable';
-}
 
 /** Structured notice when capture is known missing (hosted/static). */
 export function captureUnavailableNotice(): CaptureNotice {
@@ -503,7 +509,10 @@ async function captureCloud(
       .then((result) => {
         captureCache.set(key, result.dataUrl);
         if (result.creditsRemaining != null && creditUpdateCallback) {
-          creditUpdateCallback(provider, result.creditsRemaining);
+          creditUpdateCallback(provider, result.creditsRemaining, {
+            limit: result.limit,
+            resetAt: result.resetAt,
+          });
         }
         return result.dataUrl;
       })

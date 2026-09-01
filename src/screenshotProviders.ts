@@ -4,8 +4,9 @@
  */
 
 import { storageGet, storageSet } from './storage';
+import type { Provider } from './types/screenshot';
 
-export type ScreenshotProvider = 'playwright' | 'screenshotapi' | 'microlink';
+export type ScreenshotProvider = 'playwright' | Provider;
 
 interface ScreenshotResult {
   dataUrl: string;
@@ -30,7 +31,7 @@ export function getScreenshotProvider(): ScreenshotProvider {
   const raw = storageGet(STORAGE_KEY, STORAGE_KEY);
   return PROVIDER_VALUES.has(raw as ScreenshotProvider)
     ? (raw as ScreenshotProvider)
-    : 'playwright';
+    : 'microlink';
 }
 
 export function setScreenshotProvider(provider: ScreenshotProvider): void {
@@ -57,6 +58,10 @@ export interface CaptureResult {
   dataUrl: string;
   creditsRemaining: number | null;
   provider: ScreenshotProvider;
+  /** Microlink daily usage cap. */
+  limit?: number | null;
+  /** Unix epoch (seconds) when the Microlink daily quota resets. */
+  resetAt?: number | null;
 }
 
 /**
@@ -365,5 +370,10 @@ async function captureMicrolink(
   const remaining = res.headers.get('x-rate-limit-remaining');
   const creditsRemaining = remaining != null ? Number(remaining) : null;
 
-  return { dataUrl, creditsRemaining, provider: 'microlink' };
+  const limitHeader = res.headers.get('x-rate-limit-limit');
+  const limit = limitHeader != null ? Number(limitHeader) : null;
+  const resetHeader = res.headers.get('x-rate-limit-reset');
+  const resetAt = resetHeader != null ? Number(resetHeader) : null;
+
+  return { dataUrl, creditsRemaining, provider: 'microlink', limit, resetAt };
 }

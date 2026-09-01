@@ -26,10 +26,12 @@
     "postinstall": "playwright install chromium || true"
   },
   "dependencies": {
+    "@microlink/mql": "^0.17.1",
     "cheerio": "^1.2.0",
     "lucide-react": "^0.511.0",
     "react": "^19.2.7",
-    "react-dom": "^19.2.7"
+    "react-dom": "^19.2.7",
+    "screenshotapi-to": "^1.0.1"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.12.1",

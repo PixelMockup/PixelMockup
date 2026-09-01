@@ -1,26 +1,65 @@
 import { useCallback, useState } from 'react';
 
+export interface MicrolinkUsage {
+  remaining: number | null;
+  limit: number | null;
+  resetAt: number | null;
+  tier?: string;
+  reason?: string;
+}
+
 export interface CreditState {
   screenshotapi: number | null;
-  microlink: number | null;
+  microlink: MicrolinkUsage;
 }
+
+const EMPTY_USAGE: MicrolinkUsage = { remaining: null, limit: null, resetAt: null };
 
 export function useCredits() {
   const [credits, setCredits] = useState<CreditState>({
     screenshotapi: null,
-    microlink: null,
+    microlink: { ...EMPTY_USAGE },
   });
 
+  const updateScreenshotApiCredits = useCallback((remaining: number | null) => {
+    setCredits((prev) => ({ ...prev, screenshotapi: remaining }));
+  }, []);
+
+  const updateMicrolinkUsage = useCallback((usage: Partial<MicrolinkUsage>) => {
+    setCredits((prev) => ({
+      ...prev,
+      microlink: { ...prev.microlink, ...usage },
+    }));
+  }, []);
+
   const updateCredits = useCallback(
-    (provider: string, remaining: number | null) => {
+    (
+      provider: string,
+      remaining: number | null,
+      extras?: { limit?: number | null; resetAt?: number | null },
+    ) => {
       if (provider === 'screenshotapi') {
-        setCredits((prev) => ({ ...prev, screenshotapi: remaining }));
+        updateScreenshotApiCredits(remaining);
       } else if (provider === 'microlink') {
-        setCredits((prev) => ({ ...prev, microlink: remaining }));
+        updateMicrolinkUsage({
+          remaining,
+          limit: extras?.limit ?? undefined,
+          resetAt: extras?.resetAt ?? undefined,
+        });
       }
     },
-    [],
+    [updateScreenshotApiCredits, updateMicrolinkUsage],
   );
 
-  return { credits, updateCredits };
+  const resetMicrolinkUsage = useCallback(() => {
+    setCredits((prev) => ({ ...prev, microlink: { ...EMPTY_USAGE } }));
+  }, []);
+
+  return {
+    credits,
+    updateCredits,
+    updateScreenshotApiCredits,
+    updateMicrolinkUsage,
+    resetMicrolinkUsage,
+  };
 }
