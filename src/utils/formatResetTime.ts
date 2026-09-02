@@ -16,6 +16,6 @@ export function formatResetTime(resetAt: number): string {
   const hours = Math.floor(diff / 3600);
   const minutes = Math.floor((diff % 3600) / 60);
 
-  if (hours > 0) return `Resets in ${hours}h ${minutes}m (${timeStr})`;
+  if (hours > 0) return `Resets in ${hours}h ${minutes}m (UTC: ${timeStr})`;
   return `Resets in ${minutes}m (${timeStr})`;
 }

@@ -462,7 +462,7 @@ export async function captureOne(
     p = (async () => {
       try {
         const userConfig = getUserConfig();
-        const result = await captureWithFallback(url, width, height, userConfig, APP_SCREENSHOT_API_KEY);
+        const result = await captureWithFallback(url, width, height, userConfig, APP_SCREENSHOT_API_KEY, controller.signal);
 
         console.log(`Screenshot captured via: ${result.provider}`);
         captureCache.set(key, result.dataUrl);
@@ -504,8 +504,11 @@ async function captureCloud(
 
   let p = pending.get(key);
   if (!p) {
+    const controller = new AbortController();
+    inFlightControllers.add(controller);
+
     const apiKey = provider === 'screenshotapi' ? getScreenshotApiKey() : getMicrolinkApiKey();
-    p = captureWithProvider(url, width, height, provider, apiKey || undefined)
+    p = captureWithProvider(url, width, height, provider, apiKey || undefined, controller.signal)
       .then((result) => {
         captureCache.set(key, result.dataUrl);
         if (result.creditsRemaining != null && creditUpdateCallback) {
@@ -517,6 +520,7 @@ async function captureCloud(
         return result.dataUrl;
       })
       .finally(() => {
+        inFlightControllers.delete(controller);
         pending.delete(key);
       });
     pending.set(key, p);

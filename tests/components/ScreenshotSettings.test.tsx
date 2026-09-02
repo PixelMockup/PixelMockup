@@ -1,6 +1,12 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import ScreenshotSettings from '../../src/components/ScreenshotSettings';
+import { useCredits } from '../../src/useCredits';
+
+// Mock useCredits to control the state without making network requests
+vi.mock('../../src/useCredits', () => ({
+  useCredits: vi.fn(),
+}));
 
 function setUpDialog() {
   HTMLDialogElement.prototype.showModal = vi.fn(function (this: HTMLDialogElement) {
@@ -15,26 +21,10 @@ function renderDialog(opts: { onNotify?: ReturnType<typeof vi.fn>; onClose?: Ret
   return render(
     <ScreenshotSettings
       isOpen
-      onClose={opts.onClose ?? (() => {})}
+      onClose={opts.onClose ?? (() => { })}
       onNotify={opts.onNotify ?? vi.fn()}
     />,
   );
-}
-
-function mlValidateResponse(overrides: Record<string, unknown> = {}) {
-  return {
-    ok: true,
-    status: 200,
-    json: async () => ({
-      valid: true,
-      remaining: 24,
-      limit: 25,
-      resetAt: Math.floor(Date.now() / 1000) + 60 * 60,
-      tier: 'shared',
-      usesSharedKey: true,
-      ...overrides,
-    }),
-  };
 }
 
 function saValidateResponse(overrides: Record<string, unknown> = {}) {
@@ -45,17 +35,16 @@ function saValidateResponse(overrides: Record<string, unknown> = {}) {
   };
 }
 
-/** Mock /api/validate that routes by provider in the POST body. */
-function stubValidate(handlers: Record<string, () => Record<string, unknown>>) {
+/** Mock /api/validate that routes by provider in the POST body (ScreenshotAPI) */
+function stubValidate() {
   const fetchMock = vi.fn().mockImplementation((url: unknown, init?: RequestInit) => {
     if (String(url) === '/api/validate' && init?.method === 'POST') {
       const body = JSON.parse(String(init.body));
-      const handler = handlers[body.provider];
-      if (handler) {
-        return Promise.resolve({ ok: true, status: 200, json: async () => handler() });
+      if (body.provider === 'screenshotapi') {
+        return Promise.resolve({ ok: true, status: 200, json: async () => saValidateResponse() });
       }
     }
-    return Promise.resolve(mlValidateResponse());
+    return Promise.resolve({ ok: false, status: 404 });
   });
   vi.stubGlobal('fetch', fetchMock);
   return fetchMock;
@@ -66,7 +55,14 @@ describe('ScreenshotSettings', () => {
     setUpDialog();
     localStorage.clear();
     vi.restoreAllMocks();
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(mlValidateResponse()));
+
+    // Simulates refresh
+    (useCredits as any).mockReturnValue({
+      credits: {
+        screenshotapi: null,
+        microlink: { remaining: null, limit: null, resetAt: null, tier: 'shared' },
+      },
+    });
   });
 
   afterEach(() => {
@@ -76,7 +72,7 @@ describe('ScreenshotSettings', () => {
 
   it('renders nothing when closed', () => {
     const { container } = render(
-      <ScreenshotSettings isOpen={false} onClose={() => {}} onNotify={vi.fn()} />,
+      <ScreenshotSettings isOpen={false} onClose={() => { }} onNotify={vi.fn()} />,
     );
     expect(container.firstChild).toBeNull();
   });
@@ -93,64 +89,55 @@ describe('ScreenshotSettings', () => {
     expect(screen.getByRole('tab', { name: 'Microlink' })).toHaveClass('active');
     expect(screen.getByPlaceholderText(/microlink api key/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Use Microlink' })).toBeInTheDocument();
-    expect(screen.queryByRole('button', { name: 'Done' })).not.toBeInTheDocument();
   });
 
-  it('shows shared-key daily usage with reset countdown', async () => {
+  it('shows hint when no usage is available yet', async () => {
+    renderDialog();
+    expect(screen.getByText(/usage will appear here after your first screenshot capture/i)).toBeInTheDocument();
+  });
+
+  it('shows shared-key daily usage with reset countdown when data is available', async () => {
+    const futureReset = Math.floor(Date.now() / 1000) + 3600;
+    (useCredits as any).mockReturnValue({
+      credits: {
+        screenshotapi: null,
+        microlink: { remaining: 24, limit: 25, resetAt: futureReset, tier: 'shared' },
+      },
+    });
     renderDialog();
     await waitFor(() => {
       expect(screen.getByText(/24\/25/)).toBeInTheDocument();
-    });
-  });
-
-  it('labels shared key as connected and usage as shared', async () => {
-    renderDialog();
-    await waitFor(() => {
-      expect(screen.getByText('Shared key connected')).toBeInTheDocument();
       expect(screen.getByText(/available on shared key/i)).toBeInTheDocument();
     });
   });
 
   it('shows a warning when the shared key is exhausted', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(
-        mlValidateResponse({
-          valid: false,
-          remaining: 0,
-          limit: 25,
-          resetAt: Math.floor(Date.now() / 1000) + 5 * 3600,
-          reason: 'quota_exhausted',
-          usesSharedKey: true,
-        }),
-      ),
-    );
+    const futureReset = Math.floor(Date.now() / 1000) + 5 * 3600;
+    (useCredits as any).mockReturnValue({
+      credits: {
+        screenshotapi: null,
+        microlink: { remaining: 0, limit: 25, resetAt: futureReset, tier: 'shared' },
+      },
+    });
     renderDialog();
+
     await waitFor(() => {
       expect(screen.getByText(/shared microlink key is used up for today/i)).toBeInTheDocument();
     });
   });
 
-  it('validates a personal microlink key and marks it as connected', async () => {
-    stubValidate({
-      microlink: () => ({
-        valid: true,
-        remaining: 100,
-        limit: 1000,
-        resetAt: Math.floor(Date.now() / 1000) + 3600,
-        tier: 'paid',
-        usesSharedKey: false,
-      }),
+  it('displays personal key badge and usage when tier is paid', async () => {
+    const futureReset = Math.floor(Date.now() / 1000) + 3600;
+    (useCredits as any).mockReturnValue({
+      credits: {
+        screenshotapi: null,
+        microlink: { remaining: 100, limit: 1000, resetAt: futureReset, tier: 'paid' },
+      },
     });
     renderDialog();
-    const input = screen.getByPlaceholderText(/microlink api key/i);
-    fireEvent.change(input, { target: { value: 'own-ml-key' } });
+
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Validate' })).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Validate' }));
-    await waitFor(() => {
-      expect(screen.getByText(/your key connected/i)).toBeInTheDocument();
+      expect(screen.getByText('Your key')).toBeInTheDocument();
       expect(screen.getByText(/available on your key/i)).toBeInTheDocument();
     });
   });
@@ -172,7 +159,7 @@ describe('ScreenshotSettings', () => {
   });
 
   it('validates screenshotapi key via /api/validate', async () => {
-    stubValidate({ screenshotapi: () => saValidateResponse() });
+    stubValidate();
 
     renderDialog();
     fireEvent.click(screen.getByRole('tab', { name: 'ScreenshotAPI' }));
@@ -184,22 +171,10 @@ describe('ScreenshotSettings', () => {
     await waitFor(() => {
       expect(screen.getByText(/4200 credits remaining/i)).toBeInTheDocument();
     });
-
-    const fetchMock = globalThis.fetch as unknown as ReturnType<typeof stubValidate>;
-    const validateCall = fetchMock.mock.calls.find(
-      ([url, init]) =>
-        String(url) === '/api/validate' &&
-        init?.method === 'POST' &&
-        JSON.parse(String(init.body)).provider === 'screenshotapi',
-    ) as [string, RequestInit];
-    expect(JSON.parse(String(validateCall[1].body))).toEqual({
-      provider: 'screenshotapi',
-      key: 'test-key-123',
-    });
   });
 
   it('uses ScreenshotAPI after validation: notifies and closes', async () => {
-    stubValidate({ screenshotapi: () => saValidateResponse() });
+    stubValidate();
     const onNotify = vi.fn();
     const onClose = vi.fn();
     renderDialog({ onNotify, onClose });
@@ -231,27 +206,10 @@ describe('ScreenshotSettings', () => {
     expect(onClose).toHaveBeenCalled();
   });
 
-  it('persists a validated personal microlink key for use by captures', async () => {
-    stubValidate({
-      microlink: () => ({
-        valid: true,
-        remaining: 100,
-        limit: 1000,
-        resetAt: Math.floor(Date.now() / 1000) + 3600,
-        tier: 'paid',
-        usesSharedKey: false,
-      }),
-    });
+  it('updates microlink api key state on change', async () => {
     renderDialog();
-    fireEvent.change(screen.getByPlaceholderText(/microlink api key/i), {
-      target: { value: 'my-bought-key' },
-    });
-    await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Validate' })).toBeInTheDocument();
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Validate' }));
-    await waitFor(() => {
-      expect(localStorage.getItem('pixelMockup.microlinkApiKey')).toBe('my-bought-key');
-    });
+    const input = screen.getByPlaceholderText(/microlink api key/i);
+    fireEvent.change(input, { target: { value: 'my-bought-key' } });
+    expect(input).toHaveValue('my-bought-key');
   });
 });

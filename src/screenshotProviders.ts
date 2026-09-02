@@ -73,7 +73,8 @@ async function captureWithMicrolink(
   url: string,
   width: number,
   height: number,
-  apiKey?: string
+  apiKey?: string,
+  signal?: AbortSignal
 ): Promise<string> {
   const params = new URLSearchParams({
     url: url,
@@ -88,7 +89,7 @@ async function captureWithMicrolink(
     params.set('apiKey', apiKey);
   }
 
-  const response = await fetch(`${MICROLINK_ENDPOINT}?${params}`);
+  const response = await fetch(`${MICROLINK_ENDPOINT}?${params}`, { headers, signal });
 
   if (!response.ok) {
     const error = await response.text();
@@ -133,7 +134,8 @@ async function blobToDataUrl(blob: Blob): Promise<string> {
 async function captureWithLocalPlaywright(
   url: string,
   width: number,
-  height: number
+  height: number,
+  signal?: AbortSignal
 ): Promise<string> {
   const CAPTURE_ENDPOINT = '/__capture_website';
 
@@ -141,6 +143,7 @@ async function captureWithLocalPlaywright(
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ url, width, height }),
+    signal
   });
 
   if (!response.ok) {
@@ -172,7 +175,8 @@ export async function captureWithFallback(
   width: number,
   height: number,
   userConfig?: ProviderConfig,
-  appApiKey?: string
+  appApiKey?: string,
+  signal?: AbortSignal
 ): Promise<ScreenshotResult> {
   const errors: Array<{ provider: string; error: string }> = [];
 
@@ -261,9 +265,10 @@ export async function captureWithProvider(
   height: number,
   provider: ScreenshotProvider,
   userApiKey?: string,
+  signal?: AbortSignal
 ): Promise<CaptureResult> {
   if (provider === 'screenshotapi') {
-    return captureScreenshotApi(url, width, height, userApiKey);
+    return captureScreenshotApi(url, width, height, userApiKey, signal);
   }
   if (provider === 'microlink') {
     return captureMicrolink(url, width, height, userApiKey);
@@ -279,7 +284,8 @@ async function captureWithScreenshotApi(
   url: string,
   width: number,
   height: number,
-  apiKey: string
+  apiKey: string,
+  signal?: AbortSignal
 ): Promise<string> {
   const params = new URLSearchParams({
     token: apiKey,
@@ -292,7 +298,7 @@ async function captureWithScreenshotApi(
     fresh: 'false', // Use cached if available
   });
 
-  const response = await fetch(`${SCREENSHOT_API_ENDPOINT}?${params}`);
+  const response = await fetch(`${SCREENSHOT_API_ENDPOINT}?${params}`, { signal });
 
   if (!response.ok) {
     const error = await response.text();
@@ -308,6 +314,7 @@ async function captureScreenshotApi(
   width: number,
   height: number,
   userApiKey?: string,
+  signal?: AbortSignal
 ): Promise<CaptureResult> {
   const params = new URLSearchParams({
     url,
@@ -321,7 +328,7 @@ async function captureScreenshotApi(
     headers['x-api-key'] = userApiKey;
   }
 
-  const res = await fetch(`/api/screenshotapi?${params}`, { headers });
+  const res = await fetch(`/api/screenshotapi?${params}`, { headers, signal });
   if (!res.ok) {
     const body = await res.json().catch(() => null) as { error?: string; message?: string } | null;
     throw new Error(body?.message ?? body?.error ?? `ScreenshotAPI failed (${res.status})`);
@@ -342,6 +349,7 @@ async function captureMicrolink(
   width: number,
   height: number,
   userApiKey?: string,
+  signal?: AbortSignal
 ): Promise<CaptureResult> {
   const params = new URLSearchParams({
     url,
@@ -357,7 +365,7 @@ async function captureMicrolink(
     headers['x-api-key'] = userApiKey;
   }
 
-  const res = await fetch(`/api/microlink-capture?${params}`, { headers });
+  const res = await fetch(`/api/microlink-capture?${params}`, { headers, signal });
   if (!res.ok) {
     const body = await res.json().catch(() => null) as { error?: string; message?: string } | null;
     throw new Error(body?.message ?? body?.error ?? `Microlink failed (${res.status})`);

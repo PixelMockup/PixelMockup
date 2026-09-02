@@ -34,7 +34,7 @@ export default function ScreenshotSettings({ isOpen, onClose, onNotify }: Screen
   // Derive Microlink status directly from the live credits state
   const ml = credits.microlink;
   const mlExhausted = ml.remaining != null && ml.remaining <= 0;
-  const usingPersonalMlKey = ml.tier === 'free' || ml.tier === 'pro';
+  const usingPersonalMlKey = ml.tier === 'paid' || ml.tier === 'pro' || ml.tier === 'enterprise' || ml.usesSharedKey === false;
 
   useEffect(() => {
     if (!isOpen) return;

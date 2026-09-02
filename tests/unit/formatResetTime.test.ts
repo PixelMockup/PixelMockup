@@ -15,16 +15,20 @@ describe('formatResetTime', () => {
     vi.useRealTimers();
   });
 
-  it('returns "Resets momentarily" when diff is 0 or negative', () => {
-    expect(formatResetTime(BASE_SEC)).toBe('Resets momentarily');
-    expect(formatResetTime(BASE_SEC - 10)).toBe('Resets momentarily');
+  it('returns UTC reset time when diff is 0 or negative', () => {
+    // Updated to match the new explicit UTC output instead of "Resets momentarily"
+    const result1 = formatResetTime(BASE_SEC);
+    expect(result1).toMatch(/Reset window reached \(UTC: \d{1,2}:\d{2}\)/);
+
+    const result2 = formatResetTime(BASE_SEC - 10);
+    expect(result2).toMatch(/Reset window reached \(UTC: \d{1,2}:\d{2}\)/);
   });
 
   it('formats hours + minutes when > 1 hour', () => {
     const resetAt = BASE_SEC + 2 * 3600 + 15 * 60;
     const result = formatResetTime(resetAt);
     expect(result).toMatch(/Resets in 2h 15m/);
-    expect(result).toMatch(/\(\d{1,2}:\d{2}\)$/);
+    expect(result).toMatch(/\(UTC: \d{1,2}:\d{2}\)$/);
   });
 
   it('formats minutes only when under 1 hour', () => {
