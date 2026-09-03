@@ -7,7 +7,8 @@ export function formatResetTime(resetAt: number): string {
   const timeStr = resetDate.toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: "UTC"
+    timeZone: "UTC",
+    hour12: false
   });
 
   // If the reset time has passed, show the exact UTC time it occurred/is occurring

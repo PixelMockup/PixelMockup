@@ -3,6 +3,7 @@
  * Routes capture requests through the selected cloud provider or local Playwright.
  */
 
+import { sign } from 'crypto';
 import { storageGet, storageSet } from './storage';
 import type { Provider } from './types/screenshot';
 
@@ -220,7 +221,7 @@ export async function captureWithFallback(
 
   if (userConfig?.apiKey && userConfig.provider === 'microlink') {
     try {
-      const dataUrl = await captureWithMicrolink(url, width, height, userConfig.apiKey);
+      const dataUrl = await captureWithMicrolink(url, width, height, userConfig.apiKey, signal);
       return { dataUrl, provider: 'microlink' };
     } catch (err) {
       errors.push({
@@ -232,7 +233,7 @@ export async function captureWithFallback(
 
   // Priority 2: Try local Playwright (only works in dev with npm run dev)
   try {
-    const dataUrl = await captureWithLocalPlaywright(url, width, height);
+    const dataUrl = await captureWithLocalPlaywright(url, width, height, signal);
     return { dataUrl, provider: 'playwright' };
   } catch (err) {
     errors.push({
@@ -256,7 +257,7 @@ export async function captureWithFallback(
 
   // Priority 4: Microlink free tier (no key needed)
   try {
-    const dataUrl = await captureWithMicrolink(url, width, height);
+    const dataUrl = await captureWithMicrolink(url, width, height, signal);
     return { dataUrl, provider: 'microlink' };
   } catch (err) {
     errors.push({
@@ -330,8 +331,9 @@ async function captureWithScreenshotApi(
     throw new Error(`ScreenshotAPI error: ${response.status} - ${error}`);
   }
 
-  const blob = await response.blob();
-  return await blobToDataUrl(blob);
+  const bytes = await response.arrayBuffer();
+  const mime = response.headers.get('content-type') ?? 'image/png';
+  return bytesToDataUrl(bytes, mime);
 }
 
 async function captureScreenshotApi(
