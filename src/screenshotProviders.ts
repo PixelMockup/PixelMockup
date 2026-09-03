@@ -257,7 +257,7 @@ export async function captureWithFallback(
 
   // Priority 4: Microlink free tier (no key needed)
   try {
-    const dataUrl = await captureWithMicrolink(url, width, height, signal);
+    const dataUrl = await captureWithMicrolink(url, width, height, userConfig?.apiKey, signal);
     return { dataUrl, provider: 'microlink' };
   } catch (err) {
     errors.push({
