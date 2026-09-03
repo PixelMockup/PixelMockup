@@ -84,9 +84,11 @@ async function captureWithMicrolink(
     'screenshot.height': String(height),
     embed: 'screenshot.url',
   });
+  const headers: Record<string, string> = {};
 
   if (apiKey) {
     params.set('apiKey', apiKey);
+    headers['x-api-key'] = apiKey;
   }
 
   const response = await fetch(`${MICROLINK_ENDPOINT}?${params}`, { headers, signal });
@@ -139,25 +141,48 @@ async function captureWithLocalPlaywright(
 ): Promise<string> {
   const CAPTURE_ENDPOINT = '/__capture_website';
 
-  const response = await fetch(CAPTURE_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ url, width, height }),
-    signal
-  });
+  // retry logic for 429 (too many captures)
+  const BUSY_RETRIES = 1;
+  const BUSY_RETRY_DELAY_MS = 500;
 
-  if (!response.ok) {
-    const data = await response.json().catch(() => ({}));
+  for (let attempt = 0; attempt <= BUSY_RETRIES; attempt++) {
+    if (signal?.aborted) {
+      throw new DOMException('The operation was aborted.', 'AbortError');
+    }
+
+    const response = await fetch(CAPTURE_ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url, width, height }),
+      signal,
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (!data.dataUrl || !data.dataUrl.startsWith('data:image/png;base64,')) {
+        throw new Error(`Invalid capture payload from Playwright`);
+      }
+      return data.dataUrl;
+    }
+
+    // retry on 429
+    if (response.status === 429 && attempt < BUSY_RETRIES) {
+      await new Promise(resolve => setTimeout(resolve, BUSY_RETRY_DELAY_MS));
+      continue;
+    }
+
+    let isHtml = false;
+    const data = await response.json().catch(() => { isHtml = true; return {}; });
+
+    // ✅ Short-circuit if the endpoint is missing (404 HTML response)
+    if (response.status === 404 && isHtml) {
+      const err = new Error('capture server unavailable');
+      (err as any).isCaptureUnavailable = true;
+      throw err;
+    }
     throw new Error(data.error || `Playwright capture failed: ${response.status}`);
   }
-
-  const data = await response.json();
-
-  if (!data.dataUrl || !data.dataUrl.startsWith('data:image/png;base64,')) {
-    throw new Error('Invalid capture payload from Playwright');
-  }
-
-  return data.dataUrl;
+  throw new Error('Playwright capture failed: max retries exceeded');
 }
 
 /**
@@ -271,7 +296,7 @@ export async function captureWithProvider(
     return captureScreenshotApi(url, width, height, userApiKey, signal);
   }
   if (provider === 'microlink') {
-    return captureMicrolink(url, width, height, userApiKey);
+    return captureMicrolink(url, width, height, userApiKey, signal);
   }
   throw new Error('Use captureOne() from captureWebsite.ts for playwright provider');
 }
