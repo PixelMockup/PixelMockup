@@ -13,6 +13,7 @@ import {
   resetCaptureAvailabilityForTests,
   CAPTURE_WEBSITE_PATH,
 } from '../../src/captureWebsite';
+import { setScreenshotProvider } from '../../src/screenshotProviders';
 
 function captureFetchCalls(fetchMock: ReturnType<typeof vi.fn>) {
   return fetchMock.mock.calls.filter(
@@ -53,6 +54,7 @@ describe('captureWebsite', () => {
     vi.restoreAllMocks();
     clearWebsiteCaptureCache();
     resetCaptureAvailabilityForTests();
+    setScreenshotProvider('playwright');
   });
 
   afterEach(() => {

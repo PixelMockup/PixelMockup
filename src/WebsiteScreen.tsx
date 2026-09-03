@@ -7,8 +7,8 @@ import {
 } from './captureWebsite';
 import type { WebsitePreviewMode } from './useWebsitePreviewMode';
 import {
-  buildProxyUrl,
   probeProxyAvailable,
+  buildProxyUrl,
 } from './websiteProxy';
 import type { WebsiteViewport } from './websiteUrl';
 
@@ -110,9 +110,7 @@ export default function WebsiteScreen({
     void probeProxyAvailable().then((ok) => {
       if (!cancelled) setProxyAvailable(ok);
     });
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [previewMode]);
 
   // Per-device loading bar: reset on URL / src changes, auto-hide after a
@@ -157,11 +155,7 @@ export default function WebsiteScreen({
           className="ms-canvas-item__website-frame"
           src={proxied ? buildProxyUrl(url) : url}
           title={title}
-          sandbox={
-            proxied
-              ? 'allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox'
-              : 'allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox'
-          }
+          sandbox="allow-scripts allow-forms allow-popups"
           referrerPolicy="no-referrer-when-downgrade"
           loading="lazy"
           onLoad={() => setIframeLoaded(true)}

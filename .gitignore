@@ -39,3 +39,5 @@ blob-report
 # Python bytecode (legacy one-off scripts)
 __pycache__/
 *.py[cod]
+.vercel
+.env*

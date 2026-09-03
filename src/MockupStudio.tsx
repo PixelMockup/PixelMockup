@@ -94,6 +94,7 @@ import {
   type LayoutPreset,
 } from './layoutPresets';
 import KeybindingsPanel from './KeybindingsPanel';
+import ScreenshotSettings from './components/ScreenshotSettings';
 import ContextMenu, { type ContextMenuState } from './ContextMenu';
 import LibraryPanel, {
   LIBRARY_W_MAX,
@@ -112,9 +113,19 @@ import {
 } from './keybindings';
 import { storageGet, storageSet } from './storage';
 import { useKeybindings } from './useKeybindings';
-import { usePresence } from './usePresence';
 import { useTheme } from './useTheme';
 import { useWebsitePreviewMode } from './useWebsitePreviewMode';
+import { useCredits } from './useCredits';
+import {
+  getScreenshotProvider,
+  setScreenshotProvider,
+  getScreenshotApiKey,
+  setScreenshotApiKey,
+  getMicrolinkApiKey,
+  setMicrolinkApiKey,
+  type ScreenshotProvider,
+} from './screenshotProviders';
+import { onCreditsUpdate } from './captureWebsite';
 import MobileDock from './MobileDock';
 import StatusShell from './StatusShell';
 import ArtboardCanvas from './ArtboardCanvas';
@@ -402,13 +413,12 @@ export default function MockupStudio({
   const {
     websitePreviewMode,
     setWebsitePreviewMode,
-    toggleWebsitePreviewMode,
   } = useWebsitePreviewMode();
-  const activeUsers = usePresence();
   const [bindings, setBindings] = useState<BindingMap>(() =>
     loadBindingsForPlatform(platform),
   );
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [screenshotSettingsOpen, setScreenshotSettingsOpen] = useState(false);
   const [libraryWidth, setLibraryWidth] = useState(readLibraryWidth);
   const [viewZoom, setViewZoom] = useState<ViewZoom>('fit');
   const [snapGuides, setSnapGuides] = useState<SnapGuides>(NO_GUIDES);
@@ -431,6 +441,33 @@ export default function MockupStudio({
   } | null>(null);
   const captureNoticeUrlRef = useRef<string | null>(null);
   const iframeFallbackSessionRef = useRef(false);
+
+  // Screenshot provider settings
+  const [screenshotProvider, setScreenshotProviderState] = useState<ScreenshotProvider>(
+    getScreenshotProvider,
+  );
+  const [screenshotApiKeyState, setScreenshotApiKeyState] = useState(
+    getScreenshotApiKey,
+  );
+  const [microlinkApiKeyState, setMicrolinkApiKeyState] = useState(
+    getMicrolinkApiKey,
+  );
+  const { credits, updateCredits } = useCredits();
+
+  useEffect(() => {
+    onCreditsUpdate(updateCredits);
+  }, [updateCredits]);
+
+
+  const handleScreenshotApiKeyChange = useCallback((key: string) => {
+    setScreenshotApiKeyState(key);
+    setScreenshotApiKey(key);
+  }, []);
+
+  const handleMicrolinkApiKeyChange = useCallback((key: string) => {
+    setMicrolinkApiKeyState(key);
+    setMicrolinkApiKey(key);
+  }, []);
   /** Global website shown on all devices without a per-device screen image. */
   const [websiteUrl, setWebsiteUrl] = useState<string | null>(null);
   const [websiteUrlDraft, setWebsiteUrlDraft] = useState('');
@@ -532,6 +569,18 @@ export default function MockupStudio({
       tone === 'error' ? 3200 : 1600,
     );
   };
+
+  const handleScreenshotProviderChange = useCallback((provider: ScreenshotProvider) => {
+    setScreenshotProviderState(provider);
+    setScreenshotProvider(provider);
+    const label =
+      provider === 'playwright'
+        ? 'Local Playwright'
+        : provider === 'screenshotapi'
+          ? 'ScreenshotAPI'
+          : 'Microlink';
+    announce(`${label} selected`);
+  }, []);
 
   const openCaptureNotice = useCallback((notice: CaptureNotice, urlKey?: string) => {
     if (urlKey != null) {
@@ -1876,7 +1925,8 @@ export default function MockupStudio({
         downloadMenuOpen={exportMenuOpen}
         onDownloadMenuOpenChange={setExportMenuOpen}
         downloadMenuRef={downloadMenuRef}
-        activeUsers={activeUsers}
+        credits={credits}
+        onOpenScreenshotSettings={() => setScreenshotSettingsOpen(true)}
       />
 
       <div className="ms-body">
@@ -1905,8 +1955,7 @@ export default function MockupStudio({
           canReorder={canBringForward || canPushBackward}
           theme={theme}
           onToggleTheme={toggleTheme}
-          websitePreviewMode={websitePreviewMode}
-          onToggleWebsitePreviewMode={toggleWebsitePreviewMode}
+          onOpenScreenshotSettings={() => setScreenshotSettingsOpen(true)}
           onOpenShortcuts={() => setShortcutsOpen(true)}
           onTakeTour={onTakeTour}
           layoutsRef={layoutsMenuRef}
@@ -2162,8 +2211,12 @@ export default function MockupStudio({
         hasSelection={hasSelection}
         theme={theme}
         onToggleTheme={toggleTheme}
-        websitePreviewMode={websitePreviewMode}
-        onToggleWebsitePreviewMode={toggleWebsitePreviewMode}
+        screenshotProvider={screenshotProvider}
+        onScreenshotProviderChange={handleScreenshotProviderChange}
+        screenshotApiKey={screenshotApiKeyState}
+        onScreenshotApiKeyChange={handleScreenshotApiKeyChange}
+        microlinkApiKey={microlinkApiKeyState}
+        onMicrolinkApiKeyChange={handleMicrolinkApiKeyChange}
         onOpenShortcuts={() => setShortcutsOpen(true)}
         onTakeTour={onTakeTour}
       />
@@ -2174,6 +2227,12 @@ export default function MockupStudio({
         bindings={bindings}
         onBindingsChange={setBindings}
         platform={platform}
+      />
+
+      <ScreenshotSettings
+        isOpen={screenshotSettingsOpen}
+        onClose={() => setScreenshotSettingsOpen(false)}
+        onNotify={(msg, tone) => announce(msg, tone)}
       />
 
       {contextMenu ? (

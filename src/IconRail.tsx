@@ -1,9 +1,8 @@
 import {
   AlignHorizontalJustifyCenter,
   AlignVerticalJustifyCenter,
-  AppWindow,
+  KeyRound,
   HelpCircle,
-  Image,
   Keyboard,
   LayoutTemplate,
   Magnet,
@@ -21,7 +20,6 @@ import {
   type ArtboardFormatId,
   type SizeScaleId,
 } from './deviceScale';
-import type { WebsitePreviewMode } from './useWebsitePreviewMode';
 
 type Props = {
   devicesOpen: boolean;
@@ -45,8 +43,7 @@ type Props = {
   canReorder: boolean;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
-  websitePreviewMode: WebsitePreviewMode;
-  onToggleWebsitePreviewMode: () => void;
+  onOpenScreenshotSettings: () => void;
   onOpenShortcuts: () => void;
   onTakeTour?: () => void;
   layoutsRef: React.RefObject<HTMLDivElement | null>;
@@ -75,8 +72,7 @@ export default function IconRail({
   canReorder,
   theme,
   onToggleTheme,
-  websitePreviewMode,
-  onToggleWebsitePreviewMode,
+  onOpenScreenshotSettings,
   onOpenShortcuts,
   onTakeTour,
   layoutsRef,
@@ -314,28 +310,18 @@ export default function IconRail({
               )}
               {theme === 'dark' ? 'Light mode' : 'Dark mode'}
             </button>
+            <div className="ms-menu__separator" aria-hidden />
             <button
               type="button"
               role="menuitem"
               className="ms-menu__item ms-menu__item--with-icon"
-              title={
-                websitePreviewMode === 'iframe'
-                  ? 'Switch to Playwright screenshots when capture is available'
-                  : 'Embed the site live (works on static hosts; many sites block this)'
-              }
               onClick={() => {
-                onToggleWebsitePreviewMode();
+                onOpenScreenshotSettings();
                 setSettingsOpen(false);
               }}
             >
-              {websitePreviewMode === 'iframe' ? (
-                <Image size={16} strokeWidth={1.75} aria-hidden />
-              ) : (
-                <AppWindow size={16} strokeWidth={1.75} aria-hidden />
-              )}
-              {websitePreviewMode === 'iframe'
-                ? 'Screenshot capture'
-                : 'Live iframe preview'}
+              <KeyRound size={16} strokeWidth={1.75} aria-hidden />
+              API &amp; keys
             </button>
             <button
               type="button"

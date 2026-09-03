@@ -25,8 +25,7 @@ const defaultProps = {
   canReorder: false,
   theme: 'light' as const,
   onToggleTheme: vi.fn(),
-  websitePreviewMode: 'screenshot' as const,
-  onToggleWebsitePreviewMode: vi.fn(),
+  onOpenScreenshotSettings: vi.fn(),
   onOpenShortcuts: vi.fn(),
   onTakeTour: vi.fn(),
   layoutsRef: createRef<HTMLDivElement>(),
@@ -39,13 +38,11 @@ describe('IconRail', () => {
     expect(screen.getByRole('button', { name: /^Settings$/i })).toBeInTheDocument();
   });
 
-  it('opens the settings menu with theme, preview mode, shortcuts, and tour items', () => {
+  it('opens the settings menu with theme, screenshot settings, shortcuts, and tour items', () => {
     render(<IconRail {...defaultProps} />);
     fireEvent.click(screen.getByRole('button', { name: /^Settings$/i }));
     expect(screen.getByRole('menuitem', { name: /Dark mode/i })).toBeInTheDocument();
-    expect(
-      screen.getByRole('menuitem', { name: /Live iframe preview/i }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole('menuitem', { name: /API & keys/i })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: /Keyboard shortcuts/i })).toBeInTheDocument();
     expect(screen.getByRole('menuitem', { name: /Take tour/i })).toBeInTheDocument();
   });
@@ -58,25 +55,20 @@ describe('IconRail', () => {
     expect(onToggleTheme).toHaveBeenCalledTimes(1);
   });
 
-  it('toggles website preview mode from the settings menu', () => {
-    const onToggleWebsitePreviewMode = vi.fn();
-    render(
-      <IconRail
-        {...defaultProps}
-        onToggleWebsitePreviewMode={onToggleWebsitePreviewMode}
-      />,
-    );
-    fireEvent.click(screen.getByRole('button', { name: /^Settings$/i }));
-    fireEvent.click(screen.getByRole('menuitem', { name: /Live iframe preview/i }));
-    expect(onToggleWebsitePreviewMode).toHaveBeenCalledTimes(1);
-  });
-
   it('opens shortcuts from the settings menu', () => {
     const onOpenShortcuts = vi.fn();
     render(<IconRail {...defaultProps} onOpenShortcuts={onOpenShortcuts} />);
     fireEvent.click(screen.getByRole('button', { name: /^Settings$/i }));
     fireEvent.click(screen.getByRole('menuitem', { name: /Keyboard shortcuts/i }));
     expect(onOpenShortcuts).toHaveBeenCalledTimes(1);
+  });
+
+  it('opens screenshot settings from the settings menu', () => {
+    const onOpenScreenshotSettings = vi.fn();
+    render(<IconRail {...defaultProps} onOpenScreenshotSettings={onOpenScreenshotSettings} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Settings$/i }));
+    fireEvent.click(screen.getByRole('menuitem', { name: /API & keys/i }));
+    expect(onOpenScreenshotSettings).toHaveBeenCalledTimes(1);
   });
 
   it('restarts the tour from the settings menu', () => {

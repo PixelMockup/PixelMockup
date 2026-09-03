@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import type { DeviceItem } from './App';
-import deviceDimensions from './data/device_dimensions.json';
+import deviceDimensions from './assets/device_dimensions.json';
 import { CATEGORY_ORDER } from './deviceScale';
 import { isPriorityPhone, parseBrand, parseProductFamily } from './deviceMeta';
 

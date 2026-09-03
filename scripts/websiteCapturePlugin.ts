@@ -88,23 +88,22 @@ async function getBrowser(): Promise<Browser> {
   if (!browserPromise) {
     const executablePath = resolveChromePath();
     const args = ['--disable-dev-shm-usage'];
+
     if (disableSandbox()) args.unshift('--no-sandbox');
     browserPromise = chromium
       .launch({
         headless: true,
-        // Prefer the system browser (Fedora RPM etc.); fall back to any
-        // Playwright-managed Chromium if no system install is found.
-        ...(executablePath ? { executablePath } : {}),
+        // Use Playwright's bundled Chromium if no system Chrome found
+        ...(executablePath ? { executablePath } : { channel: 'chromium' }),
         args,
       })
       .catch((err) => {
-        // Reset so a later request can retry (e.g. after installing Chrome).
         browserPromise = null;
         const hint = executablePath
           ? `Failed to launch Chrome at ${executablePath}.`
-          : 'No system Chrome/Chromium found. Install google-chrome-stable or set PIXEL_MOCKUP_CHROME.';
+          : 'Failed to launch Playwright Chromium. Run `npx playwright install chromium`';
         throw new Error(
-          `${hint} ${err instanceof Error ? err.message : String(err)}`,
+          `${hint}\n${err instanceof Error ? err.message : String(err)}`
         );
       });
   }
