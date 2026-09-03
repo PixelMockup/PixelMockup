@@ -3,7 +3,6 @@
  * Routes capture requests through the selected cloud provider or local Playwright.
  */
 
-import { sign } from 'crypto';
 import { storageGet, storageSet } from './storage';
 import type { Provider } from './types/screenshot';
 
@@ -209,7 +208,7 @@ export async function captureWithFallback(
   // Priority 1: User's preferred provider
   if (userConfig?.apiKey && userConfig.provider === 'screenshotapi') {
     try {
-      const dataUrl = await captureWithScreenshotApi(url, width, height, userConfig.apiKey);
+      const dataUrl = await captureWithScreenshotApi(url, width, height, userConfig.apiKey, signal);
       return { dataUrl, provider: 'screenshotapi' };
     } catch (err) {
       errors.push({
@@ -245,7 +244,7 @@ export async function captureWithFallback(
   // Priority 3: App's default ScreenshotAPI key
   if (appApiKey) {
     try {
-      const dataUrl = await captureWithScreenshotApi(url, width, height, appApiKey);
+      const dataUrl = await captureWithScreenshotApi(url, width, height, appApiKey, signal);
       return { dataUrl, provider: 'screenshotapi' };
     } catch (err) {
       errors.push({
