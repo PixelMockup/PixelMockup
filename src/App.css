@@ -1222,8 +1222,30 @@
   padding-bottom: calc(12px + var(--ms-safe-b));
   background: var(--ms-stage-inner);
   min-height: 0;
+  /* container-type: size establishes the cqw/cqh reference for the artboard,
+     but size containment forces overflow to clip (not scroll) on this box.
+     Scrolling for zoomed-in artboards is handled on a dedicated inner
+     wrapper so cqw/cqh keep resolving against the stage. */
   container-type: size;
+  container-name: ms-stage;
   position: relative;
+}
+
+/* Scrollable viewport for the artboard. Holds the true-pixel artboard when
+   zoomed to 50%/100%/150%; safe `margin:auto` centering means it shows
+   centered when smaller than the viewport and scrolls from the top-left
+   when it overflows. */
+.ms-stage__canvas {
+  flex: 1;
+  align-self: stretch;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  overflow: auto;
+}
+
+.ms-stage__canvas > .ms-artboard {
+  margin: auto;
 }
 
 .ms-view-zoom {
@@ -2074,6 +2096,12 @@
 
   .ms-stage > .ms-view-zoom {
     display: none;
+  }
+
+  /* Reserve room for the floating mobile toolbar (and dock) so the artboard
+     is never hidden behind them. */
+  .ms-stage__canvas {
+    padding-bottom: calc(84px + var(--ms-safe-b));
   }
 
   .ms-mobile-toolbar {
