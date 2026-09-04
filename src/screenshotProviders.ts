@@ -80,8 +80,9 @@ async function captureWithMicrolink(
     url: url,
     screenshot: 'true',
     'screenshot.type': 'png',
-    'screenshot.width': String(width),
-    'screenshot.height': String(height),
+    'viewport.width': String(width),
+    'viewport.height': String(height),
+    'viewport.isMobile': String(width < 768),
     embed: 'screenshot.url',
   });
   const headers: Record<string, string> = {};
@@ -381,8 +382,8 @@ async function captureMicrolink(
     url,
     screenshot: 'true',
     meta: 'false',
-    'screenshot.width': String(Math.min(1920, Math.max(1, Math.round(width)))),
-    'screenshot.height': String(Math.min(1080, Math.max(1, Math.round(height)))),
+    width: String(Math.min(1920, Math.max(1, Math.round(width)))),
+    height: String(Math.min(1080, Math.max(1, Math.round(height)))),
     embed: 'screenshot.url',
   });
 

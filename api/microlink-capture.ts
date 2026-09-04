@@ -101,6 +101,7 @@ export async function handler(req: VercelRequest, res: VercelResponse): Promise<
     meta: 'false',
     'viewport.width': String(Math.min(1920, Math.max(1, Math.round(Number(width))))),
     'viewport.height': String(Math.min(1080, Math.max(1, Math.round(Number(height))))),
+    'viewport.isMobile': String(Number(width) < 768),
   });
 
   const baseUrl = userApiKey ? 'https://pro.microlink.io' : 'https://api.microlink.io';
