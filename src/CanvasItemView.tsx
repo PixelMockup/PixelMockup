@@ -229,7 +229,10 @@ function CanvasItemScreen({
     );
   }
   if (websiteUrl) {
-    const viewport = getWebsiteViewport(item.category, item.catalogFile);
+    const viewport =
+      item.category === 'phones'
+        ? { width: screen.width, height: screen.height }
+        : getWebsiteViewport(item.category, item.catalogFile);
     const rxPct = screen.width > 0 ? (screen.rx / screen.width) * 100 : 0;
     return (
       <div

@@ -1537,11 +1537,13 @@ export default function MockupStudio({
         return;
       }
       captureNoticeUrlRef.current = null;
-      // Hosted builds: one probe, then dialog — avoid N device POSTs to a
-      // missing /__capture_website endpoint.
-      const available = await ensureCaptureAvailable();
-      if (!available) {
-        openCaptureNotice(captureUnavailableNotice(), normalized);
+      // Only probe Playwright endpoint for local captures.
+      // Cloud providers (microlink/screenshotapi) don't need it.
+      if (getScreenshotProvider() === 'playwright') {
+        const available = await ensureCaptureAvailable();
+        if (!available) {
+          openCaptureNotice(captureUnavailableNotice(), normalized);
+        }
       }
       applyWebsiteUrl(normalized);
     })();
@@ -1550,9 +1552,11 @@ export default function MockupStudio({
   const showOnDevices = async (url: string) => {
     const ok = await applyLayoutPreset('apple-lineup');
     if (!ok) return;
-    const available = await ensureCaptureAvailable();
-    if (!available) {
-      openCaptureNotice(captureUnavailableNotice(), url);
+    if (getScreenshotProvider() === 'playwright') {
+      const available = await ensureCaptureAvailable();
+      if (!available) {
+        openCaptureNotice(captureUnavailableNotice(), url);
+      }
     }
     applyWebsiteUrl(url);
   };
