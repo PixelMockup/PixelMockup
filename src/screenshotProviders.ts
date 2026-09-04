@@ -174,8 +174,8 @@ async function captureWithLocalPlaywright(
     let isHtml = false;
     const data = await response.json().catch(() => { isHtml = true; return {}; });
 
-    // ✅ Short-circuit if the endpoint is missing (404 HTML response)
-    if (response.status === 404 && isHtml) {
+    // Any non-ok response with HTML body means the endpoint isn't available
+    if (!response.ok && isHtml) {
       const err = new Error('capture server unavailable');
       (err as any).isCaptureUnavailable = true;
       throw err;

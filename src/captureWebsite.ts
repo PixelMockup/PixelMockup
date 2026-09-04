@@ -403,7 +403,9 @@ export async function captureOne(
       const messageSaysUnavailable =
         err instanceof Error && /capture server unavailable/i.test(err.message);
 
-      if (isMarkedUnavailable || messageSaysUnavailable) {
+      if (isMarkedUnavailable) {
+        captureEndpointState = 'unavailable';
+      } else if (messageSaysUnavailable) {
         captureEndpointState = 'unavailable';
       }
 
