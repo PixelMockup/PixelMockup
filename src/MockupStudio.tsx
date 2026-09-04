@@ -2043,37 +2043,39 @@ export default function MockupStudio({
 
             <ViewZoomBar viewZoom={viewZoom} onViewZoom={setViewZoom} />
 
-            <ArtboardCanvas
-              canvasRef={canvasRef}
-              viewZoom={viewZoom}
-              artboardW={artboardW}
-              artboardH={artboardH}
-              snapGuides={snapGuides}
-              canvasItems={canvasItems}
-              selectedIdSet={selectedIdSet}
-              hoveredId={hoveredId}
-              dragInfo={dragInfo}
-              screenDrag={screenDrag}
-              websiteUrl={websiteUrl}
-              websitePreviewMode={websitePreviewMode}
-              setSelectedIds={setSelectedIds}
-              setHoveredId={setHoveredId}
-              openContextMenu={openContextMenu}
-              handlePointerDown={handlePointerDown}
-              handleScreenPointerDown={handleScreenPointerDown}
-              handleAddAndSelect={handleAddAndSelect}
-              findDeviceByPath={findDeviceByPath}
-              onWebsiteCaptureFailed={(notice) =>
-                openCaptureNotice(notice, websiteUrl ?? notice.summary)
-              }
-              onWebsiteCaptureDetails={(notice) => {
-                setCaptureNotice(notice);
-              }}
-              onSwitchToIframePreview={() => {
-                setWebsitePreviewMode('iframe');
-                announce('Switched to live iframe preview');
-              }}
-            />
+            <div className="ms-stage__canvas">
+              <ArtboardCanvas
+                canvasRef={canvasRef}
+                viewZoom={viewZoom}
+                artboardW={artboardW}
+                artboardH={artboardH}
+                snapGuides={snapGuides}
+                canvasItems={canvasItems}
+                selectedIdSet={selectedIdSet}
+                hoveredId={hoveredId}
+                dragInfo={dragInfo}
+                screenDrag={screenDrag}
+                websiteUrl={websiteUrl}
+                websitePreviewMode={websitePreviewMode}
+                setSelectedIds={setSelectedIds}
+                setHoveredId={setHoveredId}
+                openContextMenu={openContextMenu}
+                handlePointerDown={handlePointerDown}
+                handleScreenPointerDown={handleScreenPointerDown}
+                handleAddAndSelect={handleAddAndSelect}
+                findDeviceByPath={findDeviceByPath}
+                onWebsiteCaptureFailed={(notice) =>
+                  openCaptureNotice(notice, websiteUrl ?? notice.summary)
+                }
+                onWebsiteCaptureDetails={(notice) => {
+                  setCaptureNotice(notice);
+                }}
+                onSwitchToIframePreview={() => {
+                  setWebsitePreviewMode('iframe');
+                  announce('Switched to live iframe preview');
+                }}
+              />
+            </div>
 
             {placingPath != null ? (
               <div className="ms-progress-loader-stage">
