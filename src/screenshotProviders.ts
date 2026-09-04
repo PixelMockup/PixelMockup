@@ -80,8 +80,9 @@ async function captureWithMicrolink(
     url: url,
     screenshot: 'true',
     'screenshot.type': 'png',
-    'screenshot.width': String(width),
-    'screenshot.height': String(height),
+    'viewport.width': String(width),
+    'viewport.height': String(height),
+    'viewport.isMobile': String(width < 768),
     embed: 'screenshot.url',
   });
   const headers: Record<string, string> = {};
@@ -174,8 +175,8 @@ async function captureWithLocalPlaywright(
     let isHtml = false;
     const data = await response.json().catch(() => { isHtml = true; return {}; });
 
-    // ✅ Short-circuit if the endpoint is missing (404 HTML response)
-    if (response.status === 404 && isHtml) {
+    // Any non-ok response with HTML body means the endpoint isn't available
+    if (!response.ok && isHtml) {
       const err = new Error('capture server unavailable');
       (err as any).isCaptureUnavailable = true;
       throw err;
@@ -381,8 +382,8 @@ async function captureMicrolink(
     url,
     screenshot: 'true',
     meta: 'false',
-    'screenshot.width': String(Math.min(1920, Math.max(1, Math.round(width)))),
-    'screenshot.height': String(Math.min(1080, Math.max(1, Math.round(height)))),
+    width: String(Math.min(1920, Math.max(1, Math.round(width)))),
+    height: String(Math.min(1080, Math.max(1, Math.round(height)))),
     embed: 'screenshot.url',
   });
 

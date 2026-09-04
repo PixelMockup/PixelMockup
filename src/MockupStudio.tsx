@@ -78,7 +78,6 @@ import {
   normalizeWebsiteUrl,
   websiteHostname,
 } from './websiteUrl';
-import { warmProxy } from './websiteProxy';
 import EmptyHero from './EmptyHero';
 import IconRail from './IconRail';
 import ProgressLoader from './ProgressLoader';
@@ -114,7 +113,6 @@ import {
 import { storageGet, storageSet } from './storage';
 import { useKeybindings } from './useKeybindings';
 import { useTheme } from './useTheme';
-import { useWebsitePreviewMode } from './useWebsitePreviewMode';
 import { useCredits } from './useCredits';
 import {
   getScreenshotProvider,
@@ -410,10 +408,6 @@ export default function MockupStudio({
 }: Readonly<MockupStudioProps>) {
   const platform = useMemo(() => detectPlatform(), []);
   const { theme, toggleTheme } = useTheme();
-  const {
-    websitePreviewMode,
-    setWebsitePreviewMode,
-  } = useWebsitePreviewMode();
   const [bindings, setBindings] = useState<BindingMap>(() =>
     loadBindingsForPlatform(platform),
   );
@@ -440,7 +434,6 @@ export default function MockupStudio({
     resolve: (ok: boolean) => void;
   } | null>(null);
   const captureNoticeUrlRef = useRef<string | null>(null);
-  const iframeFallbackSessionRef = useRef(false);
 
   // Screenshot provider settings
   const [screenshotProvider, setScreenshotProviderState] = useState<ScreenshotProvider>(
@@ -624,13 +617,6 @@ export default function MockupStudio({
       setCategoryFilter(phones ?? categories[0]);
     }
   }, [categories, categoryFilter]);
-
-  // Pre-warm the proxy for the global site so the first iframe view hits a
-  // warm server/CDN cache regardless of what was loaded before.
-  useEffect(() => {
-    if (!websiteUrl || websitePreviewMode !== 'iframe') return;
-    warmProxy(websiteUrl);
-  }, [websiteUrl, websitePreviewMode]);
 
   const categoryDevices = useMemo(() => {
     if (!effectiveCategory) return [] as DeviceItem[];
@@ -1551,19 +1537,13 @@ export default function MockupStudio({
         return;
       }
       captureNoticeUrlRef.current = null;
-      // Hosted builds: one probe, then dialog — avoid N device POSTs to a
-      // missing /__capture_website endpoint.
-      const available = await ensureCaptureAvailable();
-      if (!available) {
-        if (
-          websitePreviewMode === 'screenshot' &&
-          !iframeFallbackSessionRef.current
-        ) {
-          iframeFallbackSessionRef.current = true;
-          setWebsitePreviewMode('iframe');
-          announce('Switched to live iframe preview (capture unavailable)');
+      // Only probe Playwright endpoint for local captures.
+      // Cloud providers (microlink/screenshotapi) don't need it.
+      if (getScreenshotProvider() === 'playwright') {
+        const available = await ensureCaptureAvailable();
+        if (!available) {
+          openCaptureNotice(captureUnavailableNotice(), normalized);
         }
-        openCaptureNotice(captureUnavailableNotice(), normalized);
       }
       applyWebsiteUrl(normalized);
     })();
@@ -1572,17 +1552,11 @@ export default function MockupStudio({
   const showOnDevices = async (url: string) => {
     const ok = await applyLayoutPreset('apple-lineup');
     if (!ok) return;
-    const available = await ensureCaptureAvailable();
-    if (!available) {
-      if (
-        websitePreviewMode === 'screenshot' &&
-        !iframeFallbackSessionRef.current
-      ) {
-        iframeFallbackSessionRef.current = true;
-        setWebsitePreviewMode('iframe');
-        announce('Switched to live iframe preview (capture unavailable)');
+    if (getScreenshotProvider() === 'playwright') {
+      const available = await ensureCaptureAvailable();
+      if (!available) {
+        openCaptureNotice(captureUnavailableNotice(), url);
       }
-      openCaptureNotice(captureUnavailableNotice(), url);
     }
     applyWebsiteUrl(url);
   };
@@ -2056,7 +2030,6 @@ export default function MockupStudio({
                 dragInfo={dragInfo}
                 screenDrag={screenDrag}
                 websiteUrl={websiteUrl}
-                websitePreviewMode={websitePreviewMode}
                 setSelectedIds={setSelectedIds}
                 setHoveredId={setHoveredId}
                 openContextMenu={openContextMenu}
@@ -2069,10 +2042,6 @@ export default function MockupStudio({
                 }
                 onWebsiteCaptureDetails={(notice) => {
                   setCaptureNotice(notice);
-                }}
-                onSwitchToIframePreview={() => {
-                  setWebsitePreviewMode('iframe');
-                  announce('Switched to live iframe preview');
                 }}
               />
             </div>

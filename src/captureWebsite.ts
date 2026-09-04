@@ -89,11 +89,11 @@ const NOTICES: Record<CaptureErrorKind, CaptureNotice> = {
   ),
   unreachable_server: notice(
     'unreachable_server',
-    'Capture isn’t available here',
-    'Automatic website screenshots aren’t available on this hosted build.',
-    'Capture runs with the Vite server (`npm run dev`, `npm run preview`) or the Docker image (`docker compose up`). Static hosts such as Vercel ship the UI only — no capture endpoint.',
-    'Try Settings → Live iframe preview for an on-canvas embed (many sites block it), upload your own screenshot, or run `npm run dev` / `docker compose up` for full capture and export.',
-    'Website capture needs a local or Docker run (`npm run dev` or `docker compose up`). On this static host, use live iframe preview or upload a screenshot.',
+    'Capture isn\'t available here',
+    'Automatic website screenshots aren\'t available on this hosted build.',
+    'Screenshot capture requires a cloud provider. Try selecting Microlink (free tier) or ScreenshotAPI in Settings, or run `npm run dev` / `docker compose up` for local capture.',
+    'Select a cloud provider in Settings (Microlink or ScreenshotAPI), or run locally with `npm run dev` / `docker compose up`.',
+    'Screenshot capture needs a cloud provider or local run (`npm run dev` or `docker compose up`).',
   ),
   chrome_missing: notice(
     'chrome_missing',
@@ -403,7 +403,9 @@ export async function captureOne(
       const messageSaysUnavailable =
         err instanceof Error && /capture server unavailable/i.test(err.message);
 
-      if (isMarkedUnavailable || messageSaysUnavailable) {
+      if (isMarkedUnavailable) {
+        captureEndpointState = 'unavailable';
+      } else if (messageSaysUnavailable) {
         captureEndpointState = 'unavailable';
       }
 
