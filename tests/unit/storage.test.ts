@@ -69,10 +69,10 @@ describe('storageGet / storageSet', () => {
   });
 
   it('accepts website preview mode values', () => {
-    storageSet('pixelMockup.websitePreviewMode', 'iframe');
-    expect(localStorage.getItem('pixelMockup.websitePreviewMode')).toBe('iframe');
+    storageSet('pixelMockup.websitePreviewMode', 'screenshot');
+    expect(localStorage.getItem('pixelMockup.websitePreviewMode')).toBe('screenshot');
     storageSet('pixelMockup.websitePreviewMode', 'embed');
-    expect(localStorage.getItem('pixelMockup.websitePreviewMode')).toBe('iframe');
+    expect(localStorage.getItem('pixelMockup.websitePreviewMode')).toBe('screenshot');
   });
 
   it('rejects writes to keys outside the namespace', () => {

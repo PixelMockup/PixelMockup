@@ -7,7 +7,6 @@ import { artboardWidthCss, type SnapGuides, type ViewZoom } from './artboardSnap
 import CanvasItemView from './CanvasItemView';
 import SnapGuidesOverlay from './SnapGuidesOverlay';
 import type { CaptureNotice } from './captureWebsite';
-import type { WebsitePreviewMode } from './useWebsitePreviewMode';
 
 type ArtboardCanvasProps = {
   canvasRef: React.RefObject<HTMLDivElement | null>;
@@ -21,7 +20,6 @@ type ArtboardCanvasProps = {
   dragInfo: { groupIds: string[] };
   screenDrag: { id: string } | null;
   websiteUrl: string | null;
-  websitePreviewMode?: WebsitePreviewMode;
   setSelectedIds: React.Dispatch<React.SetStateAction<string[]>>;
   setHoveredId: React.Dispatch<React.SetStateAction<string | null>>;
   openContextMenu: (
@@ -53,7 +51,6 @@ export default function ArtboardCanvas({
   dragInfo,
   screenDrag,
   websiteUrl,
-  websitePreviewMode = 'screenshot',
   setSelectedIds,
   setHoveredId,
   openContextMenu,
@@ -63,7 +60,6 @@ export default function ArtboardCanvas({
   findDeviceByPath,
   onWebsiteCaptureFailed,
   onWebsiteCaptureDetails,
-  onSwitchToIframePreview,
 }: ArtboardCanvasProps) {
   const onClickBackground = (e: React.MouseEvent) => {
     if (e.target === canvasRef.current) {
@@ -166,7 +162,6 @@ export default function ArtboardCanvas({
           artboardW={artboardW}
           artboardH={artboardH}
           websiteUrl={websiteUrl}
-          websitePreviewMode={websitePreviewMode}
           screenDrag={screenDrag}
           onPointerDown={handlePointerDown}
           onContextMenu={(e, item) => openContextMenu(e, 'device', item)}
@@ -177,7 +172,6 @@ export default function ArtboardCanvas({
           }
           onWebsiteCaptureFailed={onWebsiteCaptureFailed}
           onWebsiteCaptureDetails={onWebsiteCaptureDetails}
-          onSwitchToIframePreview={onSwitchToIframePreview}
         />
       ))}
     </div>

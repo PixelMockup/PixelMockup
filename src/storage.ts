@@ -6,7 +6,7 @@ const CONTROL_CHARS = /\p{Cc}/gu;
 
 /** Duplicate allowlists here to avoid circular imports with domain modules. */
 const THEME_VALUES = new Set(['light', 'dark']);
-const WEBSITE_PREVIEW_MODE_VALUES = new Set(['screenshot', 'iframe']);
+const WEBSITE_PREVIEW_MODE_VALUES = new Set(['screenshot']);
 const SCREENSHOT_PROVIDER_VALUES = new Set(['playwright', 'screenshotapi', 'microlink']);
 const FLAG_VALUES = new Set(['0', '1']);
 const ARTBOARD_FORMAT_VALUES = new Set([
