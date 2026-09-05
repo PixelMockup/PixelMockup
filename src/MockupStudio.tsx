@@ -65,10 +65,12 @@ import {
 } from './imageContentBounds';
 import { loadNativeSize } from './loadImage';
 import {
+  captureUnavailableNotice,
   captureWebsiteScreenshotsCached,
   classifyCaptureError,
   classifyWebsiteInput,
   clearWebsiteCaptureCache,
+  ensureCaptureAvailable,
   type CaptureNotice,
 } from './captureWebsite';
 import {
@@ -91,6 +93,7 @@ import {
   type LayoutPreset,
 } from './layoutPresets';
 import KeybindingsPanel from './KeybindingsPanel';
+import ScreenshotSettings from './components/ScreenshotSettings';
 import ContextMenu, { type ContextMenuState } from './ContextMenu';
 import LibraryPanel, {
   LIBRARY_W_MAX,
@@ -109,8 +112,18 @@ import {
 } from './keybindings';
 import { storageGet, storageSet } from './storage';
 import { useKeybindings } from './useKeybindings';
-import { usePresence } from './usePresence';
 import { useTheme } from './useTheme';
+import { useCredits } from './useCredits';
+import {
+  getScreenshotProvider,
+  setScreenshotProvider,
+  getScreenshotApiKey,
+  setScreenshotApiKey,
+  getMicrolinkApiKey,
+  setMicrolinkApiKey,
+  type ScreenshotProvider,
+} from './screenshotProviders';
+import { onCreditsUpdate } from './captureWebsite';
 import MobileDock from './MobileDock';
 import StatusShell from './StatusShell';
 import ArtboardCanvas from './ArtboardCanvas';
@@ -395,11 +408,11 @@ export default function MockupStudio({
 }: Readonly<MockupStudioProps>) {
   const platform = useMemo(() => detectPlatform(), []);
   const { theme, toggleTheme } = useTheme();
-  const activeUsers = usePresence();
   const [bindings, setBindings] = useState<BindingMap>(() =>
     loadBindingsForPlatform(platform),
   );
   const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [screenshotSettingsOpen, setScreenshotSettingsOpen] = useState(false);
   const [libraryWidth, setLibraryWidth] = useState(readLibraryWidth);
   const [viewZoom, setViewZoom] = useState<ViewZoom>('fit');
   const [snapGuides, setSnapGuides] = useState<SnapGuides>(NO_GUIDES);
@@ -421,6 +434,33 @@ export default function MockupStudio({
     resolve: (ok: boolean) => void;
   } | null>(null);
   const captureNoticeUrlRef = useRef<string | null>(null);
+
+  // Screenshot provider settings
+  const [screenshotProvider, setScreenshotProviderState] = useState<ScreenshotProvider>(
+    getScreenshotProvider,
+  );
+  const [screenshotApiKeyState, setScreenshotApiKeyState] = useState(
+    getScreenshotApiKey,
+  );
+  const [microlinkApiKeyState, setMicrolinkApiKeyState] = useState(
+    getMicrolinkApiKey,
+  );
+  const { credits, updateCredits } = useCredits();
+
+  useEffect(() => {
+    onCreditsUpdate(updateCredits);
+  }, [updateCredits]);
+
+
+  const handleScreenshotApiKeyChange = useCallback((key: string) => {
+    setScreenshotApiKeyState(key);
+    setScreenshotApiKey(key);
+  }, []);
+
+  const handleMicrolinkApiKeyChange = useCallback((key: string) => {
+    setMicrolinkApiKeyState(key);
+    setMicrolinkApiKey(key);
+  }, []);
   /** Global website shown on all devices without a per-device screen image. */
   const [websiteUrl, setWebsiteUrl] = useState<string | null>(null);
   const [websiteUrlDraft, setWebsiteUrlDraft] = useState('');
@@ -522,6 +562,18 @@ export default function MockupStudio({
       tone === 'error' ? 3200 : 1600,
     );
   };
+
+  const handleScreenshotProviderChange = useCallback((provider: ScreenshotProvider) => {
+    setScreenshotProviderState(provider);
+    setScreenshotProvider(provider);
+    const label =
+      provider === 'playwright'
+        ? 'Local Playwright'
+        : provider === 'screenshotapi'
+          ? 'ScreenshotAPI'
+          : 'Microlink';
+    announce(`${label} selected`);
+  }, []);
 
   const openCaptureNotice = useCallback((notice: CaptureNotice, urlKey?: string) => {
     if (urlKey != null) {
@@ -1466,10 +1518,10 @@ export default function MockupStudio({
   const emptyDownloadConfirmRef = useRef(false);
 
   const applyWebsiteUrl = (url: string) => {
+    const n = canvasItemsRef.current.length;
     clearWebsiteCaptureCache();
     setWebsiteUrl(url);
     setWebsiteUrlDraft(url);
-    const n = canvasItemsRef.current.length;
     setCapturingHint(
       `Updating ${n} screen${n === 1 ? '' : 's'}…`,
     );
@@ -1478,19 +1530,34 @@ export default function MockupStudio({
   };
 
   const tryApplyWebsiteUrl = (raw: string) => {
-    const normalized = normalizeWebsiteUrl(raw);
-    if (!normalized) {
-      const notice = classifyWebsiteInput(raw);
-      openCaptureNotice(notice);
-      return;
-    }
-    captureNoticeUrlRef.current = null;
-    applyWebsiteUrl(normalized);
+    void (async () => {
+      const normalized = normalizeWebsiteUrl(raw);
+      if (!normalized) {
+        openCaptureNotice(classifyWebsiteInput(raw));
+        return;
+      }
+      captureNoticeUrlRef.current = null;
+      // Only probe Playwright endpoint for local captures.
+      // Cloud providers (microlink/screenshotapi) don't need it.
+      if (getScreenshotProvider() === 'playwright') {
+        const available = await ensureCaptureAvailable();
+        if (!available) {
+          openCaptureNotice(captureUnavailableNotice(), normalized);
+        }
+      }
+      applyWebsiteUrl(normalized);
+    })();
   };
 
   const showOnDevices = async (url: string) => {
     const ok = await applyLayoutPreset('apple-lineup');
     if (!ok) return;
+    if (getScreenshotProvider() === 'playwright') {
+      const available = await ensureCaptureAvailable();
+      if (!available) {
+        openCaptureNotice(captureUnavailableNotice(), url);
+      }
+    }
     applyWebsiteUrl(url);
   };
 
@@ -1832,7 +1899,8 @@ export default function MockupStudio({
         downloadMenuOpen={exportMenuOpen}
         onDownloadMenuOpenChange={setExportMenuOpen}
         downloadMenuRef={downloadMenuRef}
-        activeUsers={activeUsers}
+        credits={credits}
+        onOpenScreenshotSettings={() => setScreenshotSettingsOpen(true)}
       />
 
       <div className="ms-body">
@@ -1861,6 +1929,7 @@ export default function MockupStudio({
           canReorder={canBringForward || canPushBackward}
           theme={theme}
           onToggleTheme={toggleTheme}
+          onOpenScreenshotSettings={() => setScreenshotSettingsOpen(true)}
           onOpenShortcuts={() => setShortcutsOpen(true)}
           onTakeTour={onTakeTour}
           layoutsRef={layoutsMenuRef}
@@ -1948,32 +2017,34 @@ export default function MockupStudio({
 
             <ViewZoomBar viewZoom={viewZoom} onViewZoom={setViewZoom} />
 
-            <ArtboardCanvas
-              canvasRef={canvasRef}
-              viewZoom={viewZoom}
-              artboardW={artboardW}
-              artboardH={artboardH}
-              snapGuides={snapGuides}
-              canvasItems={canvasItems}
-              selectedIdSet={selectedIdSet}
-              hoveredId={hoveredId}
-              dragInfo={dragInfo}
-              screenDrag={screenDrag}
-              websiteUrl={websiteUrl}
-              setSelectedIds={setSelectedIds}
-              setHoveredId={setHoveredId}
-              openContextMenu={openContextMenu}
-              handlePointerDown={handlePointerDown}
-              handleScreenPointerDown={handleScreenPointerDown}
-              handleAddAndSelect={handleAddAndSelect}
-              findDeviceByPath={findDeviceByPath}
-              onWebsiteCaptureFailed={(notice) =>
-                openCaptureNotice(notice, websiteUrl ?? notice.summary)
-              }
-              onWebsiteCaptureDetails={(notice) => {
-                setCaptureNotice(notice);
-              }}
-            />
+            <div className="ms-stage__canvas">
+              <ArtboardCanvas
+                canvasRef={canvasRef}
+                viewZoom={viewZoom}
+                artboardW={artboardW}
+                artboardH={artboardH}
+                snapGuides={snapGuides}
+                canvasItems={canvasItems}
+                selectedIdSet={selectedIdSet}
+                hoveredId={hoveredId}
+                dragInfo={dragInfo}
+                screenDrag={screenDrag}
+                websiteUrl={websiteUrl}
+                setSelectedIds={setSelectedIds}
+                setHoveredId={setHoveredId}
+                openContextMenu={openContextMenu}
+                handlePointerDown={handlePointerDown}
+                handleScreenPointerDown={handleScreenPointerDown}
+                handleAddAndSelect={handleAddAndSelect}
+                findDeviceByPath={findDeviceByPath}
+                onWebsiteCaptureFailed={(notice) =>
+                  openCaptureNotice(notice, websiteUrl ?? notice.summary)
+                }
+                onWebsiteCaptureDetails={(notice) => {
+                  setCaptureNotice(notice);
+                }}
+              />
+            </div>
 
             {placingPath != null ? (
               <div className="ms-progress-loader-stage">
@@ -2111,6 +2182,12 @@ export default function MockupStudio({
         hasSelection={hasSelection}
         theme={theme}
         onToggleTheme={toggleTheme}
+        screenshotProvider={screenshotProvider}
+        onScreenshotProviderChange={handleScreenshotProviderChange}
+        screenshotApiKey={screenshotApiKeyState}
+        onScreenshotApiKeyChange={handleScreenshotApiKeyChange}
+        microlinkApiKey={microlinkApiKeyState}
+        onMicrolinkApiKeyChange={handleMicrolinkApiKeyChange}
         onOpenShortcuts={() => setShortcutsOpen(true)}
         onTakeTour={onTakeTour}
       />
@@ -2121,6 +2198,12 @@ export default function MockupStudio({
         bindings={bindings}
         onBindingsChange={setBindings}
         platform={platform}
+      />
+
+      <ScreenshotSettings
+        isOpen={screenshotSettingsOpen}
+        onClose={() => setScreenshotSettingsOpen(false)}
+        onNotify={(msg, tone) => announce(msg, tone)}
       />
 
       {contextMenu ? (

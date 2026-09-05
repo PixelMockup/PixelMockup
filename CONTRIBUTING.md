@@ -45,19 +45,27 @@ npm run test:all
 
 Both must pass before the PR is ready.
 
-## Website capture (local only)
+## Website capture
 
-Screenshot capture for “Show on devices” uses Vite middleware + Playwright Chrome. It only works with:
+Screenshot capture for “Show on devices” uses Vite middleware + Playwright Chrome. It works with:
 
 ```bash
 npm run dev
 # or
 npm run preview
+# or
+docker compose up --build   # http://localhost:4173
 ```
+
+| Surface | Live URL capture? |
+| --- | --- |
+| `npm run dev` / `preview` | Yes |
+| `docker compose up` | Yes |
+| Vercel preview / production | No — Settings → Live iframe preview, or upload a screenshot |
 
 - Prefer testing with `https://example.com`.
 - Capturing your own Vercel URL (e.g. `pixelmockup.vercel.app`) may time out under headless Chrome even when other sites work.
-- The static Vercel deployment does not expose `/__capture_website` to end users.
+- The static Vercel deployment does not expose `/__capture_website` to end users. Iframe preview is on-canvas only; on Vercel it loads through the `/api/proxy` serverless function (see `api/proxy.ts`), which bypasses `X-Frame-Options` / CSP embedding blocks by serving the page from the app's own origin.
 
 ## Required checks before promoting `dev` → `stable`
 

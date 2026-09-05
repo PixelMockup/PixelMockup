@@ -1,6 +1,7 @@
 import {
   AlignHorizontalJustifyCenter,
   AlignVerticalJustifyCenter,
+  KeyRound,
   HelpCircle,
   Keyboard,
   LayoutTemplate,
@@ -42,6 +43,7 @@ type Props = {
   canReorder: boolean;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
+  onOpenScreenshotSettings: () => void;
   onOpenShortcuts: () => void;
   onTakeTour?: () => void;
   layoutsRef: React.RefObject<HTMLDivElement | null>;
@@ -70,6 +72,7 @@ export default function IconRail({
   canReorder,
   theme,
   onToggleTheme,
+  onOpenScreenshotSettings,
   onOpenShortcuts,
   onTakeTour,
   layoutsRef,
@@ -306,6 +309,19 @@ export default function IconRail({
                 <Moon size={16} strokeWidth={1.75} aria-hidden />
               )}
               {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+            </button>
+            <div className="ms-menu__separator" aria-hidden />
+            <button
+              type="button"
+              role="menuitem"
+              className="ms-menu__item ms-menu__item--with-icon"
+              onClick={() => {
+                onOpenScreenshotSettings();
+                setSettingsOpen(false);
+              }}
+            >
+              <KeyRound size={16} strokeWidth={1.75} aria-hidden />
+              API &amp; keys
             </button>
             <button
               type="button"

@@ -3,14 +3,22 @@
  * middleware, with a shared cache so the canvas preview and export reuse
  * the same bytes for a given url + viewport.
  */
-
 import { CAPTURE_WEBSITE_PATH } from './capturePath';
 import { websiteInputIssue } from './websiteUrl';
+import {
+  type ScreenshotProvider,
+  type ProviderConfig,
+  captureWithFallback,
+  captureWithProvider,
+  getScreenshotProvider,
+  getScreenshotApiKey,
+  getMicrolinkApiKey,
+} from './screenshotProviders';
 
 export { CAPTURE_WEBSITE_PATH };
 
-const BUSY_RETRIES = 2;
-const BUSY_RETRY_DELAYS_MS = [500, 1000] as const;
+// const BUSY_RETRIES = 2;
+// const BUSY_RETRY_DELAYS_MS = [500, 1000] as const;
 
 const REMEDIATION_UPLOAD =
   'Try a public site that loads without a captcha or login wall, or take your own screenshot and upload it onto the device screens.';
@@ -23,6 +31,7 @@ export type CaptureErrorKind =
   | 'timeout'
   | 'busy'
   | 'forbidden_origin'
+  | 'cancelled'
   | 'generic';
 
 export type CaptureNotice = {
@@ -51,6 +60,10 @@ function notice(
   return { kind, title, body, reason, remediation, summary };
 }
 
+const USER_PROVIDER_KEY = 'pixelMockup_screenshotProvider';
+const USER_API_KEY = 'pixelMockup_screenshotApiKey';
+const APP_SCREENSHOT_API_KEY = 'YOUR_DEFAULT_SCREENSHOT_API_KEY_HERE'; // Replace with your actual key
+
 const OPAQUE_SERVER_MESSAGES = new Set([
   'capture failed',
   'invalid capture payload',
@@ -76,11 +89,11 @@ const NOTICES: Record<CaptureErrorKind, CaptureNotice> = {
   ),
   unreachable_server: notice(
     'unreachable_server',
-    'Capture server unavailable',
-    'Pixel Mockup couldn’t reach the local service that takes website screenshots.',
-    'Capture only runs while the app is started with the Vite server (`npm run dev` or `npm run preview`). A static build or a stopped server has no capture endpoint.',
-    'Start the app with `npm run dev` or `npm run preview`, then try again. Or upload your own screenshot onto the devices.',
-    'Could not reach the capture server. Run the app with `npm run dev` (or `npm run preview`).',
+    'Capture isn\'t available here',
+    'Automatic website screenshots aren\'t available on this hosted build.',
+    'Screenshot capture requires a cloud provider. Try selecting Microlink (free tier) or ScreenshotAPI in Settings, or run `npm run dev` / `docker compose up` for local capture.',
+    'Select a cloud provider in Settings (Microlink or ScreenshotAPI), or run locally with `npm run dev` / `docker compose up`.',
+    'Screenshot capture needs a cloud provider or local run (`npm run dev` or `docker compose up`).',
   ),
   chrome_missing: notice(
     'chrome_missing',
@@ -114,6 +127,14 @@ const NOTICES: Record<CaptureErrorKind, CaptureNotice> = {
     'Use the Pixel Mockup window opened by `npm run dev` or `npm run preview`, then try again. Or upload a screenshot instead.',
     'Capture request was blocked (wrong origin).',
   ),
+  cancelled: notice(
+    'cancelled',
+    'Capture cancelled',
+    'This capture was cancelled because a newer request replaced it.',
+    'Changing the website URL aborts in-flight captures so they don’t block the queue.',
+    'Wait for the new URL to finish loading on the devices.',
+    'Capture cancelled.',
+  ),
   generic: notice(
     'generic',
     'Couldn’t capture this website',
@@ -124,6 +145,23 @@ const NOTICES: Record<CaptureErrorKind, CaptureNotice> = {
   ),
 };
 
+/**
+ * Get user's configured provider from localStorage
+ */
+function getUserConfig(): ProviderConfig | undefined {
+  try {
+    const provider = localStorage.getItem(USER_PROVIDER_KEY) as ProviderConfig['provider'] | null;
+    const apiKey = localStorage.getItem(USER_API_KEY);
+
+    if (provider && apiKey) {
+      return { provider, apiKey };
+    }
+  } catch {
+    // localStorage might not be available
+  }
+  return undefined;
+}
+
 function isBusyErrorMessage(message: string): boolean {
   return /too many captures|429/i.test(message);
 }
@@ -132,12 +170,27 @@ function isOpaqueServerMessage(raw: string): boolean {
   return OPAQUE_SERVER_MESSAGES.has(raw.trim().toLowerCase());
 }
 
+function isAbortError(err: unknown): boolean {
+  if (err == null || typeof err !== 'object') return false;
+  const name = 'name' in err ? String(err.name) : '';
+  if (name === 'AbortError') return true;
+  const message = 'message' in err ? String(err.message) : '';
+  return /aborted|abort(ed)? by user|The operation was aborted/i.test(message);
+}
+
 function kindFromMessage(raw: string): CaptureErrorKind {
   const t = raw.trim();
+  if (/aborted|abort(ed)? by user|The operation was aborted/i.test(t)) {
+    return 'cancelled';
+  }
   if (/blocked host/i.test(t)) return 'blocked_host';
   if (/invalid or non-http\(s\) url/i.test(t)) return 'invalid_url';
   if (/forbidden origin/i.test(t)) return 'forbidden_origin';
-  if (/failed to fetch|networkerror|load failed/i.test(t)) {
+  if (
+    /failed to fetch|networkerror|load failed|capture server unavailable/i.test(
+      t,
+    )
+  ) {
     return 'unreachable_server';
   }
   if (/chrome|chromium|executable|launch/i.test(t)) return 'chrome_missing';
@@ -153,6 +206,7 @@ function kindFromMessage(raw: string): CaptureErrorKind {
 
 /** Structured notice for dialogs; `summary` stays toast/a11y friendly. */
 export function classifyCaptureError(err: unknown): CaptureNotice {
+  if (isAbortError(err)) return NOTICES.cancelled;
   const raw = (err instanceof Error ? err.message : String(err)).trim();
   const kind = kindFromMessage(raw);
   const base = NOTICES[kind];
@@ -185,95 +239,223 @@ function cacheKey(url: string, width: number, height: number): string {
   return `${url}|${Math.round(width)}x${Math.round(height)}`;
 }
 
+function cloudCacheKey(url: string, width: number, height: number, provider: ScreenshotProvider): string {
+  return `${provider}|${url}|${Math.round(width)}x${Math.round(height)}`;
+}
+
+/** Callback to update credit counts in the UI. */
+let creditUpdateCallback: ((
+  provider: string,
+  remaining: number | null,
+  extras?: { limit?: number | null; resetAt?: number | null },
+) => void) | null = null;
+
+/** Register a callback for credit updates after each cloud capture. */
+export function onCreditsUpdate(
+  cb: (
+    provider: string,
+    remaining: number | null,
+    extras?: { limit?: number | null; resetAt?: number | null },
+  ) => void,
+): void {
+  creditUpdateCallback = cb;
+}
+
 /** Resolved data URLs, keyed by url|WxH (shared by preview + export). */
 const captureCache = new Map<string, string>();
 /** In-flight requests, so identical viewports capture only once. */
 const pending = new Map<string, Promise<string>>();
+/** Controllers for in-flight fetches; aborted on cache clear / re-apply. */
+const inFlightControllers = new Set<AbortController>();
 
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => {
-    window.setTimeout(resolve, ms);
-  });
+/**
+ * Hosted static builds (Vercel) have no capture middleware. Probe once in
+ * production so Apply / N devices don't hammer a missing endpoint.
+ * Dev skips the probe — the Vite plugin is always present.
+ */
+type CaptureEndpointState = 'unknown' | 'available' | 'unavailable';
+let captureEndpointState: CaptureEndpointState = 'unknown';
+let captureProbeInFlight: Promise<boolean> | null = null;
+
+const CAPTURE_UNAVAILABLE_ERROR = 'capture server unavailable';
+
+/** Structured notice when capture is known missing (hosted/static). */
+export function captureUnavailableNotice(): CaptureNotice {
+  return NOTICES.unreachable_server;
 }
 
-async function requestCaptureOnce(
-  url: string,
-  width: number,
-  height: number,
-): Promise<{ ok: true; dataUrl: string } | { ok: false; error: string; busy: boolean }> {
-  let res: Response;
+export function isCaptureUnavailable(): boolean {
+  return captureEndpointState === 'unavailable';
+}
+
+/** Test helper — reset the one-shot probe between cases. */
+export function resetCaptureAvailabilityForTests(): void {
+  captureEndpointState = 'unknown';
+  captureProbeInFlight = null;
+}
+
+/**
+ * Lightweight POST that never launches Chrome: empty body → JSON 400 from the
+ * Vite middleware. SPA/static hosts return HTML (or fail to parse as JSON).
+ */
+async function probeCaptureEndpoint(): Promise<boolean> {
   try {
-    res = await fetch(CAPTURE_WEBSITE_PATH, {
+    const res = await fetch(CAPTURE_WEBSITE_PATH, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        url,
-        width: Math.max(1, Math.round(width)),
-        height: Math.max(1, Math.round(height)),
-      }),
+      body: JSON.stringify({}),
     });
-  } catch (err) {
-    // Keep the raw network error so classifyCaptureError can map it.
-    throw err instanceof Error ? err : new Error(String(err));
+    const data = (await res.json().catch(() => null)) as {
+      error?: unknown;
+      dataUrl?: unknown;
+    } | null;
+    return (
+      data != null &&
+      typeof data === 'object' &&
+      ('error' in data || 'dataUrl' in data)
+    );
+  } catch {
+    return false;
   }
-
-  const data = (await res.json().catch(() => ({}))) as {
-    dataUrl?: string;
-    error?: string;
-  };
-  if (!res.ok || !data.dataUrl) {
-    const error = data.error || 'capture failed';
-    return {
-      ok: false,
-      error,
-      busy: res.status === 429 || isBusyErrorMessage(error),
-    };
-  }
-  if (!data.dataUrl.startsWith('data:image/png;base64,')) {
-    throw new Error('invalid capture payload');
-  }
-  return { ok: true, dataUrl: data.dataUrl };
 }
 
-async function requestCapture(
-  url: string,
-  width: number,
-  height: number,
-): Promise<string> {
-  let lastError = 'capture failed';
-  for (let attempt = 0; attempt <= BUSY_RETRIES; attempt++) {
-    const result = await requestCaptureOnce(url, width, height);
-    if (result.ok) return result.dataUrl;
-    lastError = result.error;
-    if (!result.busy || attempt === BUSY_RETRIES) {
-      throw new Error(lastError);
-    }
-    await sleep(BUSY_RETRY_DELAYS_MS[attempt] ?? 1000);
+/**
+ * Resolve whether `/__capture_website` exists. Safe to call from Apply before
+ * mounting device captures — subsequent calls are free after the first probe.
+ * Uses one empty POST (no Chrome) so `vite preview` still detects the plugin
+ * while static hosts (Vercel) fail fast.
+ */
+export async function ensureCaptureAvailable(): Promise<boolean> {
+  if (captureEndpointState === 'available') return true;
+  if (captureEndpointState === 'unavailable') return false;
+
+  if (!captureProbeInFlight) {
+    captureProbeInFlight = probeCaptureEndpoint()
+      .then((ok) => {
+        captureEndpointState = ok ? 'available' : 'unavailable';
+        return ok;
+      })
+      .finally(() => {
+        captureProbeInFlight = null;
+      });
   }
-  throw new Error(lastError);
+  return captureProbeInFlight;
 }
 
 /**
  * Capture (or reuse cached) screenshot for a url + viewport.
  * Concurrent identical requests share one network call.
+ * Routes through cloud providers when selected, otherwise uses local Playwright.
  */
-export function captureOne(
+export async function captureOne(
   url: string,
   width: number,
   height: number,
 ): Promise<string> {
+  const provider = getScreenshotProvider();
+
+  if (provider === 'screenshotapi' || provider === 'microlink') {
+    return captureCloud(url, width, height, provider);
+  }
+
+  // Playwright (local dev)
+  if (captureEndpointState === 'unavailable') {
+    throw new Error(CAPTURE_UNAVAILABLE_ERROR);
+  }
+  if (captureEndpointState === 'unknown') {
+    const ok = await ensureCaptureAvailable();
+    if (!ok) throw new Error(CAPTURE_UNAVAILABLE_ERROR);
+  }
+
   const key = cacheKey(url, width, height);
   const cached = captureCache.get(key);
-  if (cached) return Promise.resolve(cached);
+  if (cached) return cached;
+
+  const existing = pending.get(key);
+  if (existing) return existing;
+
+  const controller = new AbortController();
+  inFlightControllers.add(controller);
+
+  const nextCapture = (async (): Promise<string> => {
+    try {
+      const userConfig = getUserConfig();
+
+      const result = await captureWithFallback(
+        url,
+        width,
+        height,
+        userConfig,
+        APP_SCREENSHOT_API_KEY,
+        controller.signal,
+      );
+
+      console.log(`Screenshot captured via: ${result.provider}`);
+      captureCache.set(key, result.dataUrl);
+      return result.dataUrl;
+    } catch (err) {
+      const isMarkedUnavailable =
+        typeof err === 'object' &&
+        err !== null &&
+        'isCaptureUnavailable' in err &&
+        (err as { isCaptureUnavailable?: unknown }).isCaptureUnavailable === true;
+
+      const messageSaysUnavailable =
+        err instanceof Error && /capture server unavailable/i.test(err.message);
+
+      if (isMarkedUnavailable) {
+        captureEndpointState = 'unavailable';
+      } else if (messageSaysUnavailable) {
+        captureEndpointState = 'unavailable';
+      }
+
+      // IMPORTANT:
+      // Re-throw so this async function always either resolves with string
+      // or rejects with the original error.
+      // Without this, TypeScript sees Promise<string | undefined>.
+      throw err;
+    } finally {
+      inFlightControllers.delete(controller);
+      pending.delete(key);
+    }
+  })();
+  pending.set(key, nextCapture);
+  return nextCapture;
+}
+
+/**
+ * Capture via a cloud screenshot provider (ScreenshotAPI or Microlink).
+ * Uses a separate cache keyed by provider to avoid cross-provider collisions.
+ */
+async function captureCloud(
+  url: string,
+  width: number,
+  height: number,
+  provider: ScreenshotProvider,
+): Promise<string> {
+  const key = cloudCacheKey(url, width, height, provider);
+  const cached = captureCache.get(key);
+  if (cached) return cached;
 
   let p = pending.get(key);
   if (!p) {
-    p = requestCapture(url, width, height)
-      .then((dataUrl) => {
-        captureCache.set(key, dataUrl);
-        return dataUrl;
+    const controller = new AbortController();
+    inFlightControllers.add(controller);
+
+    const apiKey = provider === 'screenshotapi' ? getScreenshotApiKey() : getMicrolinkApiKey();
+    p = captureWithProvider(url, width, height, provider, apiKey || undefined, controller.signal)
+      .then((result) => {
+        captureCache.set(key, result.dataUrl);
+        if (result.creditsRemaining != null && creditUpdateCallback) {
+          creditUpdateCallback(provider, result.creditsRemaining, {
+            limit: result.limit,
+            resetAt: result.resetAt,
+          });
+        }
+        return result.dataUrl;
       })
       .finally(() => {
+        inFlightControllers.delete(controller);
         pending.delete(key);
       });
     pending.set(key, p);
@@ -306,6 +488,15 @@ export async function captureWebsiteScreenshotsCached(
 
 /** Clear cached captures (e.g. when the user changes the URL). */
 export function clearWebsiteCaptureCache(): void {
+  for (const controller of inFlightControllers) {
+    controller.abort();
+  }
+  inFlightControllers.clear();
   captureCache.clear();
   pending.clear();
+}
+
+/** True when an error is an intentional abort (re-apply / cache clear). */
+export function isCaptureAbortError(err: unknown): boolean {
+  return isAbortError(err) || classifyCaptureError(err).kind === 'cancelled';
 }

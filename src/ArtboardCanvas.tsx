@@ -36,6 +36,7 @@ type ArtboardCanvasProps = {
   findDeviceByPath: (path: string) => DeviceItem | undefined;
   onWebsiteCaptureFailed?: (notice: CaptureNotice) => void;
   onWebsiteCaptureDetails?: (notice: CaptureNotice) => void;
+  onSwitchToIframePreview?: () => void;
 };
 
 export default function ArtboardCanvas({

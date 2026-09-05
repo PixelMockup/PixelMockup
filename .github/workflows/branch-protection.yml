@@ -1,0 +1,40 @@
+name: Branch Protection
+
+on:
+  pull_request:
+    branches: [stable, dev]
+
+jobs:
+  protect-stable:
+    if: github.event.pull_request.base.ref == 'stable'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR source
+        run: |
+          HEAD_BRANCH="${{ github.event.pull_request.head.ref }}"
+          if [[ "$HEAD_BRANCH" != "dev" ]]; then
+            echo "ERROR: Direct PR into 'stable' is not allowed."
+            echo "HEAD_BRANCH '$HEAD_BRANCH' must be 'dev'."
+            echo ""
+            PR_NUM="${{ github.event.pull_request.number }}"
+            echo "Redirect this PR to 'dev' and re-open:"
+            echo "  gh pr edit $PR_NUM --base dev"
+            echo ""
+            echo "Or via GitHub UI: click 'Edit' on the PR title → change base to 'dev'"
+            echo ""
+            echo "To promote to stable later, follow the release process:"
+            echo "  gh pr create --base stable --head dev --title 'Release: promote dev to production'"
+            exit 1
+          fi
+          echo "PR source verified: head=dev, base=stable — release PR. Allowed."
+
+  protect-dev:
+    if: github.event.pull_request.base.ref == 'dev'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check feature branch naming
+        run: |
+          HEAD_BRANCH="${{ github.event.pull_request.head.ref }}"
+          echo "PR into 'dev': head='$HEAD_BRANCH'"
+          echo "Branch naming convention: fix/*, feat/*, chore/*, etc."
+          echo "Release PRs (dev->stable) do NOT target 'dev' directly."

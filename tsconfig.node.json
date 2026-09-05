@@ -22,11 +22,16 @@
   "include": [
     "vite.config.ts",
     "scripts/websiteCapturePlugin.ts",
+    "scripts/apiPlugin.ts",
     "scripts/presencePlugin.ts",
     "src/capturePath.ts",
     "src/websiteUrl.ts",
     "src/presencePath.ts",
     "src/presenceStore.ts",
-    "api/presence.ts"
+    "api/presence.ts",
+    "api/proxy.ts",
+    "api/validate.ts",
+    "api/microlink-capture.ts",
+    "api/screenshotapi.ts"
   ]
 }

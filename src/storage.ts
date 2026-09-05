@@ -6,6 +6,8 @@ const CONTROL_CHARS = /\p{Cc}/gu;
 
 /** Duplicate allowlists here to avoid circular imports with domain modules. */
 const THEME_VALUES = new Set(['light', 'dark']);
+const WEBSITE_PREVIEW_MODE_VALUES = new Set(['screenshot']);
+const SCREENSHOT_PROVIDER_VALUES = new Set(['playwright', 'screenshotapi', 'microlink']);
 const FLAG_VALUES = new Set(['0', '1']);
 const ARTBOARD_FORMAT_VALUES = new Set([
   '16-9',
@@ -124,6 +126,14 @@ export function validateStorageValue(key: string, value: string): string | null 
     case 'pixelMockup.theme':
       // NOSONAR tssecurity:S8475 - value matched against trusted THEME_VALUES allowlist
       return THEME_VALUES.has(raw) ? raw : null;
+    case 'pixelMockup.websitePreviewMode':
+      return WEBSITE_PREVIEW_MODE_VALUES.has(raw) ? raw : null;
+    case 'pixelMockup.screenshotProvider':
+      return SCREENSHOT_PROVIDER_VALUES.has(raw) ? raw : null;
+    case 'pixelMockup.screenshotApiKey':
+    case 'pixelMockup.microlinkApiKey':
+      // API keys: accept any non-empty string (stripped of control chars).
+      return raw.length > 0 ? raw : '';
     case 'pixelMockup.artboardFormat':
       // NOSONAR tssecurity:S8475 - value matched against trusted ARTBOARD_FORMAT_VALUES allowlist
       return ARTBOARD_FORMAT_VALUES.has(raw) ? raw : null;

@@ -27,9 +27,9 @@ Device mockup composer — arrange phones, tablets, and more on an artboard, the
 | Styling | CSS | Layout and theme |
 | Icons | lucide-react | UI icons |
 | Build / dev | Vite 8 + `@vitejs/plugin-react` | Local `npm run dev`, HMR, production bundle |
-| Local sidecars | Vite middleware plugins | Website capture and presence during `dev` / `preview` |
-| Production API | Vercel serverless (`api/presence.ts`) | `/api/presence` heartbeats on hosted deploys |
-| Hosting | Vercel | Preview from `dev`, production from `stable` |
+| Local sidecars | Vite middleware plugins | Website capture and presence during `dev` / `preview` / Docker |
+| Production API | Vercel serverless (`api/presence.ts`) | `/api/presence` heartbeats on Vercel deploys |
+| Hosting | Vercel (static) + optional Docker | Vercel: preview/`dev`, prod/`stable`. Docker: UI + live capture |
 | Unit / component tests | Vitest, Testing Library, jsdom | Logic and React component tests |
 | E2E / a11y | Playwright, axe | Browser flows and accessibility checks |
 | Lint / perf | oxlint, Lighthouse CI | Lint gate and optional performance runs |
@@ -132,17 +132,44 @@ npx playwright install chromium
 
 ## Website capture
 
-“Show on devices” screenshots run through a local capture server (Playwright + Chrome) that only exists when you start the app with:
+“Show on devices” screenshots run through a capture server (Playwright + Chrome) that exists when you start the app with Vite or Docker:
+
+| How you run | Live URL capture? |
+| --- | --- |
+| `npm run dev` / `npm run preview` | Yes (Playwright screenshots) |
+| `docker compose up` | Yes (Playwright screenshots) |
+| Vercel preview / production | No capture API — use **Settings → Live iframe preview** for an on-canvas embed, or upload a screenshot |
 
 ```bash
 npm run dev
 # or
 npm run preview
+# or (built app + Chromium in one container)
+docker compose up --build
 ```
+
+Open `http://localhost:4173` when using Docker Compose.
 
 Tips:
 
 - Test with a simple public site such as `https://example.com`.
 - Some hosts (including some Vercel deployments) may time out under headless Chrome even when they open fine in a normal browser — try another URL.
 - Multiple device sizes are captured a few at a time and wait in line (you may see “Loading site…” longer); they should not fail with “too many captures.”
-- The static Vercel site does **not** run the capture API for visitors; capture is a local/dev feature.
+- The static Vercel site does **not** run the capture API for visitors. Iframe preview is for on-canvas viewing only; export still needs a captured or uploaded screenshot.
+- On Vercel, iframe preview runs through the built-in `/api/proxy` serverless function, which fetches the page server-side and injects a `<base>` tag — so sites that send `X-Frame-Options` / `CSP frame-ancestors` render instead of showing a blank frame. Very JS-heavy SPAs, cookie-gated pages, or pages with HTML over ~4 MB may still render partially; the frame falls back to the direct URL when the proxy isn't present (local dev / Docker).
+
+### Deploy the Docker image
+
+The image is **Node 22 + system Chromium** (not the full Playwright browser image). Build and run on any container host (Fly.io, Railway, a VPS, etc.):
+
+```bash
+docker build -t pixel-mockup .
+docker run --rm -p 4173:4173 \
+  -e HOST=0.0.0.0 \
+  -e PORT=4173 \
+  -e PIXEL_MOCKUP_DISABLE_SANDBOX=1 \
+  -e PIXEL_MOCKUP_CHROME=/usr/bin/chromium \
+  pixel-mockup
+```
+
+Publish port **4173** (or map it behind your platform’s HTTPS proxy). Capture and presence both run inside this process — no separate Vercel serverless function is required for Docker deploys.
