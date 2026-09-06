@@ -3,6 +3,7 @@ import BrandMark from './BrandMark';
 import type { ExportFormat, ExportResolution } from './deviceScale';
 import type { CreditState } from './useCredits';
 import { formatResetTime } from './utils/formatResetTime';
+import { getScreenshotProvider } from './screenshotProviders';
 
 const EXPORT_FORMATS = new Set<ExportFormat>(['png', 'jpg']);
 const EXPORT_RESOLUTIONS = new Set<ExportResolution>([
@@ -137,46 +138,58 @@ export default function TopCommandBar({
       )}
 
       <div className="ms-top-command__end">
-        {credits.screenshotapi != null ? (
-          <span
-            className="ms-presence-pill"
-            role="status"
-            aria-live="polite"
-            title="ScreenshotAPI credits remaining"
-          >
-            <span className="ms-presence-pill__dot" aria-hidden />
-            {credits.screenshotapi} SA
-          </span>
-        ) : null}
-        {credits.microlink.remaining != null ? (
-          <button
-            type="button"
-            className={[
-              'ms-presence-pill',
-              'ms-presence-pill--clickable',
-              mlExhausted ? 'ms-presence-pill--exhausted' : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-            role="button"
-            title={
-              mlExhausted
-                ? 'Shared Microlink key is used up for today — click for details'
-                : 'Microlink shared key availability — click to manage'
-            }
-            aria-label="Microlink shared key usage — click to open API and keys"
-            onClick={onOpenScreenshotSettings}
-          >
-            <span className="ms-presence-pill__dot" aria-hidden />
-            {mlExhausted ? (
-              <>Microlink used{ml.resetAt != null ? ` — ${formatResetTime(ml.resetAt)}` : ''}</>
-            ) : (
-              <>
-                {(ml.limit != null ? `${ml.remaining}/${ml.limit} ` : `${ml.remaining} `)}Microlink
-              </>
-            )}
-          </button>
-        ) : null}
+        {(() => {
+          const provider = getScreenshotProvider();
+          if (provider === 'screenshotapi') {
+            const saRemaining = credits.screenshotapi;
+            
+            return (
+              <button
+                type="button"
+                className="ms-presence-pill ms-presence-pill--clickable"
+                role="button"
+                title="ScreenshotAPI credits — click for API & keys"
+                aria-label="ScreenshotAPI credits — click to manage API and keys"
+                onClick={onOpenScreenshotSettings}
+              >
+                <span className="ms-presence-pill__dot" aria-hidden />
+                {saRemaining != null ? `${saRemaining}/200(per month) ` : `200(per month) `}ScreenshotAPI
+              </button>
+            );
+          }
+          if (provider === 'microlink' && credits.microlink.remaining != null) {
+            return (
+              <button
+                type="button"
+                className={[
+                  'ms-presence-pill',
+                  'ms-presence-pill--clickable',
+                  mlExhausted ? 'ms-presence-pill--exhausted' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                role="button"
+                title={
+                  mlExhausted
+                    ? 'Shared Microlink key is used up for today — click for details'
+                    : 'Microlink shared key availability — click to manage'
+                }
+                aria-label="Microlink shared key usage — click to open API and keys"
+                onClick={onOpenScreenshotSettings}
+              >
+                <span className="ms-presence-pill__dot" aria-hidden />
+                {mlExhausted ? (
+                  <>Microlink used{ml.resetAt != null ? ` — ${formatResetTime(ml.resetAt)}` : ''}</>
+                ) : (
+                  <>
+                    {(`${ml.remaining}/25(per day) `)}Microlink
+                  </>
+                )}
+              </button>
+            );
+          }
+          return null;
+        })()}
 
 
         <div className="ms-download-cluster" ref={downloadMenuRef}>
