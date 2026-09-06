@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Bug } from 'lucide-react';
 import type { Provider, SaStatus } from '../types/screenshot';
 import { formatResetTime } from '../utils/formatResetTime';
 import {
@@ -290,13 +291,14 @@ export default function ScreenshotSettings({ isOpen, onClose, onNotify }: Screen
         </div>
         <div className="ms-modal-footer" style={{ paddingTop: '0.75rem', borderTop: '1px solid #e5e5e5', textAlign: 'center' }}>
           <a
-            className="ms-ss-link"
+            className="ms-btn ms-btn--ghost"
             href="https://github.com/PixelMockup/PixelMockup/issues"
             target="_blank"
             rel="noreferrer noopener"
             style={{ fontSize: '0.85rem', opacity: 0.75 }}
           >
-            Report a bug →
+            <Bug size={14} strokeWidth={1.75} style={{ verticalAlign: 'middle', marginRight: '0.25rem' }} />
+            Report a bug
           </a>
         </div>
       </div>
