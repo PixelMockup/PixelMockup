@@ -1,6 +1,7 @@
 import {
   AlignHorizontalJustifyCenter,
   AlignVerticalJustifyCenter,
+  Bug,
   KeyRound,
   HelpCircle,
   Keyboard,
@@ -349,6 +350,19 @@ export default function IconRail({
                 Take tour
               </button>
             ) : null}
+            <div className="ms-menu__separator" aria-hidden />
+            <a
+              href="https://github.com/PixelMockup/PixelMockup/issues"
+              target="_blank"
+              rel="noreferrer noopener"
+              role="menuitem"
+              className="ms-menu__item ms-menu__item--with-icon"
+              style={{ textDecoration: 'none', color: 'inherit' }}
+              onClick={() => setSettingsOpen(false)}
+            >
+              <Bug size={16} strokeWidth={1.75} aria-hidden />
+              Report a bug
+            </a>
           </div>
         ) : null}
       </div>

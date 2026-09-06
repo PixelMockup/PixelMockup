@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   AlignHorizontalJustifyCenter,
   AlignVerticalJustifyCenter,
+  Bug,
   Download,
   Globe,
   HelpCircle,
@@ -355,6 +356,16 @@ export default function MobileDock({
                   Take tour
                 </button>
               ) : null}
+              <a
+                className="ms-menu__item ms-menu__item--with-icon"
+                href="https://github.com/PixelMockup/PixelMockup/issues"
+                target="_blank"
+                rel="noreferrer noopener"
+                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', color: 'inherit', width: '100%', padding: '0.5rem 1rem' }}
+              >
+                <Bug size={16} strokeWidth={1.75} aria-hidden />
+                Report a bug
+              </a>
             </div>
           ) : null}
         </div>

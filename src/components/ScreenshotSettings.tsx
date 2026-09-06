@@ -288,17 +288,6 @@ export default function ScreenshotSettings({ isOpen, onClose, onNotify }: Screen
             {view === 'screenshotapi' ? 'Use ScreenshotAPI' : 'Use Microlink'}
           </button>
         </div>
-        <div className="ms-modal-footer" style={{ paddingTop: '0.75rem', borderTop: '1px solid #e5e5e5', textAlign: 'center' }}>
-          <a
-            className="ms-ss-link"
-            href="https://github.com/PixelMockup/PixelMockup/issues"
-            target="_blank"
-            rel="noreferrer noopener"
-            style={{ fontSize: '0.85rem', opacity: 0.75 }}
-          >
-            Report a bug →
-          </a>
-        </div>
       </div>
     </dialog>
   );
