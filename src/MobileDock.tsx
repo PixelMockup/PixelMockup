@@ -259,18 +259,6 @@ export default function MobileDock({
           <span className="ms-mobile-dock__label">More</span>
         </button>
 
-        <a
-          href="https://github.com/PixelMockup/PixelMockup/issues"
-          target="_blank"
-          rel="noreferrer noopener"
-          className="ms-mobile-dock__btn"
-          aria-label="Report a bug"
-          title="Report a bug"
-        >
-          <Bug size={18} strokeWidth={1.75} aria-hidden />
-          <span className="ms-mobile-dock__label">Bug</span>
-        </a>
-
         <div className="ms-mobile-dock__menu-wrap" ref={settingsRef}>
           <button
             type="button"

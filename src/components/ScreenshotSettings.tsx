@@ -291,13 +291,13 @@ export default function ScreenshotSettings({ isOpen, onClose, onNotify }: Screen
         </div>
         <div className="ms-modal-footer" style={{ paddingTop: '0.75rem', borderTop: '1px solid #e5e5e5', textAlign: 'center' }}>
           <a
-            className="ms-btn ms-btn--ghost"
+            className="ms-btn"
             href="https://github.com/PixelMockup/PixelMockup/issues"
             target="_blank"
             rel="noreferrer noopener"
-            style={{ fontSize: '0.85rem', opacity: 0.75 }}
+            style={{ fontSize: '0.9rem', padding: '0.35rem 0.75rem' }}
           >
-            <Bug size={14} strokeWidth={1.75} style={{ verticalAlign: 'middle', marginRight: '0.25rem' }} />
+            <Bug size={16} strokeWidth={1.75} style={{ verticalAlign: 'middle', marginRight: '0.35rem' }} />
             Report a bug
           </a>
         </div>
