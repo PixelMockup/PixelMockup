@@ -1,4 +1,4 @@
-import { Bug, Download, Ellipsis, X } from 'lucide-react';
+import { Download, Ellipsis, X } from 'lucide-react';
 import BrandMark from './BrandMark';
 import type { ExportFormat, ExportResolution } from './deviceScale';
 import type { CreditState } from './useCredits';
@@ -191,17 +191,6 @@ export default function TopCommandBar({
           return null;
         })()}
 
-
-        <a
-          href="https://github.com/PixelMockup/PixelMockup/issues"
-          target="_blank"
-          rel="noreferrer noopener"
-          className="ms-icon-btn"
-          aria-label="Report a bug"
-          title="Report a bug"
-        >
-          <Bug size={16} strokeWidth={1.75} aria-hidden />
-        </a>
 
         <div className="ms-download-cluster" ref={downloadMenuRef}>
           <button
