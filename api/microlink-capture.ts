@@ -104,7 +104,7 @@ export async function handler(req: VercelRequest, res: VercelResponse): Promise<
     'viewport.isMobile': String(Number(width) < 768),
   });
 
-  const baseUrl = userApiKey ? 'https://pro.microlink.io' : 'https://api.microlink.io';
+  const baseUrl = 'https://api.microlink.io';
   const requestHeaders: Record<string, string> = {};
   if (userApiKey) requestHeaders['x-api-key'] = userApiKey;
 
