@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Bug } from 'lucide-react';
 import type { Provider, SaStatus } from '../types/screenshot';
 import { formatResetTime } from '../utils/formatResetTime';
 import {
@@ -288,18 +287,6 @@ export default function ScreenshotSettings({ isOpen, onClose, onNotify }: Screen
           >
             {view === 'screenshotapi' ? 'Use ScreenshotAPI' : 'Use Microlink'}
           </button>
-        </div>
-        <div className="ms-modal-footer" style={{ paddingTop: '0.75rem', borderTop: '1px solid #e5e5e5', textAlign: 'center' }}>
-          <a
-            className="ms-btn"
-            href="https://github.com/PixelMockup/PixelMockup/issues"
-            target="_blank"
-            rel="noreferrer noopener"
-            style={{ fontSize: '0.9rem', padding: '0.35rem 0.75rem' }}
-          >
-            <Bug size={16} strokeWidth={1.75} style={{ verticalAlign: 'middle', marginRight: '0.35rem' }} />
-            Report a bug
-          </a>
         </div>
       </div>
     </dialog>
