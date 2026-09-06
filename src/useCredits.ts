@@ -14,7 +14,6 @@ export interface CreditState {
   microlink: MicrolinkUsage;
 }
 
-const STORAGE_KEY = 'pixelMockup_microlink_usage';
 
 const EMPTY_USAGE: MicrolinkUsage = { remaining: null, limit: null, resetAt: null };
 const SA_FREE_TIER_LIMIT = 200;
