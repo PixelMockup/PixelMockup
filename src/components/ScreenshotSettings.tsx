@@ -22,7 +22,7 @@ const MICROLINK_KEYS_URL = 'https://microlink.io/docs';
 
 export default function ScreenshotSettings({ isOpen, onClose, onNotify }: ScreenshotSettingsProps) {
   // This is updated automatically by `captureWebsite.ts` after actual captures, costing ZERO extra API calls.
-  const { credits } = useCredits();
+  const { credits, updateScreenshotApiCredits } = useCredits();
   const [view, setView] = useState<Provider>(() =>
     getScreenshotProvider() === 'screenshotapi' ? 'screenshotapi' : 'microlink',
   );
@@ -75,12 +75,16 @@ export default function ScreenshotSettings({ isOpen, onClose, onNotify }: Screen
         return;
       }
       const data = await res.json();
+      const creditsRemaining = data.creditsRemaining ?? null;
       setSaStatus({
         valid: data.valid ?? false,
-        creditsRemaining: data.creditsRemaining ?? undefined,
+        creditsRemaining,
         reason: data.reason ?? data.message ?? undefined,
         loading: false,
       });
+      if (data.valid) {
+        try { updateScreenshotApiCredits(creditsRemaining); } catch { /* ignore */ }
+      }
     } catch {
       setSaStatus({ valid: false, reason: 'network_error', loading: false });
     }
