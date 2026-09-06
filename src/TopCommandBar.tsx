@@ -142,17 +142,19 @@ export default function TopCommandBar({
           const provider = getScreenshotProvider();
           if (provider === 'screenshotapi') {
             const saRemaining = credits.screenshotapi;
-            const saLimit = credits.screenshotapiLimit ?? 200;
+            
             return (
-              <span
-                className="ms-presence-pill"
-                role="status"
-                aria-live="polite"
-                title="ScreenshotAPI credits remaining"
+              <button
+                type="button"
+                className="ms-presence-pill ms-presence-pill--clickable"
+                role="button"
+                title="ScreenshotAPI credits — click for API & keys"
+                aria-label="ScreenshotAPI credits — click to manage API and keys"
+                onClick={onOpenScreenshotSettings}
               >
                 <span className="ms-presence-pill__dot" aria-hidden />
-                {saRemaining != null ? `${saRemaining}/${saLimit} ` : `${saLimit} `}SA
-              </span>
+                {saRemaining != null ? `${saRemaining}/200(per month) ` : `200(per month) `}ScreenshotAPI
+              </button>
             );
           }
           if (provider === 'microlink' && credits.microlink.remaining != null) {
@@ -180,7 +182,7 @@ export default function TopCommandBar({
                   <>Microlink used{ml.resetAt != null ? ` — ${formatResetTime(ml.resetAt)}` : ''}</>
                 ) : (
                   <>
-                    {(ml.limit != null ? `${ml.remaining}/${ml.limit} ` : `${ml.remaining} `)}Microlink
+                    {(`${ml.remaining}/25(per day) `)}Microlink
                   </>
                 )}
               </button>
