@@ -562,6 +562,29 @@ export default function MockupStudio({
       tone === 'error' ? 3200 : 1600,
     );
   };
+  // Global error handler that triggers bug report on errors
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      console.error('Global error caught:', event.error || event.message);
+      announce(
+        'Something went wrong. You can report this bug to help us fix it.',
+        'error',
+      );
+      (window as any).__lastErrorInfo = {
+        message: event.message || event.error?.message || 'Unknown error',
+        url: window.location.href,
+        time: new Date().toISOString(),
+      };
+    };
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', (e) => {
+      console.error('Unhandled rejection:', e.reason);
+      announce('Something went wrong. You can report this bug to help us fix it.', 'error');
+    });
+    return () => {
+      window.removeEventListener('error', handleError);
+    };
+  }, []);
 
   const handleScreenshotProviderChange = useCallback((provider: ScreenshotProvider) => {
     setScreenshotProviderState(provider);
