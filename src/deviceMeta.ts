@@ -63,6 +63,18 @@ const SIMPLE_COLORS = [
   'gray',
 ];
 
+function isBlackVariant(name: string | undefined): boolean {
+  const n = (name ?? '').toLowerCase();
+  if (/\bmidnight\s+black\b/.test(n)) return true;
+  if (/\bjet\s+black\b/.test(n)) return true;
+  if (/\bmatte\s+black\b/.test(n)) return true;
+  if (/\bjust\s+black\b/.test(n)) return true;
+  if (/\bspace\s+grey\b/.test(n)) return true;
+  if (/\bspace\s+gray\b/.test(n)) return true;
+  if (/\bblack\b/.test(n)) return true;
+  return false;
+}
+
 export function normalizeDeviceText(input: string): string {
   return input
     .toLowerCase()
@@ -195,6 +207,7 @@ export function formatDeviceDisplayName(name: string | undefined): string {
 export function isPriorityPhone(name: string | undefined): boolean {
   const n = (name ?? '').toLowerCase();
   if (!n) return false;
+  if (!isBlackVariant(n)) return false;
 
   // Apple: iPhone X / XR / XS and 11+ (including Pro / Max / Plus).
   // SE 2nd/3rd gen filenames are typically "iPhone SE" without a generation
@@ -220,14 +233,17 @@ export function isPriorityTablet(name: string | undefined): boolean {
   const n = (name ?? '').toLowerCase();
   if (!n) return false;
   // iPad Pro (11-inch or 13-inch) in Space Gray — priority
-  if (/\bipad\s+pro\b/.test(n) && /\bspace\s+gray\b|\bspace\s+grey\b/.test(n)) return true;
+  if (/\bipad\s+pro\b/.test(n) && (/\bspace\s+gray\b/.test(n) || /\bspace\s+grey\b/.test(n))) return true;
   return false;
 }
 
 export function isPriorityWatch(name: string | undefined): boolean {
   const n = name ?? '';
-  // Watches with "Closed" in the name — priority (closed loop bands)
-  return n.includes('Closed');
+  if (!n.toLowerCase().includes('apple')) return false;
+  const plusIdx = n.indexOf('+');
+  if (plusIdx === -1) return false;
+  const strap = n.slice(plusIdx + 1).toLowerCase();
+  return strap.includes('black');
 }
 
 export interface SearchableDevice {
