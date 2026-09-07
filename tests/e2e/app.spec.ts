@@ -66,14 +66,16 @@ test.describe('Pixel Mockup app shell', () => {
     ).toBeVisible();
   });
 
-  test('opens download options after placing a device', async ({ page }) => {
+  test('opens export settings after placing a device', async ({ page }) => {
     await page.goto('/');
     await placeFirstPhone(page);
-    const downloadBtn = page.getByRole('button', { name: /^Download$/i }).first();
-    await expect(downloadBtn).toBeEnabled({ timeout: 20_000 });
-    await page.getByRole('button', { name: /Download options/i }).first().click();
-    await expect(page.getByRole('menu').first()).toBeVisible();
-    await page.keyboard.press('Escape');
+    const rail = page.getByRole('navigation', { name: /Studio tools/i });
+    await rail.getByRole('button', { name: /^Canvas Settings$/i }).click();
+    const menu = page.getByRole('menu', { name: /Canvas Settings/i });
+    await expect(menu).toBeVisible();
+    await expect(menu.getByText('Format')).toBeVisible();
+    await expect(menu.getByText('Resolution')).toBeVisible();
+    await expect(menu.getByText('Transparent background')).toBeVisible();
   });
 
   test('opens shortcuts panel', async ({ page }) => {
@@ -198,33 +200,21 @@ test.describe('Pixel Mockup app shell', () => {
     await page.goto('/');
     const dock = page.getByRole('navigation', { name: /Quick actions/i });
     await dock.getByRole('button', { name: /More/i }).click();
-    const sheet = page.getByRole('dialog', { name: /More tools/i });
+    const sheet = page.getByRole('dialog', { name: /^More$/i });
     await expect(sheet).toBeVisible();
     await expect(sheet.getByRole('heading', { name: /Layouts/i })).toBeVisible();
     await expect(sheet.getByRole('heading', { name: /Export/i })).toBeVisible();
   });
 
-  test('opens mobile dock settings menu on tablet', async ({ page }) => {
+  test('opens mobile dock settings sheet on tablet', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
     await page.goto('/');
     const dock = page.getByRole('navigation', { name: /Quick actions/i });
     await dock.getByRole('button', { name: /^Settings$/i }).click();
-    await expect(dock.getByRole('menuitem', { name: /Dark mode|Light mode/i })).toBeVisible();
-    await expect(dock.getByRole('menuitem', { name: /Keyboard shortcuts/i })).toBeVisible();
-    await dock.getByRole('menuitem', { name: /Keyboard shortcuts/i }).click();
-    await expect(page.getByRole('dialog', { name: /Keyboard shortcuts/i })).toBeVisible();
-  });
-
-  test('opens mobile URL sheet on tablet', async ({ page }) => {
-    await page.setViewportSize({ width: 768, height: 1024 });
-    await page.goto('/');
-    await page.getByRole('button', { name: /Start layout only/i }).click();
-    const dock = page.getByRole('navigation', { name: /Quick actions/i });
-    await expect(dock.getByRole('button', { name: /URL/i })).toBeVisible();
-    await dock.getByRole('button', { name: /URL/i }).click();
-    const sheet = page.getByRole('dialog', { name: /Website URL/i });
+    const sheet = page.getByRole('dialog', { name: /^Settings$/i });
     await expect(sheet).toBeVisible();
-    await expect(sheet.getByRole('textbox', { name: /Website URL/i })).toBeVisible();
+    await expect(sheet.getByRole('button', { name: /Dark mode|Light mode/i })).toBeVisible();
+    await expect(sheet.getByRole('heading', { name: /Screenshot provider/i })).toBeVisible();
   });
 });
 
