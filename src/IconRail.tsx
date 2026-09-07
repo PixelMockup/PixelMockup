@@ -20,6 +20,8 @@ import {
   SIZE_SCALE_PRESETS,
   type ArtboardFormatId,
   type SizeScaleId,
+  type ExportFormat,
+  type ExportResolution,
 } from './deviceScale';
 
 type Props = {
@@ -47,6 +49,12 @@ type Props = {
   onOpenScreenshotSettings: () => void;
   onOpenShortcuts: () => void;
   onTakeTour?: () => void;
+  exportFormat: ExportFormat;
+  exportResolution: ExportResolution;
+  exportTransparentBg: boolean;
+  onExportFormat: (v: ExportFormat) => void;
+  onExportResolution: (v: ExportResolution) => void;
+  onExportTransparentBg: (v: boolean) => void;
   layoutsRef: React.RefObject<HTMLDivElement | null>;
   moreRef: React.RefObject<HTMLDivElement | null>;
 };
@@ -76,6 +84,12 @@ export default function IconRail({
   onOpenScreenshotSettings,
   onOpenShortcuts,
   onTakeTour,
+  exportFormat,
+  exportResolution,
+  exportTransparentBg,
+  onExportFormat,
+  onExportResolution,
+  onExportTransparentBg,
   layoutsRef,
   moreRef,
 }: Readonly<Props>) {
@@ -149,7 +163,7 @@ export default function IconRail({
           <LayoutTemplate size={20} strokeWidth={1.5} aria-hidden />
         </button>
         {layoutsOpen ? (
-          <div className="ms-menu ms-rail-menu" role="menu">
+          <div className="ms-menu ms-rail-menu" role="menu" aria-label="Layouts">
             {LAYOUT_PRESETS.map((p) => (
               <button
                 key={p.id}
@@ -175,8 +189,8 @@ export default function IconRail({
           className={`ms-rail-btn${moreOpen ? ' is-active' : ''}`}
           aria-expanded={moreOpen}
           aria-haspopup="menu"
-          aria-label="Canvas tools"
-          title="Canvas tools"
+          aria-label="Canvas Settings"
+          title="Canvas Settings"
           onClick={() => {
             onMoreOpenChange(!moreOpen);
             onLayoutsOpenChange(false);
@@ -187,7 +201,7 @@ export default function IconRail({
           <SlidersHorizontal size={20} strokeWidth={1.5} aria-hidden />
         </button>
         {moreOpen ? (
-          <div className="ms-menu ms-rail-menu ms-rail-menu--wide" role="menu">
+          <div className="ms-menu ms-rail-menu ms-rail-menu--wide" role="menu" aria-label="Canvas Settings">
             <label className="ms-field">
               <span className="ms-field__label">Canvas size</span>
               <select
@@ -271,6 +285,47 @@ export default function IconRail({
                 Backward
               </button>
             </div>
+            <label className="ms-field">
+              <span className="ms-field__label">Format</span>
+              <select
+                value={exportFormat}
+                onChange={(e) => {
+                  const next = e.target.value as ExportFormat;
+                  if (next === 'png' || next === 'jpg') {
+                    onExportFormat(next);
+                  }
+                }}
+              >
+                <option value="png">PNG</option>
+                <option value="jpg">JPG</option>
+              </select>
+            </label>
+            <label className="ms-field">
+              <span className="ms-field__label">Resolution</span>
+              <select
+                value={exportResolution}
+                onChange={(e) => {
+                  const next = e.target.value as ExportResolution;
+                  if (['best', '1440p', '1080p', '720p'].includes(next)) {
+                    onExportResolution(next);
+                  }
+                }}
+              >
+                <option value="best">Best</option>
+                <option value="1440p">1440p</option>
+                <option value="1080p">1080p</option>
+                <option value="720p">720p</option>
+              </select>
+            </label>
+            <label className="ms-check">
+              <input
+                type="checkbox"
+                checked={exportTransparentBg && exportFormat !== 'jpg'}
+                disabled={exportFormat === 'jpg'}
+                onChange={(e) => onExportTransparentBg(e.target.checked)}
+              /> {''}
+              Transparent background
+            </label>
           </div>
         ) : null}
       </div>
@@ -294,7 +349,7 @@ export default function IconRail({
           <Settings size={20} strokeWidth={1.5} aria-hidden />
         </button>
         {settingsOpen ? (
-          <div className="ms-menu ms-rail-menu ms-rail-menu--settings" role="menu">
+          <div className="ms-menu ms-rail-menu ms-rail-menu--settings" role="menu" aria-label="Settings">
             <button
               type="button"
               role="menuitem"
@@ -322,7 +377,7 @@ export default function IconRail({
               }}
             >
               <KeyRound size={16} strokeWidth={1.75} aria-hidden />
-              API &amp; keys
+              API &amp; Keys
             </button>
             <button
               type="button"
@@ -334,7 +389,7 @@ export default function IconRail({
               }}
             >
               <Keyboard size={16} strokeWidth={1.75} aria-hidden />
-              Keyboard shortcuts
+              Keyboard Shortcuts
             </button>
             {onTakeTour ? (
               <button
@@ -347,7 +402,7 @@ export default function IconRail({
                 }}
               >
                 <HelpCircle size={16} strokeWidth={1.75} aria-hidden />
-                Take tour
+                Take Tour
               </button>
             ) : null}
             <div className="ms-menu__separator" aria-hidden />
