@@ -1178,12 +1178,12 @@
   background: color-mix(in srgb, var(--ms-border) 55%, transparent);
 }
 
-.ms-device-tile__placeholder-icon {
-  width: 28px;
-  height: 44px;
-  border: 2px solid var(--ms-border-strong);
-  border-radius: 6px;
-  opacity: 0.7;
+.ms-device-tile__placeholder-text {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--ms-muted);
+  text-align: center;
+  line-height: 1.2;
 }
 
 .ms-device-tile__spinner {

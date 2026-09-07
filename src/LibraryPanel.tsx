@@ -389,8 +389,8 @@ export default function LibraryPanel({
                         }}
                       >
                         {unloaded ? (
-                          <span className="ms-device-tile__placeholder" aria-hidden>
-                            <span className="ms-device-tile__placeholder-icon" />
+                          <span className="ms-device-tile__placeholder">
+                            <span className="ms-device-tile__placeholder-text">Tap to load</span>
                           </span>
                         ) : (
                           <img
@@ -409,9 +409,7 @@ export default function LibraryPanel({
                             ? 'Placing…'
                             : loadingAsset
                               ? 'Loading…'
-                              : unloaded
-                                ? 'Tap to load'
-                                : label}
+                              : label}
                         </span>
                       </button>
                     );
