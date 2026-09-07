@@ -2022,8 +2022,6 @@ export default function MockupStudio({
               <EmptyHero
                 busy={placingPath != null}
                 onShowOnDevices={(url) => void showOnDevices(url)}
-                onStartLayoutOnly={() => void applyLayoutPreset('apple-lineup')}
-                onBrowseDevices={openDevicesPicker}
               />
             ) : null}
 
