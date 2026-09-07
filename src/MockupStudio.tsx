@@ -1971,10 +1971,6 @@ export default function MockupStudio({
           libraryProgress={libraryProgress}
           loadedCategories={loadedCategories}
           loadingDevicePaths={loadingDevicePaths}
-          onClose={() => {
-            setLibraryCollapsed(true);
-            persistLibraryCollapsed(true);
-          }}
           onCategoryChange={(c) => {
             setCategoryFilter(c);
             setSelectedProduct(null);

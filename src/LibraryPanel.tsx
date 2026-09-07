@@ -30,7 +30,6 @@ interface LibraryPanelProps {
   libraryProgress: number;
   loadedCategories: Set<string>;
   loadingDevicePaths: Set<string>;
-  onClose: () => void;
   onCategoryChange: (category: string) => void;
   onBrandAll: () => void;
   onSelectBrand: (brand: string) => void;
@@ -91,7 +90,6 @@ export default function LibraryPanel({
   libraryProgress,
   loadedCategories,
   loadingDevicePaths,
-  onClose,
   onCategoryChange,
   onBrandAll,
   onSelectBrand,
@@ -122,14 +120,6 @@ export default function LibraryPanel({
     >
       <div className="ms-library-header">
         <h2 className="ms-library-title">Devices</h2>
-        <button
-          type="button"
-          className="ms-btn ms-btn--ghost ms-library-close"
-          onClick={onClose}
-          aria-label="Close devices"
-        >
-          Close
-        </button>
       </div>
 
       {libraryLoading && (
