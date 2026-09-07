@@ -365,13 +365,21 @@
   min-width: 240px;
 }
 
-.ms-rail-menu--settings {
-  top: auto;
-  bottom: 0;
-  min-width: 190px;
-}
+  .ms-rail-menu--settings {
+    top: auto;
+    bottom: 0;
+    min-width: 190px;
+  }
 
-.ms-menu__item--with-icon {
+  .ms-rail-menu-title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--ms-ink);
+    margin: 0 0 var(--ms-space-1);
+    padding: 0 var(--ms-space-2);
+  }
+
+  .ms-menu__item--with-icon {
   display: inline-flex;
   align-items: center;
   gap: 8px;

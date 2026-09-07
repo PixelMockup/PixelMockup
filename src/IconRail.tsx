@@ -164,6 +164,7 @@ export default function IconRail({
         </button>
         {layoutsOpen ? (
           <div className="ms-menu ms-rail-menu" role="menu" aria-label="Layouts">
+            <h3 className="ms-rail-menu-title">Layouts</h3>
             {LAYOUT_PRESETS.map((p) => (
               <button
                 key={p.id}
@@ -202,6 +203,7 @@ export default function IconRail({
         </button>
         {moreOpen ? (
           <div className="ms-menu ms-rail-menu ms-rail-menu--wide" role="menu" aria-label="Canvas Settings">
+            <h3 className="ms-rail-menu-title">Canvas Settings</h3>
             <label className="ms-field">
               <span className="ms-field__label">Canvas size</span>
               <select
@@ -350,6 +352,7 @@ export default function IconRail({
         </button>
         {settingsOpen ? (
           <div className="ms-menu ms-rail-menu ms-rail-menu--settings" role="menu" aria-label="Settings">
+            <h3 className="ms-rail-menu-title">Settings</h3>
             <button
               type="button"
               role="menuitem"
