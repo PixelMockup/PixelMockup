@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import type { DeviceItem } from './App';
 import deviceDimensions from './assets/device_dimensions.json';
 import { CATEGORY_ORDER } from './deviceScale';
-import { isPriorityPhone, parseBrand, parseProductFamily } from './deviceMeta';
+import { isPriorityPhone, isPriorityTablet, isPriorityWatch, parseBrand, parseProductFamily } from './deviceMeta';
 
 const lazyDeviceFiles = import.meta.glob('./assets/device_library/**/*.svg', {
   eager: false,
@@ -11,7 +11,7 @@ const lazyDeviceFiles = import.meta.glob('./assets/device_library/**/*.svg', {
 });
 
 const CATEGORY_LOAD_CONCURRENCY = 6;
-const PRIORITY_FULL_CATEGORIES = ['computers', 'displays', 'tablets'] as const;
+const PRIORITY_FULL_CATEGORIES = ['computers', 'displays'] as const;
 
 type DimEntry = {
   file: string;
@@ -316,7 +316,29 @@ export function useDeviceLibrary(): UseDeviceLibraryResult {
         return !current?.src;
       });
 
-    const totalUnits = fullCategories.length + (priorityPhonePaths.length > 0 ? 1 : 0);
+    const tabletMeta = metadataCatalog.tablets ?? [];
+    const priorityTabletPaths = tabletMeta
+      .filter((d) => isPriorityTablet(d.name))
+      .map((d) => d.path)
+      .filter((path) => {
+        const current = groupedLibraryRef.current.tablets?.find((d) => d.path === path);
+        return !current?.src;
+      });
+
+    const watchMeta = metadataCatalog.watches ?? [];
+    const priorityWatchPaths = watchMeta
+      .filter((d) => isPriorityWatch(d.name))
+      .map((d) => d.path)
+      .filter((path) => {
+        const current = groupedLibraryRef.current.watches?.find((d) => d.path === path);
+        return !current?.src;
+      });
+
+    const totalUnits =
+      fullCategories.length +
+      (priorityPhonePaths.length > 0 ? 1 : 0) +
+      (priorityTabletPaths.length > 0 ? 1 : 0) +
+      (priorityWatchPaths.length > 0 ? 1 : 0);
     if (totalUnits === 0) return;
 
     setIsLoading(true);
@@ -343,6 +365,42 @@ export function useDeviceLibrary(): UseDeviceLibraryResult {
             phonesDone += 1;
             const phoneFraction = phonesDone / priorityPhonePaths.length;
             setProgress(((completed + phoneFraction) / totalUnits) * 100);
+          },
+        );
+        completed += 1;
+        setProgress((completed / totalUnits) * 100);
+      }
+
+      if (priorityTabletPaths.length > 0) {
+        setStatusMessage('Loading flagship tablets...');
+        setProgress((completed / totalUnits) * 100);
+        let tabletsDone = 0;
+        await mapPool(
+          priorityTabletPaths,
+          CATEGORY_LOAD_CONCURRENCY,
+          async (path) => {
+            await loadDevice(path);
+            tabletsDone += 1;
+            const tabletFraction = tabletsDone / priorityTabletPaths.length;
+            setProgress(((completed + tabletFraction) / totalUnits) * 100);
+          },
+        );
+        completed += 1;
+        setProgress((completed / totalUnits) * 100);
+      }
+
+      if (priorityWatchPaths.length > 0) {
+        setStatusMessage('Loading flagship watches...');
+        setProgress((completed / totalUnits) * 100);
+        let watchesDone = 0;
+        await mapPool(
+          priorityWatchPaths,
+          CATEGORY_LOAD_CONCURRENCY,
+          async (path) => {
+            await loadDevice(path);
+            watchesDone += 1;
+            const watchFraction = watchesDone / priorityWatchPaths.length;
+            setProgress(((completed + watchFraction) / totalUnits) * 100);
           },
         );
         completed += 1;

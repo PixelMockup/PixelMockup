@@ -203,14 +203,31 @@ export function isPriorityPhone(name: string | undefined): boolean {
   if (/\biphone\s+(1[1-9]|[2-9]\d)\b/.test(n)) return true;
   if (/\biphone\s+se\b/.test(n)) return true;
 
-  // Samsung Galaxy S7+ and Note 5+ (covers the current catalog and newer models).
-  if (/\bgalaxy\s+s([7-9]|1[0-9]|2[0-9])\b/.test(n)) return true;
+  // Samsung Galaxy S8+ and Note 5+.
+  if (/\bgalaxy\s+s([8-9]|1[0-9]|2[0-9])\b/.test(n)) return true;
   if (/\bgalaxy\s+note\s*([5-9]|1[0-9]|20)\b/.test(n)) return true;
 
   // Google Pixel 3+.
   if (/\bpixel\s*([3-9]|[1-9]\d)\b/.test(n)) return true;
 
+  // Huawei P8+.
+  if (/\bhuawei\s+p\s*([8-9]|[1-9]\d)\b/.test(n)) return true;
+
   return false;
+}
+
+export function isPriorityTablet(name: string | undefined): boolean {
+  const n = (name ?? '').toLowerCase();
+  if (!n) return false;
+  // iPad Pro (11-inch or 13-inch) in Space Gray — priority
+  if (/\bipad\s+pro\b/.test(n) && /\bspace\s+gray\b|\bspace\s+grey\b/.test(n)) return true;
+  return false;
+}
+
+export function isPriorityWatch(name: string | undefined): boolean {
+  const n = name ?? '';
+  // Watches with "Closed" in the name — priority (closed loop bands)
+  return n.includes('Closed');
 }
 
 export interface SearchableDevice {
