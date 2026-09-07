@@ -372,7 +372,7 @@
   }
 
   .ms-rail-menu-title {
-    font-size: 0.85rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--ms-ink);
     margin: 0 0 var(--ms-space-1);
