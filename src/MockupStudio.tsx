@@ -418,7 +418,6 @@ export default function MockupStudio({
   const [snapGuides, setSnapGuides] = useState<SnapGuides>(NO_GUIDES);
   const [snapEnabled, setSnapEnabled] = useState(readSnapEnabled);
   const [snapMargin] = useState(readSnapMargin);
-  const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [layoutsMenuOpen, setLayoutsMenuOpen] = useState(false);
   const [moreToolsOpen, setMoreToolsOpen] = useState(false);
   const [libraryCollapsed, setLibraryCollapsed] = useState(readLibraryCollapsed);
@@ -521,7 +520,6 @@ export default function MockupStudio({
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const screenFileInputRef = useRef<HTMLInputElement>(null);
-  const downloadMenuRef = useRef<HTMLDivElement>(null);
   const layoutsMenuRef = useRef<HTMLDivElement>(null);
   const moreMenuRef = useRef<HTMLDivElement>(null);
   const resizeDragRef = useRef<{ startX: number; startW: number } | null>(
@@ -1630,7 +1628,6 @@ export default function MockupStudio({
     setSoftEmptyDownload(false);
     setIsExporting(true);
     setSelectedIds([]);
-    setExportMenuOpen(false);
     try {
       const websiteJobs = websiteUrl
         ? canvasItems
@@ -1887,7 +1884,6 @@ export default function MockupStudio({
       : (canvasItems.find((i) => i.instanceId === primaryId)?.screenZoom ?? 1);
 
   const closeChromeMenus = () => {
-    setExportMenuOpen(false);
     setLayoutsMenuOpen(false);
     setMoreToolsOpen(false);
   };
@@ -1910,18 +1906,7 @@ export default function MockupStudio({
         captureCount={canvasItems.length}
         downloading={isExporting}
         softEmptyDownload={softEmptyDownload}
-        exportFormat={exportFormat}
-        exportResolution={exportResolution}
-        exportTransparentBg={exportBgMode === 'transparent'}
-        onExportFormat={setExportFormat}
-        onExportResolution={setExportResolution}
-        onExportTransparentBg={(v) =>
-          setExportBgMode(v ? 'transparent' : 'color')
-        }
         onDownload={() => void downloadCanvas()}
-        downloadMenuOpen={exportMenuOpen}
-        onDownloadMenuOpenChange={setExportMenuOpen}
-        downloadMenuRef={downloadMenuRef}
         credits={credits}
         onOpenScreenshotSettings={() => setScreenshotSettingsOpen(true)}
       />
@@ -1955,6 +1940,14 @@ export default function MockupStudio({
           onOpenScreenshotSettings={() => setScreenshotSettingsOpen(true)}
           onOpenShortcuts={() => setShortcutsOpen(true)}
           onTakeTour={onTakeTour}
+          exportFormat={exportFormat}
+          exportResolution={exportResolution}
+          exportTransparentBg={exportBgMode === 'transparent'}
+          onExportFormat={setExportFormat}
+          onExportResolution={setExportResolution}
+          onExportTransparentBg={(v) =>
+            setExportBgMode(v ? 'transparent' : 'color')
+          }
           layoutsRef={layoutsMenuRef}
           moreRef={moreMenuRef}
         />
@@ -2171,22 +2164,17 @@ export default function MockupStudio({
       />
 
       <MobileDock
-        hasDevices={canvasItems.length > 0}
-        isExporting={isExporting}
-        websiteUrlDraft={websiteUrlDraft}
-        onWebsiteUrlDraftChange={setWebsiteUrlDraft}
-        onApplyUrl={tryApplyWebsiteUrl}
-        onClearUrl={clearWebsiteUrl}
-        websiteUrlActive={websiteUrl != null}
-        captureBusy={capturingHint != null}
         exportFormat={exportFormat}
         exportResolution={exportResolution}
         exportTransparentBg={exportBgMode === 'transparent'}
         onExportFormat={setExportFormat}
         onExportResolution={setExportResolution}
         onExportTransparentBg={(v) => setExportBgMode(v ? 'transparent' : 'color')}
-        onDownload={() => void downloadCanvas()}
         onDevices={openDevicesPicker}
+        closeDevices={() => {
+          setLibraryCollapsed(true);
+          persistLibraryCollapsed(true);
+        }}
         onApplyPreset={(id) => void applyLayoutPreset(id)}
         artboardFormatId={artboardFormatId}
         onArtboardFormat={changeArtboardFormat}
@@ -2211,7 +2199,6 @@ export default function MockupStudio({
         onScreenshotApiKeyChange={handleScreenshotApiKeyChange}
         microlinkApiKey={microlinkApiKeyState}
         onMicrolinkApiKeyChange={handleMicrolinkApiKeyChange}
-        onOpenShortcuts={() => setShortcutsOpen(true)}
         onTakeTour={onTakeTour}
       />
 

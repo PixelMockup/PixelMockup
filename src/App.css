@@ -1846,7 +1846,9 @@
 
   .ms-mobile-dock__sheet-backdrop {
     position: fixed;
-    inset: 0;
+    left: 0;
+    right: 0;
+    bottom: calc(64px + var(--ms-safe-b));
     z-index: 40;
     background: var(--ms-overlay);
   }
@@ -1855,7 +1857,7 @@
     position: fixed;
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: calc(64px + var(--ms-safe-b));
     z-index: 41;
     display: flex;
     flex-direction: column;
@@ -1868,15 +1870,20 @@
     border-top-right-radius: var(--ms-radius);
     background: var(--ms-surface-raised);
     box-shadow: 0 -8px 32px rgba(27, 36, 48, 0.18);
-    animation: ms-slide-up 200ms ease;
   }
 
-  .ms-mobile-dock__sheet-handle {
-    width: 40px;
-    height: 4px;
-    margin: 0 auto var(--ms-space-3);
-    border-radius: 2px;
-    background: var(--ms-border-strong);
+  .ms-mobile-dock__sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--ms-space-2);
+  }
+
+  .ms-mobile-dock__sheet-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--ms-ink);
+    margin: 0;
   }
 
   .ms-mobile-dock__url-form {
@@ -1962,27 +1969,6 @@
     flex: 1;
   }
 
-  .ms-mobile-dock__menu-wrap {
-    position: relative;
-    flex: 1;
-  }
-
-  .ms-mobile-dock__settings-menu {
-    position: absolute;
-    right: 0;
-    bottom: calc(100% + 8px);
-    z-index: 45;
-    display: flex;
-    flex-direction: column;
-    gap: var(--ms-space-2);
-    min-width: 180px;
-    padding: var(--ms-space-2);
-    border: 1px solid var(--ms-border);
-    border-radius: var(--ms-radius);
-    background: var(--ms-surface-raised);
-    box-shadow: var(--ms-shadow);
-  }
-
   @keyframes ms-slide-up {
     from {
       transform: translateY(100%);
@@ -2051,6 +2037,10 @@
     flex-direction: column;
   }
 
+  .ms-empty-hero__input {
+    flex: none;
+  }
+
   .ms-top-command .ms-url-command {
     display: none;
   }
@@ -2089,7 +2079,6 @@
     border-right: none;
     border-bottom: none;
     transform: translateY(0) scale(1);
-    animation: ms-slide-up 200ms ease;
   }
 
   .ms-library.is-open {

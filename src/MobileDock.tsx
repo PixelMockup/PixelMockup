@@ -3,10 +3,7 @@ import {
   AlignHorizontalJustifyCenter,
   AlignVerticalJustifyCenter,
   Bug,
-  Download,
-  Globe,
   HelpCircle,
-  Keyboard,
   LayoutTemplate,
   Magnet,
   Moon,
@@ -35,22 +32,14 @@ const EXPORT_RESOLUTIONS = new Set<ExportResolution>([
 ]);
 
 type MobileDockProps = {
-  hasDevices: boolean;
-  isExporting: boolean;
-  websiteUrlDraft: string;
-  onWebsiteUrlDraftChange: (value: string) => void;
-  onApplyUrl: (url: string) => void;
-  onClearUrl: () => void;
-  websiteUrlActive: boolean;
-  captureBusy: boolean;
   exportFormat: ExportFormat;
   exportResolution: ExportResolution;
   exportTransparentBg: boolean;
   onExportFormat: (v: ExportFormat) => void;
   onExportResolution: (v: ExportResolution) => void;
   onExportTransparentBg: (v: boolean) => void;
-  onDownload: () => void;
   onDevices: () => void;
+  closeDevices: () => void;
   onApplyPreset: (id: string) => void;
   artboardFormatId: ArtboardFormatId;
   onArtboardFormat: (id: ArtboardFormatId) => void;
@@ -72,11 +61,10 @@ type MobileDockProps = {
   onScreenshotApiKeyChange: (key: string) => void;
   microlinkApiKey: string;
   onMicrolinkApiKeyChange: (key: string) => void;
-  onOpenShortcuts: () => void;
   onTakeTour?: () => void;
 };
 
-type SheetId = 'url' | 'more' | null;
+type SheetId = 'more' | 'settings' | null;
 
 function parseExportFormat(value: string): ExportFormat | null {
   return EXPORT_FORMATS.has(value as ExportFormat) ? (value as ExportFormat) : null;
@@ -88,27 +76,15 @@ function parseExportResolution(value: string): ExportResolution | null {
     : null;
 }
 
-function downloadLabel(downloading: boolean): string {
-  return downloading ? 'Downloading…' : 'Download';
-}
-
 export default function MobileDock({
-  hasDevices,
-  isExporting,
-  websiteUrlDraft,
-  onWebsiteUrlDraftChange,
-  onApplyUrl,
-  onClearUrl,
-  websiteUrlActive,
-  captureBusy,
   exportFormat,
   exportResolution,
   exportTransparentBg,
   onExportFormat,
   onExportResolution,
   onExportTransparentBg,
-  onDownload,
   onDevices,
+  closeDevices,
   onApplyPreset,
   artboardFormatId,
   onArtboardFormat,
@@ -130,82 +106,42 @@ export default function MobileDock({
   onScreenshotApiKeyChange,
   microlinkApiKey,
   onMicrolinkApiKeyChange,
-  onOpenShortcuts,
   onTakeTour,
 }: Readonly<MobileDockProps>) {
   const [openSheet, setOpenSheet] = useState<SheetId>(null);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const sheetRef = useRef<HTMLDivElement | null>(null);
-  const settingsRef = useRef<HTMLDivElement | null>(null);
-  const urlInputRef = useRef<HTMLInputElement | null>(null);
+  const navRef = useRef<HTMLElement | null>(null);
 
-  const open = (id: SheetId) => setOpenSheet(id);
   const close = () => setOpenSheet(null);
   const closeAll = () => {
     close();
-    setSettingsOpen(false);
+    closeDevices();
   };
-
-  useEffect(() => {
-    if (openSheet === 'url') {
-      queueMicrotask(() => urlInputRef.current?.focus());
-    }
-  }, [openSheet]);
 
   useEffect(() => {
     const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as HTMLElement;
+      if (navRef.current?.contains(target)) return;
+
       const sheet = sheetRef.current;
-      if (sheet) {
-        const target = e.target as HTMLElement;
-        if (!sheet.contains(target)) {
-          close();
-        }
-      }
-      const settings = settingsRef.current;
-      if (settings) {
-        const target = e.target as HTMLElement;
-        if (!settings.contains(target)) {
-          setSettingsOpen(false);
-        }
+      if (sheet && !sheet.contains(target)) {
+        close();
       }
     };
-    if (openSheet || settingsOpen) {
+    if (openSheet) {
       window.addEventListener('pointerdown', onPointerDown);
       return () => window.removeEventListener('pointerdown', onPointerDown);
     }
-  }, [openSheet, settingsOpen]);
-
-  useEffect(() => {
-    if (!settingsOpen) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setSettingsOpen(false);
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [settingsOpen]);
-
-  const handleUrlSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onApplyUrl(websiteUrlDraft);
-    close();
-  };
-
-  const toggleUrl = () => open(openSheet === 'url' ? null : 'url');
-  const toggleMore = () => open(openSheet === 'more' ? null : 'more');
-  const toggleSettings = () => {
-    setSettingsOpen((v) => !v);
-    close();
-  };
+  }, [openSheet]);
 
   return (
     <>
-      <nav className="ms-mobile-dock" aria-label="Quick actions">
+      <nav ref={navRef} className="ms-mobile-dock" aria-label="Quick actions">
         <button
           type="button"
           className="ms-mobile-dock__btn"
           aria-label="Devices"
+          title="Devices"
           onClick={() => {
             closeAll();
             onDevices();
@@ -217,158 +153,31 @@ export default function MobileDock({
 
         <button
           type="button"
-          className={`ms-mobile-dock__btn${openSheet === 'url' ? ' is-active' : ''}`}
-          aria-label="Website URL"
-          aria-pressed={openSheet === 'url'}
+          className="ms-mobile-dock__btn"
+          aria-label="More"
+          title="More"
           onClick={() => {
             closeAll();
-            toggleUrl();
-          }}
-        >
-          <Globe size={18} strokeWidth={1.75} aria-hidden />
-          <span className="ms-mobile-dock__label">URL</span>
-        </button>
-
-        {hasDevices ? (
-          <button
-            type="button"
-            className="ms-mobile-dock__btn ms-mobile-dock__btn--accent"
-            disabled={isExporting}
-            aria-busy={isExporting}
-            onClick={() => {
-              closeAll();
-              onDownload();
-            }}
-          >
-            <Download size={18} strokeWidth={1.75} aria-hidden />
-            <span className="ms-mobile-dock__label">{downloadLabel(isExporting)}</span>
-          </button>
-        ) : null}
-
-        <button
-          type="button"
-          className={`ms-mobile-dock__btn${openSheet === 'more' ? ' is-active' : ''}`}
-          aria-label="More tools"
-          aria-pressed={openSheet === 'more'}
-          onClick={() => {
-            setSettingsOpen(false);
-            toggleMore();
+            setOpenSheet('more');
           }}
         >
           <MoreHorizontal size={18} strokeWidth={1.75} aria-hidden />
           <span className="ms-mobile-dock__label">More</span>
         </button>
 
-        <div className="ms-mobile-dock__menu-wrap" ref={settingsRef}>
-          <button
-            type="button"
-            className={`ms-mobile-dock__btn${settingsOpen ? ' is-active' : ''}`}
-            aria-label="Settings"
-            aria-expanded={settingsOpen}
-            aria-haspopup="menu"
-            onClick={toggleSettings}
-          >
-            <Settings size={18} strokeWidth={1.75} aria-hidden />
-            <span className="ms-mobile-dock__label">Settings</span>
-          </button>
-          {settingsOpen ? (
-            <div className="ms-mobile-dock__settings-menu" role="menu">
-              <button
-                type="button"
-                role="menuitem"
-                className="ms-menu__item ms-menu__item--with-icon"
-                onClick={() => {
-                  onToggleTheme();
-                  setSettingsOpen(false);
-                }}
-              >
-                {theme === 'dark' ? (
-                  <Sun size={16} strokeWidth={1.75} aria-hidden />
-                ) : (
-                  <Moon size={16} strokeWidth={1.75} aria-hidden />
-                )}
-                {theme === 'dark' ? 'Light mode' : 'Dark mode'}
-              </button>
-              <div className="ms-menu__separator" aria-hidden />
-              <div className="ms-menu__label">Screenshot provider</div>
-              <select
-                className="ms-menu__select"
-                value={screenshotProvider}
-                onChange={(e) => {
-                  onScreenshotProviderChange(
-                    (e.target.value as string) === 'playwright' ? 'playwright'
-                      : (e.target.value as string) === 'screenshotapi' ? 'screenshotapi'
-                      : 'microlink'
-                  );
-                }}
-              >
-                <option value="playwright">Local (Playwright)</option>
-                <option value="screenshotapi">ScreenshotAPI</option>
-                <option value="microlink">Microlink</option>
-              </select>
-              {screenshotProvider === 'screenshotapi' && (
-                <label className="ms-menu__label" style={{ marginTop: 4 }}>
-                  API key
-                  <input
-                    className="ms-menu__input"
-                    type="password"
-                    placeholder="screenshotapi.to key"
-                    value={screenshotApiKey}
-                    onChange={(e) => onScreenshotApiKeyChange(e.target.value)}
-                  />
-                </label>
-              )}
-              {screenshotProvider === 'microlink' && (
-                <label className="ms-menu__label" style={{ marginTop: 4 }}>
-                  API key
-                  <input
-                    className="ms-menu__input"
-                    type="password"
-                    placeholder="Microlink API key (optional)"
-                    value={microlinkApiKey}
-                    onChange={(e) => onMicrolinkApiKeyChange(e.target.value)}
-                  />
-                </label>
-              )}
-              <button
-                type="button"
-                role="menuitem"
-                className="ms-menu__item ms-menu__item--with-icon"
-                onClick={() => {
-                  onOpenShortcuts();
-                  setSettingsOpen(false);
-                }}
-              >
-                <Keyboard size={16} strokeWidth={1.75} aria-hidden />
-                Keyboard shortcuts
-              </button>
-              {onTakeTour ? (
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="ms-menu__item ms-menu__item--with-icon"
-                  onClick={() => {
-                    onTakeTour();
-                    setSettingsOpen(false);
-                  }}
-                >
-                  <HelpCircle size={16} strokeWidth={1.75} aria-hidden />
-                  Take tour
-                </button>
-              ) : null}
-              <a
-                className="ms-menu__item ms-menu__item--with-icon"
-                href="https://github.com/PixelMockup/PixelMockup/issues"
-                target="_blank"
-                rel="noreferrer noopener"
-                style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', color: 'inherit', width: '100%', padding: '0.5rem 1rem' }}
-              >
-                <Bug size={16} strokeWidth={1.75} aria-hidden />
-                Report a bug
-              </a>
-            </div>
-          ) : null}
-        </div>
+        <button
+          type="button"
+          className="ms-mobile-dock__btn"
+          aria-label="Settings"
+          title="Settings"
+          onClick={() => {
+            closeAll();
+            setOpenSheet('settings');
+          }}
+        >
+          <Settings size={18} strokeWidth={1.75} aria-hidden />
+          <span className="ms-mobile-dock__label">Settings</span>
+        </button>
       </nav>
 
       {openSheet ? (
@@ -378,48 +187,20 @@ export default function MobileDock({
             className="ms-mobile-dock__sheet"
             role="dialog"
             aria-modal="true"
-            aria-label={openSheet === 'url' ? 'Website URL' : 'More tools'}
+            aria-label={openSheet === 'more' ? 'More' : 'Settings'}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="ms-mobile-dock__sheet-handle" />
-
-            {openSheet === 'url' ? (
-              <form className="ms-mobile-dock__url-form" onSubmit={handleUrlSubmit}>
-                <label className="ms-sr-only" htmlFor="ms-mobile-url-input">
-                  Website URL
-                </label>
-                <input
-                  ref={urlInputRef}
-                  id="ms-mobile-url-input"
-                  className="ms-mobile-dock__url-input"
-                  type="text"
-                  inputMode="url"
-                  autoComplete="url"
-                  spellCheck={false}
-                  placeholder="google.com"
-                  value={websiteUrlDraft}
-                  aria-busy={captureBusy}
-                  onChange={(e) => onWebsiteUrlDraftChange(e.target.value)}
-                />
-                <div className="ms-mobile-dock__url-actions">
-                  {(websiteUrlActive || websiteUrlDraft.trim()) ? (
-                    <button
-                      type="button"
-                      className="ms-btn ms-btn--ghost"
-                      onClick={() => {
-                        onClearUrl();
-                        close();
-                      }}
-                    >
-                      Clear
-                    </button>
-                  ) : null}
-                  <button type="submit" className="ms-btn ms-btn--accent">
-                    Apply
-                  </button>
-                </div>
-              </form>
-            ) : null}
+            <div className="ms-mobile-dock__sheet-header">
+              <h3 className="ms-mobile-dock__sheet-title">{openSheet === 'more' ? 'More' : 'Settings'}</h3>
+              <button
+                type="button"
+                className="ms-btn ms-btn--ghost"
+                onClick={close}
+                aria-label="Close"
+              >
+                Close
+              </button>
+            </div>
 
             {openSheet === 'more' ? (
               <div className="ms-mobile-dock__sections">
@@ -511,7 +292,7 @@ export default function MobileDock({
                       onClick={() => {
                         onAlignV();
                         close();
-                        }}
+                      }}
                     >
                       <AlignVerticalJustifyCenter size={16} aria-hidden />
                       Align V
@@ -582,6 +363,108 @@ export default function MobileDock({
                     />
                     Transparent background
                   </label>
+                </section>
+              </div>
+            ) : null}
+
+            {openSheet === 'settings' ? (
+              <div className="ms-mobile-dock__sections">
+                <section className="ms-mobile-dock__section">
+                  <h3 className="ms-mobile-dock__section-title">Appearance</h3>
+                  <div className="ms-mobile-dock__section-body">
+                    <button
+                      type="button"
+                      className="ms-btn ms-btn--ghost"
+                      style={{ width: '100%' }}
+                      onClick={() => {
+                        onToggleTheme();
+                        close();
+                      }}
+                    >
+                      {theme === 'dark' ? (
+                        <Sun size={16} strokeWidth={1.75} aria-hidden />
+                      ) : (
+                        <Moon size={16} strokeWidth={1.75} aria-hidden />
+                      )}
+                      {theme === 'dark' ? 'Light mode' : 'Dark mode'}
+                    </button>
+                  </div>
+                </section>
+
+                <section className="ms-mobile-dock__section">
+                  <h3 className="ms-mobile-dock__section-title">Screenshot provider</h3>
+                  <div className="ms-mobile-dock__section-body">
+                    <label className="ms-field">
+                      <span className="ms-field__label">Provider</span>
+                      <select
+                        value={screenshotProvider}
+                        onChange={(e) => {
+                          onScreenshotProviderChange(
+                            (e.target.value as string) === 'playwright' ? 'playwright'
+                              : (e.target.value as string) === 'screenshotapi' ? 'screenshotapi'
+                                : 'microlink'
+                          );
+                        }}
+                      >
+                        <option value="playwright">Local (Playwright)</option>
+                        <option value="screenshotapi">ScreenshotAPI</option>
+                        <option value="microlink">Microlink</option>
+                      </select>
+                    </label>
+                    {screenshotProvider === 'screenshotapi' && (
+                      <label className="ms-field" style={{ marginTop: 8 }}>
+                        <span className="ms-field__label">API key</span>
+                        <input
+                          className="ms-menu__input"
+                          type="password"
+                          placeholder="screenshotapi.to key"
+                          value={screenshotApiKey}
+                          onChange={(e) => onScreenshotApiKeyChange(e.target.value)}
+                        />
+                      </label>
+                    )}
+                    {screenshotProvider === 'microlink' && (
+                      <label className="ms-field" style={{ marginTop: 8 }}>
+                        <span className="ms-field__label">API key</span>
+                        <input
+                          className="ms-menu__input"
+                          type="password"
+                          placeholder="Microlink API key (optional)"
+                          value={microlinkApiKey}
+                          onChange={(e) => onMicrolinkApiKeyChange(e.target.value)}
+                        />
+                      </label>
+                    )}
+                  </div>
+                </section>
+
+                <section className="ms-mobile-dock__section">
+                  <div className="ms-mobile-dock__section-body">
+                    {onTakeTour ? (
+                      <button
+                        type="button"
+                        className="ms-btn ms-btn--ghost"
+                        style={{ width: '100%' }}
+                        onClick={() => {
+                          onTakeTour();
+                          close();
+                        }}
+                      >
+                        <HelpCircle size={16} strokeWidth={1.75} aria-hidden />
+                        Take Tour
+                      </button>
+                    ) : null}
+                    <a
+                      href="https://github.com/PixelMockup/PixelMockup/issues"
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="ms-btn ms-btn--ghost"
+                      style={{ width: '100%', textDecoration: 'none' }}
+                    >
+                      <Bug size={16} strokeWidth={1.75} aria-hidden />
+                      Report a bug
+                    </a>
+                  </div>
                 </section>
               </div>
             ) : null}

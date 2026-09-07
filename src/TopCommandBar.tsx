@@ -1,29 +1,8 @@
-import { Download, Ellipsis, X } from 'lucide-react';
+import { Download, X } from 'lucide-react';
 import BrandMark from './BrandMark';
-import type { ExportFormat, ExportResolution } from './deviceScale';
 import type { CreditState } from './useCredits';
 import { formatResetTime } from './utils/formatResetTime';
 import { getScreenshotProvider } from './screenshotProviders';
-
-const EXPORT_FORMATS = new Set<ExportFormat>(['png', 'jpg']);
-const EXPORT_RESOLUTIONS = new Set<ExportResolution>([
-  'best',
-  '1440p',
-  '1080p',
-  '720p',
-]);
-
-function parseExportFormat(value: string): ExportFormat | null {
-  return EXPORT_FORMATS.has(value as ExportFormat)
-    ? (value as ExportFormat)
-    : null;
-}
-
-function parseExportResolution(value: string): ExportResolution | null {
-  return EXPORT_RESOLUTIONS.has(value as ExportResolution)
-    ? (value as ExportResolution)
-    : null;
-}
 
 type Props = {
   hasDevices: boolean;
@@ -36,16 +15,7 @@ type Props = {
   captureCount: number;
   downloading: boolean;
   softEmptyDownload: boolean;
-  exportFormat: ExportFormat;
-  exportResolution: ExportResolution;
-  exportTransparentBg: boolean;
-  onExportFormat: (v: ExportFormat) => void;
-  onExportResolution: (v: ExportResolution) => void;
-  onExportTransparentBg: (v: boolean) => void;
   onDownload: () => void;
-  downloadMenuOpen: boolean;
-  onDownloadMenuOpenChange: (open: boolean) => void;
-  downloadMenuRef: React.RefObject<HTMLDivElement | null>;
   credits: CreditState;
   onOpenScreenshotSettings: () => void;
 };
@@ -67,16 +37,7 @@ export default function TopCommandBar({
   captureCount,
   downloading,
   softEmptyDownload,
-  exportFormat,
-  exportResolution,
-  exportTransparentBg,
-  onExportFormat,
-  onExportResolution,
-  onExportTransparentBg,
   onDownload,
-  downloadMenuOpen,
-  onDownloadMenuOpenChange,
-  downloadMenuRef,
   credits,
   onOpenScreenshotSettings,
 }: Readonly<Props>) {
@@ -191,8 +152,7 @@ export default function TopCommandBar({
           return null;
         })()}
 
-
-        <div className="ms-download-cluster" ref={downloadMenuRef}>
+        <div className="ms-download-cluster">
           <button
             type="button"
             className="ms-btn ms-btn--accent ms-btn--download"
@@ -212,60 +172,6 @@ export default function TopCommandBar({
               {downloadLabel(downloading, softEmptyDownload)}
             </span>
           </button>
-          {hasDevices ? (
-            <button
-              type="button"
-              className="ms-icon-btn"
-              aria-label="Download options"
-              title="Download options"
-              aria-expanded={downloadMenuOpen}
-              aria-haspopup="menu"
-              onClick={() => onDownloadMenuOpenChange(!downloadMenuOpen)}
-            >
-              <Ellipsis size={18} strokeWidth={1.75} aria-hidden />
-            </button>
-          ) : null}
-          {hasDevices && downloadMenuOpen ? (
-            <div className="ms-menu ms-download-menu" role="menu">
-              <label className="ms-field">
-                <span className="ms-field__label">Format</span>
-                <select
-                  value={exportFormat}
-                  onChange={(e) => {
-                    const next = parseExportFormat(e.target.value);
-                    if (next) onExportFormat(next);
-                  }}
-                >
-                  <option value="png">PNG</option>
-                  <option value="jpg">JPG</option>
-                </select>
-              </label>
-              <label className="ms-field">
-                <span className="ms-field__label">Resolution</span>
-                <select
-                  value={exportResolution}
-                  onChange={(e) => {
-                    const next = parseExportResolution(e.target.value);
-                    if (next) onExportResolution(next);
-                  }}
-                >
-                  <option value="best">Best</option>
-                  <option value="1440p">1440p</option>
-                  <option value="1080p">1080p</option>
-                  <option value="720p">720p</option>
-                </select>
-              </label>
-              <label className="ms-check">
-                <input
-                  type="checkbox"
-                  checked={exportTransparentBg && exportFormat !== 'jpg'}
-                  disabled={exportFormat === 'jpg'}
-                  onChange={(e) => onExportTransparentBg(e.target.checked)}
-                /> {''}
-                Transparent background
-              </label>
-            </div>
-          ) : null}
         </div>
       </div>
     </header>
