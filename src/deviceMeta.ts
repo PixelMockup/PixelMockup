@@ -243,7 +243,7 @@ export function isPriorityWatch(name: string | undefined): boolean {
   const plusIdx = n.indexOf('+');
   if (plusIdx === -1) return false;
   const strap = n.slice(plusIdx + 1).toLowerCase();
-  return strap.includes('black');
+  return strap.includes('black') && n.includes('Closed');
 }
 
 export interface SearchableDevice {
