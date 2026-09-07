@@ -16,7 +16,6 @@ function isPriorityDevice(item: DeviceItem): boolean {
 }
 
 const PRODUCT_CHIP_PREVIEW = 8;
-const INITIAL_VISIBLE_ITEMS = 50;
 const LIBRARY_DRAG_MIME = 'application/x-mockup-device';
 
 export const LIBRARY_W_MIN = 280;
@@ -298,13 +297,9 @@ export default function LibraryPanel({
             const priorityItems = items.filter(isPriorityDevice);
             const tapToLoadItems = items.filter((item) => !isPriorityDevice(item));
             const expanded =
-              searchIsGlobal ||
-              expandedSections.has(category) ||
-              tapToLoadItems.length <= INITIAL_VISIBLE_ITEMS;
-            const visibleTapToLoad = expanded
-              ? tapToLoadItems
-              : tapToLoadItems.slice(0, INITIAL_VISIBLE_ITEMS);
-            const hiddenCount = tapToLoadItems.length - visibleTapToLoad.length;
+              searchIsGlobal || expandedSections.has(category);
+            const visibleTapToLoad = expanded ? tapToLoadItems : [];
+            const hiddenCount = tapToLoadItems.length;
             return (
               <div key={category} className="ms-device-section">
                 <h3 className="ms-device-section-title">{category}</h3>
