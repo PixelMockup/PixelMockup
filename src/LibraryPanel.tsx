@@ -1,3 +1,4 @@
+import { Funnel } from 'lucide-react';
 import { useState, type RefObject } from 'react';
 import type { DeviceItem } from './App';
 import { formatDeviceDisplayName } from './deviceMeta';
@@ -138,15 +139,26 @@ export default function LibraryPanel({
       )}
 
       <div className="ms-filter-block ms-filter-block--search">
-        <input
-          ref={searchInputRef}
-          className="ms-search"
-          type="search"
-          placeholder="Search devices (e.g. iphone)…"
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          aria-label="Search devices"
-        />
+        <div className="ms-search-wrap">
+          <input
+            ref={searchInputRef}
+            className="ms-search"
+            type="search"
+            placeholder="Search devices (e.g. iphone)…"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            aria-label="Search devices"
+          />
+          <button
+            type="button"
+            className="ms-search-funnel"
+            aria-expanded={filtersOpen}
+            aria-label="Toggle filters"
+            onClick={() => setFiltersOpen((v) => !v)}
+          >
+            <Funnel size={16} strokeWidth={1.5} />
+          </button>
+        </div>
       </div>
 
       {categories.length > 0 && (
@@ -180,27 +192,6 @@ export default function LibraryPanel({
           )}
         </div>
       )}
-
-      <div className="ms-filter-block">
-        <button
-          type="button"
-          className="ms-btn ms-btn--ghost ms-filters-toggle"
-          aria-expanded={filtersOpen}
-          onClick={() => setFiltersOpen((v) => !v)}
-        >
-          {filtersOpen ? 'Hide filters' : 'Filters'}
-          {hasActiveFilters && !filtersOpen ? ' · on' : ''}
-        </button>
-        {hasActiveFilters && (
-          <button
-            type="button"
-            className="ms-btn ms-btn--ghost"
-            onClick={onClearFilters}
-          >
-            Clear
-          </button>
-        )}
-      </div>
 
       {filtersOpen && (
         <>

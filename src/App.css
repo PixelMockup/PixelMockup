@@ -1046,8 +1046,8 @@
 }
 
 .ms-search {
-  width: 100%;
-  padding: 10px 12px;
+  flex: 1;
+  padding: 10px 36px 10px 40px;
   border: 1px solid var(--ms-border);
   border-radius: var(--ms-radius-sm);
   background: var(--ms-surface-raised);
@@ -1057,6 +1057,34 @@
 
 .ms-search::placeholder {
   color: var(--ms-muted);
+}
+
+.ms-search-wrap {
+  position: relative;
+  display: flex;
+}
+
+.ms-search-funnel {
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: var(--ms-radius-sm);
+  background: transparent;
+  color: var(--ms-muted);
+  cursor: pointer;
+  transition: color 160ms ease;
+}
+
+.ms-search-funnel:hover {
+  color: var(--ms-ink);
 }
 
 .ms-library-results {
