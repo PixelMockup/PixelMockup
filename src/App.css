@@ -2079,6 +2079,7 @@
     border-right: none;
     border-bottom: none;
     transform: translateY(0) scale(1);
+    transition: none;
   }
 
   .ms-library.is-open {
