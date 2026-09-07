@@ -529,7 +529,21 @@
   font-size: 0.85rem;
 }
 
-@media (max-width: 480px) {
+.ms-text-btn {
+  border: none;
+  background: transparent;
+  color: var(--ms-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  padding: 0;
+  font: inherit;
+}
+
+.ms-text-btn:hover:not(:disabled) {
+  color: var(--ms-ink);
+}
+
+/* —— Mobile warning —— */
 .ms-mobile-warning {
   position: fixed;
   inset: 0;
