@@ -239,11 +239,18 @@ export function isPriorityTablet(name: string | undefined): boolean {
 
 export function isPriorityWatch(name: string | undefined): boolean {
   const n = name ?? '';
-  if (!n.toLowerCase().includes('apple')) return false;
-  const plusIdx = n.indexOf('+');
-  if (plusIdx === -1) return false;
-  const strap = n.slice(plusIdx + 1).toLowerCase();
-  return strap.includes('black') && n.includes('Closed');
+  const nl = n.toLowerCase();
+  if (nl.includes('space gray aluminum') || nl.includes('space grey aluminum')) {
+    const plusIdx = n.indexOf('+');
+    if (plusIdx !== -1) {
+      const strap = n.slice(plusIdx + 1).toLowerCase();
+      if (strap.includes('black') && n.includes('Closed')) return true;
+    }
+  }
+  if (nl.includes('sony smartwatch 3 black closed')) return true;
+  if (nl.includes('moto 360 men black + black closed')) return true;
+  if (nl.includes('moto 360 woman gold + stone closed')) return true;
+  return false;
 }
 
 export interface SearchableDevice {
