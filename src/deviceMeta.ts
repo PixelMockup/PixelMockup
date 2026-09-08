@@ -244,7 +244,7 @@ export function isPriorityWatch(name: string | undefined): boolean {
     const plusIdx = n.indexOf('+');
     if (plusIdx !== -1) {
       const strap = n.slice(plusIdx + 1).toLowerCase().trim();
-      if (strap === 'black' && n.includes('Closed')) return true;
+      if (strap.includes('black closed')) return true;
     }
   }
   if (nl.includes('sony smartwatch 3 black closed')) return true;
