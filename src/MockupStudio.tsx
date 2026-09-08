@@ -101,6 +101,9 @@ import LibraryPanel, {
 } from './LibraryPanel';
 import {
   formatDeviceDisplayName,
+  isPriorityPhone,
+  isPriorityTablet,
+  isPriorityWatch,
   matchesSearchQuery,
   sortBySearchRelevance,
 } from './deviceMeta';
@@ -351,6 +354,13 @@ function persistLibraryWidth(w: number) {
   }
 }
 
+function isPriorityDevice(item: DeviceItem): boolean {
+  if (item.category === 'phones') return isPriorityPhone(item.name);
+  if (item.category === 'tablets') return isPriorityTablet(item.name);
+  if (item.category === 'watches') return isPriorityWatch(item.name);
+  return true; // computers, displays — all priority
+}
+
 function buildFilteredLibrary(
   brandFilteredDevices: DeviceItem[],
   selectedProductValid: string | null,
@@ -368,6 +378,12 @@ function buildFilteredLibrary(
     return matchesSearchQuery(item, searchQuery);
   });
   items = sortBySearchRelevance(items, searchQuery);
+  // Sort so priority devices come first within each category
+  items = [...items].sort((a, b) => {
+    const aPri = isPriorityDevice(a) ? 0 : 1;
+    const bPri = isPriorityDevice(b) ? 0 : 1;
+    return aPri - bPri;
+  });
   if (items.length === 0) return [];
 
   if (searchIsGlobal) {
@@ -1971,10 +1987,6 @@ export default function MockupStudio({
           libraryProgress={libraryProgress}
           loadedCategories={loadedCategories}
           loadingDevicePaths={loadingDevicePaths}
-          onClose={() => {
-            setLibraryCollapsed(true);
-            persistLibraryCollapsed(true);
-          }}
           onCategoryChange={(c) => {
             setCategoryFilter(c);
             setSelectedProduct(null);
@@ -2026,8 +2038,6 @@ export default function MockupStudio({
               <EmptyHero
                 busy={placingPath != null}
                 onShowOnDevices={(url) => void showOnDevices(url)}
-                onStartLayoutOnly={() => void applyLayoutPreset('apple-lineup')}
-                onBrowseDevices={openDevicesPicker}
               />
             ) : null}
 

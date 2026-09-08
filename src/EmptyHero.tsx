@@ -3,8 +3,6 @@ import { normalizeWebsiteUrl } from './websiteUrl';
 
 type Props = {
   onShowOnDevices: (url: string) => void;
-  onStartLayoutOnly: () => void;
-  onBrowseDevices: () => void;
   busy?: boolean;
 };
 
@@ -13,8 +11,6 @@ type Props = {
  */
 export default function EmptyHero({
   onShowOnDevices,
-  onStartLayoutOnly,
-  onBrowseDevices,
   busy = false,
 }: Readonly<Props>) {
   const inputId = useId();
@@ -71,20 +67,6 @@ export default function EmptyHero({
           {error}
         </p>
       ) : null}
-      <div className="ms-empty-hero__quiet">
-        <button
-          type="button"
-          className="ms-text-btn"
-          disabled={busy}
-          onClick={onStartLayoutOnly}
-        >
-          Start layout only
-        </button>
-        <span aria-hidden>·</span>
-        <button type="button" className="ms-text-btn" onClick={onBrowseDevices}>
-          Browse devices
-        </button>
-      </div>
     </div>
   );
 }
