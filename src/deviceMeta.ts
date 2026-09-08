@@ -243,8 +243,8 @@ export function isPriorityWatch(name: string | undefined): boolean {
   if (nl.includes('space gray aluminum') || nl.includes('space grey aluminum')) {
     const plusIdx = n.indexOf('+');
     if (plusIdx !== -1) {
-      const strap = n.slice(plusIdx + 1).toLowerCase();
-      if (strap.includes('black') && n.includes('Closed')) return true;
+      const strap = n.slice(plusIdx + 1).toLowerCase().trim();
+      if (strap === 'black' && n.includes('Closed')) return true;
     }
   }
   if (nl.includes('sony smartwatch 3 black closed')) return true;
