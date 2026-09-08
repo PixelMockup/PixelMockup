@@ -20,3 +20,9 @@ export function formatResetTime(resetAt: number): string {
   if (hours > 0) return `Resets in ${hours}h ${minutes}m (UTC: ${timeStr})`;
   return `Resets in ${minutes}m (${timeStr})`;
 }
+
+// If reset time has passed
+export function hasResetTimePassed(resetAt: number): boolean {
+  const now = Math.floor(Date.now() / 1000);
+  return resetAt - now <= 0;
+}
