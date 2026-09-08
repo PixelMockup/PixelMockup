@@ -101,12 +101,8 @@ test.describe('responsive layout', () => {
       });
       dismissMobileWarningIfShown(page);
 
-      const startBtn = page
-        .getByRole('button', { name: /Start layout only/i })
-        .first();
-      // Wait for button to be attached and stable before clicking.
-      await startBtn.waitFor({ state: 'attached', timeout: 10000 });
-      await startBtn.click();
+      await page.getByRole('textbox', { name: /Website URL/i }).fill('google.com');
+      await page.getByRole('button', { name: /Show on devices/i }).click();
       // Wait for the layout to apply — the artboard should gain canvas items.
       await page
         .locator('.ms-canvas-item')
