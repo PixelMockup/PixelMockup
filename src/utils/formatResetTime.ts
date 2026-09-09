@@ -3,11 +3,10 @@ export function formatResetTime(resetAt: number): string {
   const diff = resetAt - now;
   const resetDate = new Date(resetAt * 1000);
 
-  // Explicitly format in UTC
+  // Explicitly format to user's Local browser timezone
   const timeStr = resetDate.toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: "UTC",
     hour12: false
   });
 
