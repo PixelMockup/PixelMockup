@@ -19,23 +19,23 @@ export interface CreditState {
 const EMPTY_USAGE: MicrolinkUsage = { remaining: null, limit: null, resetAt: null };
 const SA_FREE_TIER_LIMIT = 200;
 
-// async function fetchMicrolinkCredits(): Promise<Partial<MicrolinkUsage>> {
-//   try {
-//     const res = await fetch(`/api/credits?t=${Date.now()}`, {
-//       cache: 'no-store',
-//       headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' } // revalidate cache and have no storing
-//     });
-//     if (!res.ok) return {};
-//     const data = await res.json() as { remaining?: number; limit?: number; resetAt?: number };
-//     return {
-//       remaining: data.remaining ?? null,
-//       limit: data.limit ?? null,
-//       resetAt: data.resetAt ?? null,
-//     };
-//   } catch {
-//     return {};
-//   }
-// }
+  // async function fetchMicrolinkCredits(): Promise<Partial<MicrolinkUsage>> {
+  //   try {
+  //     const res = await fetch(`/api/credits?t=${Date.now()}`, {
+  //       cache: 'no-store',
+  //       headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+  //     });
+  //     if (!res.ok) return {};
+  //     const data = await.json();
+  //     return {
+  //       remaining: data.remaining ?? null,
+  //       limit: data.limit ?? null,
+  //       resetAt: data.resetAt ?? null,
+  //     };
+  // } catch {
+  //     return {};
+  //   }
+  // }
 
 export function useCredits() {
   const [credits, setCredits] = useState<CreditState>({
@@ -97,7 +97,7 @@ export function useCredits() {
     fetchCredits();
   }, [fetchCredits]);
 
-  const updateScreenshotApiCredits = useCallback((remaining: number | null, limit: number | null, resetAt: number | null) => {
+  const updateScreenshotApiCredits = useCallback((remaining: number | null, limit?: number | null, resetAt?: number | null) => {
     setCredits((prev) => ({
       ...prev,
       screenshotapi: remaining,

@@ -81,32 +81,44 @@ export default function ScreenshotSettings({ isOpen, onClose, onNotify }: Screen
 
   const validateSa = useCallback(async () => {
     if (!saKey) return;
+
     setSaStatus((s) => ({ ...s, valid: null, loading: true }));
+
     try {
       const res = await fetch('/api/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ provider: 'screenshotapi', key: saKey }),
       });
+
       if (!res.ok) {
         setSaStatus({ valid: false, reason: 'error', loading: false });
         return;
       }
+
       const data = await res.json();
       const creditsRemaining = data.creditsRemaining ?? null;
+      const resetAt = data.resetAt ?? null;
+      const limit = data.limit ?? null; // Default to 200 if not provided
+
       setSaStatus({
         valid: data.valid ?? false,
         creditsRemaining,
         reason: data.reason ?? data.message ?? undefined,
         loading: false,
       });
+
       if (data.valid) {
-        try { updateScreenshotApiCredits(creditsRemaining, null, null); } catch { /* ignore */ }
+        try {
+          updateScreenshotApiCredits(creditsRemaining, limit, resetAt);
+        } catch (err) {
+          console.log('Failed to update ScreenshotAPI credits state: ', err);
+        }
       }
     } catch {
       setSaStatus({ valid: false, reason: 'network_error', loading: false });
     }
-  }, [saKey]);
+  }, [saKey, updateScreenshotApiCredits]);
 
   const handleViewScreenshotApi = useCallback(() => {
     setView('screenshotapi');
