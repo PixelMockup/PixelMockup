@@ -101,6 +101,8 @@ export default function TopCommandBar({
       <div className="ms-top-command__end">
         {(() => {
           const provider = getScreenshotProvider();
+
+          // --- SCREENSHOTAPI DYNAMIC DISPLAY ---
           if (provider === 'screenshotapi') {
             const saRemaining = credits.screenshotapi;
             const saLimit = credits.screenshotapiLimit ?? 200; // Dynamic fallback
@@ -121,6 +123,8 @@ export default function TopCommandBar({
               </button>
             );
           }
+
+          // --- MICROLINK DYNAMIC DISPLAY ---
           if (provider === 'microlink' && credits.microlink.remaining != null) {
             const mlLimit = credits.microlink.limit ?? 25; // Dynamic fallback
 

@@ -18,53 +18,90 @@ export interface CreditState {
 const EMPTY_USAGE: MicrolinkUsage = { remaining: null, limit: null, resetAt: null };
 const SA_FREE_TIER_LIMIT = 200;
 
-async function fetchMicrolinkCredits(): Promise<Partial<MicrolinkUsage>> {
-  try {
-    const res = await fetch(`/api/credits?t=${Date.now()}`, {
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' } // revalidate cache and have no storing
-    });
-    if (!res.ok) return {};
-    const data = await res.json() as { remaining?: number; limit?: number; resetAt?: number };
-    return {
-      remaining: data.remaining ?? null,
-      limit: data.limit ?? null,
-      resetAt: data.resetAt ?? null,
-    };
-  } catch {
-    return {};
-  }
-}
+// async function fetchMicrolinkCredits(): Promise<Partial<MicrolinkUsage>> {
+//   try {
+//     const res = await fetch(`/api/credits?t=${Date.now()}`, {
+//       cache: 'no-store',
+//       headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' } // revalidate cache and have no storing
+//     });
+//     if (!res.ok) return {};
+//     const data = await res.json() as { remaining?: number; limit?: number; resetAt?: number };
+//     return {
+//       remaining: data.remaining ?? null,
+//       limit: data.limit ?? null,
+//       resetAt: data.resetAt ?? null,
+//     };
+//   } catch {
+//     return {};
+//   }
+// }
 
 export function useCredits() {
   const [credits, setCredits] = useState<CreditState>({
     screenshotapi: null,
     screenshotapiLimit: SA_FREE_TIER_LIMIT,
+    screenshotapiResetAt: null,
     microlink: EMPTY_USAGE,
   });
   const [isLoadingCredits, setIsLoadingCredits] = useState(false);
 
   const fetchCredits = useCallback(async () => {
     setIsLoadingCredits(true);
-    const mlData = await fetchMicrolinkCredits();
-    if (mlData.remaining != null || mlData.limit != null || mlData.resetAt != null) {
-      setCredits((prev) => ({
-        ...prev,
-        microlink: { ...prev.microlink, ...mlData },
-      }));
+
+    try {
+      // Cache busting ensure to never get stale vercel edge cache data
+      const res = await fetch(`/api/credits?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+
+        // update Microlink state
+        if (data.remaining != null || data.limit != null || data.resetAt != null) {
+          setCredits((prev) => ({
+            ...prev,
+            microlink: {
+              remaining: data.remaining ?? prev.microlink.remaining,
+              limit: data.limit ?? prev.microlink.limit,
+              resetAt: data.resetAt ?? prev.microlink.resetAt,
+              tier: data.tier ?? prev.microlink.tier,
+            },
+          }));
+        }
+        // update ScreenshotAPI state
+        // handle both generic keys and specific keys
+        const saRemaining = data.saRemaining ?? data.remaining;
+        const saLimit = data.saLimit ?? data.limit;
+        const saResetAt = data.saResetAt ?? data.resetAt;
+
+        if (saRemaining != null || saLimit != null || saResetAt != null) {
+          setCredits((prev) => ({
+            ...prev,
+            screenshotapi: saRemaining ?? prev.screenshotapi,
+            screenshotapiLimit: saLimit ?? prev.screenshotapiLimit,
+            screenshotapiResetAt: saResetAt ?? prev.screenshotapiResetAt,
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching credits:', error);
+    } finally {
+      setIsLoadingCredits(false);
     }
-    setIsLoadingCredits(false);
   }, []);
 
   useEffect(() => {
     fetchCredits();
   }, [fetchCredits]);
 
-  const updateScreenshotApiCredits = useCallback((remaining: number | null, limit: number | null) => {
+  const updateScreenshotApiCredits = useCallback((remaining: number | null, limit: number | null, resetAt: number | null) => {
     setCredits((prev) => ({
       ...prev,
       screenshotapi: remaining,
-      screenshotapiLimit: limit ?? SA_FREE_TIER_LIMIT
+      screenshotapiLimit: limit ?? prev.screenshotapiLimit,
+      screenshotapiResetAt: resetAt ?? prev.screenshotapiResetAt,
     }));
   }, []);
 
@@ -82,7 +119,7 @@ export function useCredits() {
       extras?: { limit?: number | null; resetAt?: number | null },
     ) => {
       if (provider === 'screenshotapi') {
-        updateScreenshotApiCredits(remaining, null);
+        updateScreenshotApiCredits(remaining, extras?.limit ?? null, extras?.resetAt ?? null);
       } else if (provider === 'microlink') {
         updateMicrolinkUsage({
           remaining,
