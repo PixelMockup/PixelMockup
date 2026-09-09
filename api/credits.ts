@@ -17,7 +17,7 @@ const FETCH_TIMEOUT_MS = 15_000;
 
 function respondJson(res: VercelResponse, status: number, body: Record<string, unknown>) {
   res.status(status);
-  res.setHeader('Cache-Control', 'no-store');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate');
   res.setHeader('Content-Type', 'application/json');
   res.json(body);
 }
@@ -52,6 +52,18 @@ export async function handler(req: VercelRequest, res: VercelResponse): Promise<
       remaining: saStored.remaining,
       limit: saStored.limit,
       resetAt: saStored.resetAt,
+    });
+    return;
+  }
+
+  // OPTIMIZATION: If the store already auto-reset and is at full capacity, 
+  // return it immediately and skip the unnecessary API probe!
+  if (mlStored && mlStored.resetAt === null && mlStored.remaining === mlStored.limit) {
+    respondJson(res, 200, {
+      provider: 'microlink',
+      remaining: mlStored.remaining,
+      limit: mlStored.limit,
+      resetAt: null,
     });
     return;
   }
@@ -100,8 +112,26 @@ export async function handler(req: VercelRequest, res: VercelResponse): Promise<
   const limit = rateLimitLimit ? parseInt(rateLimitLimit, 10) : 25;
   const resetAt = rateLimitReset ? parseInt(rateLimitReset, 10) : null;
 
-  // Store in server memory
-  setCreditState('microlink', remaining, limit, resetAt);
+  // 4. SMART MERGE: If the live probe says we are exhausted, but the reset time 
+  // has already passed, trust the auto-reset logic instead of the stale probe.
+  const nowSec = Math.floor(Date.now() / 1000);
+  const isProbeExhausted = remaining !== null && remaining <= 0;
+  const isResetPast = resetAt !== null && nowSec >= resetAt;
+
+  let finalRemaining = remaining;
+  let finalLimit = limit;
+  let finalResetAt = resetAt;
+
+  if ((isProbeExhausted && isResetPast) || (mlStored && mlStored.resetAt === null && mlStored.remaining === mlStored.limit)) {
+    finalRemaining = mlStored ? mlStored.limit : (limit ?? 25);
+    finalLimit = mlStored ? mlStored.limit : (limit ?? 25);
+    finalResetAt = null; // Will be updated on next successful fresh probe
+  }
+
+  // 5. Update store only with the corrected, smart values
+  if (finalRemaining !== null || finalLimit !== null || finalResetAt !== null) {
+    setCreditState('microlink', finalRemaining, finalLimit, finalResetAt);
+  }
 
   respondJson(res, 200, {
     provider: 'microlink',

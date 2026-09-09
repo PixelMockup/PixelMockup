@@ -20,7 +20,10 @@ const SA_FREE_TIER_LIMIT = 200;
 
 async function fetchMicrolinkCredits(): Promise<Partial<MicrolinkUsage>> {
   try {
-    const res = await fetch('/api/credits');
+    const res = await fetch(`/api/credits?t=${Date.now()}`, {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' } // revalidate cache and have no storing
+    });
     if (!res.ok) return {};
     const data = await res.json() as { remaining?: number; limit?: number; resetAt?: number };
     return {
