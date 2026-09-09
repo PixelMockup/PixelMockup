@@ -28,7 +28,8 @@ async function placePhone(page: Page) {
   await expect(page.locator('.ms-progress-loader-overlay')).toHaveCount(0, {
     timeout: 60_000,
   });
-  await page.getByRole('button', { name: /^Start layout only$/i }).first().click();
+  await page.getByRole('textbox', { name: /Website URL/i }).fill('google.com');
+  await page.getByRole('button', { name: /Show on devices/i }).click();
   await expect(page.locator('.ms-canvas-item').first()).toBeVisible({
     timeout: 45_000,
   });

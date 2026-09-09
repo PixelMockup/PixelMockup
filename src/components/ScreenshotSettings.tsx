@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { Provider, SaStatus } from '../types/screenshot';
-import { formatResetTime } from '../utils/formatResetTime';
+import { formatResetTime, hasResetTimePassed } from '../utils/formatResetTime';
 import {
   getScreenshotProvider,
   setScreenshotProvider,
@@ -22,7 +22,7 @@ const MICROLINK_KEYS_URL = 'https://microlink.io/docs';
 
 export default function ScreenshotSettings({ isOpen, onClose, onNotify }: ScreenshotSettingsProps) {
   // This is updated automatically by `captureWebsite.ts` after actual captures, costing ZERO extra API calls.
-  const { credits } = useCredits();
+  const { credits, updateScreenshotApiCredits, refreshCredits } = useCredits();
   const [view, setView] = useState<Provider>(() =>
     getScreenshotProvider() === 'screenshotapi' ? 'screenshotapi' : 'microlink',
   );
@@ -47,9 +47,27 @@ export default function ScreenshotSettings({ isOpen, onClose, onNotify }: Screen
 
   useEffect(() => {
     if (!isOpen) return;
-    const id = window.setInterval(() => setResetTick((t) => t + 1), 30_000);
+
+    if (ml.resetAt && hasResetTimePassed(ml.resetAt)) {
+      const refreshTimer = window.setTimeout(() => {
+        refreshCredits();
+      }, 5_000); // Wait 5 seconds after reset, then refresh
+
+      return () => window.clearTimeout(refreshTimer);
+    }
+  }, [isOpen, ml.resetAt, ml.remaining, refreshCredits]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const id = window.setInterval(() => {
+      setResetTick((t) => t + 1);
+      // Check if we should auto-refresh credits
+      if (ml.resetAt && hasResetTimePassed(ml.resetAt) && ml.remaining === 0) {
+        refreshCredits();
+      }
+    }, 30_000);
     return () => window.clearInterval(id);
-  }, [isOpen, ml.resetAt, setResetTick]);
+  }, [isOpen, ml.resetAt, ml.remaining, refreshCredits, setResetTick]);
 
   const handleSaKeyChange = useCallback((key: string) => {
     setSaKeyState(key);
@@ -75,12 +93,16 @@ export default function ScreenshotSettings({ isOpen, onClose, onNotify }: Screen
         return;
       }
       const data = await res.json();
+      const creditsRemaining = data.creditsRemaining ?? null;
       setSaStatus({
         valid: data.valid ?? false,
-        creditsRemaining: data.creditsRemaining ?? undefined,
+        creditsRemaining,
         reason: data.reason ?? data.message ?? undefined,
         loading: false,
       });
+      if (data.valid) {
+        try { updateScreenshotApiCredits(creditsRemaining); } catch { /* ignore */ }
+      }
     } catch {
       setSaStatus({ valid: false, reason: 'network_error', loading: false });
     }
@@ -234,19 +256,25 @@ export default function ScreenshotSettings({ isOpen, onClose, onNotify }: Screen
                 </div>
 
                 {ml.remaining != null ? (
-                  <div className={`ms-ss-usage${mlExhausted ? ' ms-ss-usage--exhausted' : ''}`}>
-                    <span className="ms-ss-usage__value">
-                      {ml.limit != null
-                        ? `${ml.remaining}/${ml.limit}`
-                        : `${ml.remaining}`}
-                    </span>
-                    <span className="ms-ss-usage__label">
-                      {usingPersonalMlKey ? 'available on your key' : 'available on shared key'}
-                    </span>
-                    {ml.resetAt != null && (
-                      <span className="ms-ss-usage__reset">{formatResetTime(ml.resetAt)}</span>
-                    )}
-                  </div>
+                  hasResetTimePassed(ml.resetAt || 0) && ml.remaining <= 0 ? (
+                    <div className="ms-ss-usage ms-ss-status-warn" style={{ marginBottom: '1rem' }}>
+                      Reset window reached. Refreshing credits...
+                    </div>
+                  ) : (
+                    <div className={`ms-ss-usage${mlExhausted ? ' ms-ss-usage--exhausted' : ''}`}>
+                      <span className="ms-ss-usage__value">
+                        {ml.limit != null
+                          ? `${ml.remaining}/${ml.limit}`
+                          : `${ml.remaining}`}
+                      </span>
+                      <span className="ms-ss-usage__label">
+                        {usingPersonalMlKey ? 'available on your key' : 'available on shared key'}
+                      </span>
+                      {ml.resetAt != null && (
+                        <span className="ms-ss-usage__reset">{formatResetTime(ml.resetAt)}</span>
+                      )}
+                    </div>
+                  )
                 ) : (
                   <div className="ms-ss-status">
                     <span className="ms-ss-status-hint">
@@ -254,7 +282,7 @@ export default function ScreenshotSettings({ isOpen, onClose, onNotify }: Screen
                     </span>
                   </div>
                 )}
-                {mlExhausted && (
+                {mlExhausted && !hasResetTimePassed(ml.resetAt || 0) && (
                   <div className="ms-ss-status ms-ss-status-warn">
                     The shared Microlink key is used up for today. Get your own key via the link below to keep capturing.
                   </div>

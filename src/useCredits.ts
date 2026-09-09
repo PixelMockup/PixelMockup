@@ -10,60 +10,58 @@ export interface MicrolinkUsage {
 
 export interface CreditState {
   screenshotapi: number | null;
+  screenshotapiLimit: number | null;
   microlink: MicrolinkUsage;
 }
 
-const STORAGE_KEY = 'pixelMockup_microlink_usage';
-
-// Read the last known state from STORAGE_KEY
-function getStoredUsage(): MicrolinkUsage {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-
-      // Optimistic Reset: If the reset time has passed, assume it's back to the limit
-      // This prevents showing "0/25" for hours after the UTC rollover.
-      if (parsed.resetAt && Date.now() / 1000 > parsed.resetAt) {
-        return {
-          remaining: parsed.limit ?? 25,
-          limit: parsed.limit ?? 25,
-          resetAt: null
-        };
-      }
-      return parsed;
-    }
-  } catch {
-    // Ignore parse errors (e.g., corrupted storage)
-  }
-  return { remaining: null, limit: null, resetAt: null };
-}
-
-// ✅ NEW: Save state to localStorage whenever it updates
-function setStoredUsage(usage: MicrolinkUsage) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(usage));
-  } catch {
-    // Ignore (e.g., private browsing mode)
-  }
-}
 
 const EMPTY_USAGE: MicrolinkUsage = { remaining: null, limit: null, resetAt: null };
+const SA_FREE_TIER_LIMIT = 200;
+
+async function fetchMicrolinkCredits(): Promise<Partial<MicrolinkUsage>> {
+  try {
+    const res = await fetch(`/api/credits?t=${Date.now()}`, {
+      cache: 'no-store',
+      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' } // revalidate cache and have no storing
+    });
+    if (!res.ok) return {};
+    const data = await res.json() as { remaining?: number; limit?: number; resetAt?: number };
+    return {
+      remaining: data.remaining ?? null,
+      limit: data.limit ?? null,
+      resetAt: data.resetAt ?? null,
+    };
+  } catch {
+    return {};
+  }
+}
 
 export function useCredits() {
-  // Initialize from localstorage insted of empty state
   const [credits, setCredits] = useState<CreditState>({
     screenshotapi: null,
-    microlink: getStoredUsage(),
+    screenshotapiLimit: SA_FREE_TIER_LIMIT,
+    microlink: EMPTY_USAGE,
   });
+  const [isLoadingCredits, setIsLoadingCredits] = useState(false);
 
-  // Automatically persist to localStorage whenever microlink usage changes
+  const fetchCredits = useCallback(async () => {
+    setIsLoadingCredits(true);
+    const mlData = await fetchMicrolinkCredits();
+    if (mlData.remaining != null || mlData.limit != null || mlData.resetAt != null) {
+      setCredits((prev) => ({
+        ...prev,
+        microlink: { ...prev.microlink, ...mlData },
+      }));
+    }
+    setIsLoadingCredits(false);
+  }, []);
+
   useEffect(() => {
-    setStoredUsage(credits.microlink);
-  }, [credits.microlink]);
+    fetchCredits();
+  }, [fetchCredits]);
 
   const updateScreenshotApiCredits = useCallback((remaining: number | null) => {
-    setCredits((prev) => ({ ...prev, screenshotapi: remaining }));
+    setCredits((prev) => ({ ...prev, screenshotapi: remaining, screenshotapiLimit: SA_FREE_TIER_LIMIT }));
   }, []);
 
   const updateMicrolinkUsage = useCallback((usage: Partial<MicrolinkUsage>) => {
@@ -102,5 +100,7 @@ export function useCredits() {
     updateScreenshotApiCredits,
     updateMicrolinkUsage,
     resetMicrolinkUsage,
+    refreshCredits: fetchCredits,
+    isLoadingCredits,
   };
 }

@@ -1,4 +1,5 @@
 import { lookup } from 'node:dns/promises';
+import { setCreditState } from './creditsStore.js';
 import { isBlockedAddress, normalizeWebsiteUrl } from '../src/websiteUrl.js';
 
 type VercelRequest = {
@@ -137,6 +138,10 @@ export async function handler(req: VercelRequest, res: VercelResponse): Promise<
     const buffer = Buffer.from(await upstream.arrayBuffer());
     const contentType = upstream.headers.get('content-type') || 'image/png';
     const creditsRemaining = headerNum(upstream.headers, 'x-credits-remaining');
+    // Update server-side credit storage with real-time header value
+    if (creditsRemaining != null) {
+      setCreditState('screenshotapi', creditsRemaining, 200, null, apiKey);
+    }
 
     res.writeHead(200, {
       'Content-Type': contentType,

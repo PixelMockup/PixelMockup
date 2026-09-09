@@ -365,13 +365,21 @@
   min-width: 240px;
 }
 
-.ms-rail-menu--settings {
-  top: auto;
-  bottom: 0;
-  min-width: 190px;
-}
+  .ms-rail-menu--settings {
+    top: auto;
+    bottom: 0;
+    min-width: 190px;
+  }
 
-.ms-menu__item--with-icon {
+  .ms-rail-menu-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--ms-ink);
+    margin: 0 0 var(--ms-space-1);
+    padding: 0 var(--ms-space-2);
+  }
+
+  .ms-menu__item--with-icon {
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -489,9 +497,8 @@
 
 .ms-empty-hero__form {
   display: flex;
-  flex-wrap: wrap;
-  align-items: stretch;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   gap: var(--ms-space-2);
   width: min(100%, 34rem);
   min-width: min(100%, 320px);
@@ -500,8 +507,7 @@
 }
 
 .ms-empty-hero__input {
-  flex: 1 1 14rem;
-  min-width: 0;
+  width: 100%;
   height: 44px;
   padding: 0 14px;
   border: 1px solid var(--ms-border);
@@ -521,15 +527,6 @@
   margin: 0;
   color: var(--ms-danger);
   font-size: 0.85rem;
-}
-
-.ms-empty-hero__quiet {
-  display: flex;
-  align-items: center;
-  gap: var(--ms-space-2);
-  margin-top: var(--ms-space-1);
-  color: var(--ms-muted);
-  font-size: 0.9rem;
 }
 
 .ms-text-btn {
@@ -887,10 +884,6 @@
   visibility: visible;
 }
 
-.ms-library-close {
-  display: inline-flex;
-}
-
 .ms-library-resizer {
   display: none;
 }
@@ -932,7 +925,6 @@
 .ms-library-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
   padding: 14px 16px 8px;
   flex-shrink: 0;
@@ -1054,8 +1046,8 @@
 }
 
 .ms-search {
-  width: 100%;
-  padding: 10px 12px;
+  flex: 1;
+  padding: 10px 36px 10px 40px;
   border: 1px solid var(--ms-border);
   border-radius: var(--ms-radius-sm);
   background: var(--ms-surface-raised);
@@ -1065,6 +1057,34 @@
 
 .ms-search::placeholder {
   color: var(--ms-muted);
+}
+
+.ms-search-wrap {
+  position: relative;
+  display: flex;
+}
+
+.ms-search-funnel {
+  position: absolute;
+  left: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: none;
+  border-radius: var(--ms-radius-sm);
+  background: transparent;
+  color: var(--ms-muted);
+  cursor: pointer;
+  transition: color 160ms ease;
+}
+
+.ms-search-funnel:hover {
+  color: var(--ms-ink);
 }
 
 .ms-library-results {
@@ -1158,12 +1178,12 @@
   background: color-mix(in srgb, var(--ms-border) 55%, transparent);
 }
 
-.ms-device-tile__placeholder-icon {
-  width: 28px;
-  height: 44px;
-  border: 2px solid var(--ms-border-strong);
-  border-radius: 6px;
-  opacity: 0.7;
+.ms-device-tile__placeholder-text {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--ms-muted);
+  text-align: center;
+  line-height: 1.2;
 }
 
 .ms-device-tile__spinner {
@@ -1846,7 +1866,9 @@
 
   .ms-mobile-dock__sheet-backdrop {
     position: fixed;
-    inset: 0;
+    left: 0;
+    right: 0;
+    bottom: calc(64px + var(--ms-safe-b));
     z-index: 40;
     background: var(--ms-overlay);
   }
@@ -1855,7 +1877,7 @@
     position: fixed;
     left: 0;
     right: 0;
-    bottom: 0;
+    bottom: calc(64px + var(--ms-safe-b));
     z-index: 41;
     display: flex;
     flex-direction: column;
@@ -1868,15 +1890,20 @@
     border-top-right-radius: var(--ms-radius);
     background: var(--ms-surface-raised);
     box-shadow: 0 -8px 32px rgba(27, 36, 48, 0.18);
-    animation: ms-slide-up 200ms ease;
   }
 
-  .ms-mobile-dock__sheet-handle {
-    width: 40px;
-    height: 4px;
-    margin: 0 auto var(--ms-space-3);
-    border-radius: 2px;
-    background: var(--ms-border-strong);
+  .ms-mobile-dock__sheet-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: var(--ms-space-2);
+  }
+
+  .ms-mobile-dock__sheet-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--ms-ink);
+    margin: 0;
   }
 
   .ms-mobile-dock__url-form {
@@ -1962,27 +1989,6 @@
     flex: 1;
   }
 
-  .ms-mobile-dock__menu-wrap {
-    position: relative;
-    flex: 1;
-  }
-
-  .ms-mobile-dock__settings-menu {
-    position: absolute;
-    right: 0;
-    bottom: calc(100% + 8px);
-    z-index: 45;
-    display: flex;
-    flex-direction: column;
-    gap: var(--ms-space-2);
-    min-width: 180px;
-    padding: var(--ms-space-2);
-    border: 1px solid var(--ms-border);
-    border-radius: var(--ms-radius);
-    background: var(--ms-surface-raised);
-    box-shadow: var(--ms-shadow);
-  }
-
   @keyframes ms-slide-up {
     from {
       transform: translateY(100%);
@@ -2051,6 +2057,10 @@
     flex-direction: column;
   }
 
+  .ms-empty-hero__input {
+    flex: none;
+  }
+
   .ms-top-command .ms-url-command {
     display: none;
   }
@@ -2089,7 +2099,7 @@
     border-right: none;
     border-bottom: none;
     transform: translateY(0) scale(1);
-    animation: ms-slide-up 200ms ease;
+    transition: none;
   }
 
   .ms-library.is-open {

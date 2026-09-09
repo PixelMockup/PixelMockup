@@ -91,9 +91,10 @@ test.describe('library and canvas interactions', () => {
     await expect(page.locator('#root')).toBeVisible();
   });
 
-  test('empty hero starts layout only in one click', async ({ page }) => {
+  test('empty hero starts show on devices in one click', async ({ page }) => {
     await page.goto('/');
-    await page.getByRole('button', { name: /Start layout only/i }).click();
+    await page.getByRole('textbox', { name: /Website URL/i }).fill('google.com');
+    await page.getByRole('button', { name: /Show on devices/i }).click();
     await expect(page.locator('.ms-canvas-item').first()).toBeVisible({
       timeout: 45_000,
     });
