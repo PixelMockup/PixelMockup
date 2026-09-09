@@ -79,7 +79,7 @@ export default function TopCommandBar({
               title="Clear website"
               onClick={onClearUrl}
             >
-              <X size={16} strokeWidth={1.75} aria-hidden />
+              <X size={20} strokeWidth={1.75} aria-hidden />
             </button>
           ) : null}
           <button
@@ -103,7 +103,8 @@ export default function TopCommandBar({
           const provider = getScreenshotProvider();
           if (provider === 'screenshotapi') {
             const saRemaining = credits.screenshotapi;
-            
+            const saLimit = credits.screenshotapiLimit ?? 200; // Dynamic fallback
+
             return (
               <button
                 type="button"
@@ -114,11 +115,15 @@ export default function TopCommandBar({
                 onClick={onOpenScreenshotSettings}
               >
                 <span className="ms-presence-pill__dot" aria-hidden />
-                {saRemaining != null ? `${saRemaining}/200(per month) ` : `200(per month) `}ScreenshotAPI
+                {saRemaining != null
+                  ? `${saRemaining}/${saLimit}(per month) `
+                  : `${saLimit}(per month) `}ScreenshotAPI
               </button>
             );
           }
           if (provider === 'microlink' && credits.microlink.remaining != null) {
+            const mlLimit = credits.microlink.limit ?? 25; // Dynamic fallback
+
             return (
               <button
                 type="button"
@@ -143,7 +148,7 @@ export default function TopCommandBar({
                   <>Microlink used{ml.resetAt != null ? ` — ${formatResetTime(ml.resetAt)}` : ''}</>
                 ) : (
                   <>
-                    {(`${ml.remaining}/25(per day) `)}Microlink
+                    {(`${ml.remaining}/${mlLimit}(per day) `)}Microlink
                   </>
                 )}
               </button>

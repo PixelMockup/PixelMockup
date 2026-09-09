@@ -60,8 +60,12 @@ export function useCredits() {
     fetchCredits();
   }, [fetchCredits]);
 
-  const updateScreenshotApiCredits = useCallback((remaining: number | null) => {
-    setCredits((prev) => ({ ...prev, screenshotapi: remaining, screenshotapiLimit: SA_FREE_TIER_LIMIT }));
+  const updateScreenshotApiCredits = useCallback((remaining: number | null, limit: number | null) => {
+    setCredits((prev) => ({
+      ...prev,
+      screenshotapi: remaining,
+      screenshotapiLimit: limit ?? SA_FREE_TIER_LIMIT
+    }));
   }, []);
 
   const updateMicrolinkUsage = useCallback((usage: Partial<MicrolinkUsage>) => {
