@@ -82,7 +82,7 @@ export function useCredits() {
       extras?: { limit?: number | null; resetAt?: number | null },
     ) => {
       if (provider === 'screenshotapi') {
-        updateScreenshotApiCredits(remaining);
+        updateScreenshotApiCredits(remaining, null);
       } else if (provider === 'microlink') {
         updateMicrolinkUsage({
           remaining,

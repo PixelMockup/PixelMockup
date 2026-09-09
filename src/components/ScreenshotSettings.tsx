@@ -101,7 +101,7 @@ export default function ScreenshotSettings({ isOpen, onClose, onNotify }: Screen
         loading: false,
       });
       if (data.valid) {
-        try { updateScreenshotApiCredits(creditsRemaining); } catch { /* ignore */ }
+        try { updateScreenshotApiCredits(creditsRemaining, null); } catch { /* ignore */ }
       }
     } catch {
       setSaStatus({ valid: false, reason: 'network_error', loading: false });
