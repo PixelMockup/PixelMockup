@@ -11,6 +11,7 @@ export interface MicrolinkUsage {
 export interface CreditState {
   screenshotapi: number | null;
   screenshotapiLimit: number | null;
+  screenshotapiResetAt?: number | null;
   microlink: MicrolinkUsage;
 }
 
