@@ -3,6 +3,7 @@ import BrandMark from './BrandMark';
 import type { CreditState } from './useCredits';
 import { formatResetTime } from './utils/formatResetTime';
 import { getScreenshotProvider } from './screenshotProviders';
+import type { ScreenshotProvider } from './screenshotProviders';  // ← ADD
 
 type Props = {
   hasDevices: boolean;
@@ -18,6 +19,7 @@ type Props = {
   onDownload: () => void;
   credits: CreditState;
   onOpenScreenshotSettings: () => void;
+  screenshotProvider: ScreenshotProvider;
 };
 
 function downloadLabel(downloading: boolean, softEmptyDownload: boolean): string {
@@ -40,6 +42,7 @@ export default function TopCommandBar({
   onDownload,
   credits,
   onOpenScreenshotSettings,
+  screenshotProvider,
 }: Readonly<Props>) {
   const ml = credits.microlink;
   const mlExhausted = ml.remaining !== null && ml.remaining <= 0;
@@ -100,7 +103,7 @@ export default function TopCommandBar({
 
       <div className="ms-top-command__end">
         {(() => {
-          const provider = getScreenshotProvider();
+          const provider = screenshotProvider;
 
           // --- SCREENSHOTAPI DYNAMIC DISPLAY ---
           if (provider === 'screenshotapi') {

@@ -10,17 +10,27 @@ import {
   setMicrolinkApiKey,
 } from '../screenshotProviders';
 import { useCredits } from '../useCredits';
+import type { CreditState } from '../useCredits';
 
 interface ScreenshotSettingsProps {
   isOpen: boolean;
   onClose: () => void;
+  credits: CreditState;
   onNotify: (msg: string, tone?: 'info' | 'error') => void;
+  updateScreenshotApiCredits: (remaining: number | null, limit?: number | null, resetAt?: number | null) => void;
+  refreshCredits: () => Promise<void>;
+  onProviderChange?: (provider: Provider) => void;
 }
 
 const SCREENSHOT_API_KEYS_URL = 'https://screenshotapi.to';
 const MICROLINK_KEYS_URL = 'https://microlink.io/docs';
 
-export default function ScreenshotSettings({ isOpen, onClose, onNotify }: ScreenshotSettingsProps) {
+export default function ScreenshotSettings({
+  isOpen,
+  onClose,
+  onNotify,
+  onProviderChange,
+}: ScreenshotSettingsProps) {
   // This is updated automatically by `captureWebsite.ts` after actual captures, costing ZERO extra API calls.
   const { credits, updateScreenshotApiCredits, refreshCredits } = useCredits();
   const [view, setView] = useState<Provider>(() =>
@@ -134,15 +144,17 @@ export default function ScreenshotSettings({ isOpen, onClose, onNotify }: Screen
       return;
     }
     setScreenshotProvider('screenshotapi');
+    onProviderChange?.('screenshotapi');
     onNotify('Using ScreenshotAPI');
     onClose();
-  }, [saStatus.valid, onNotify, onClose]);
+  }, [saStatus.valid, onNotify, onProviderChange, onClose]);
 
   const handleUseMicrolink = useCallback(() => {
     setScreenshotProvider('microlink');
     onNotify('Using Microlink');
     onClose();
-  }, [onNotify, onClose]);
+    onProviderChange?.('microlink');
+  }, [onNotify, onClose, onProviderChange]);
 
   if (!isOpen) return null;
 

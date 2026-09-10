@@ -15,7 +15,6 @@ export interface CreditState {
   microlink: MicrolinkUsage;
 }
 
-
 const EMPTY_USAGE: MicrolinkUsage = { remaining: null, limit: null, resetAt: null };
 const SA_FREE_TIER_LIMIT = 200;
 
