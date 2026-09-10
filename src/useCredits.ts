@@ -19,24 +19,6 @@ export interface CreditState {
 const EMPTY_USAGE: MicrolinkUsage = { remaining: null, limit: null, resetAt: null };
 const SA_FREE_TIER_LIMIT = 200;
 
-async function fetchMicrolinkCredits(): Promise<Partial<MicrolinkUsage>> {
-  try {
-    const res = await fetch(`/api/credits?t=${Date.now()}`, {
-      cache: 'no-store',
-      headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
-    });
-    if (!res.ok) return {};
-    const data = await res.json();
-    return {
-      remaining: data.remaining ?? null,
-      limit: data.limit ?? null,
-      resetAt: data.resetAt ?? null,
-    };
-  } catch {
-    return {};
-  }
-}
-
 export function useCredits() {
   const [credits, setCredits] = useState<CreditState>({
     screenshotapi: null,
