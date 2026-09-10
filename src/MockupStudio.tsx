@@ -132,6 +132,7 @@ import StatusShell from './StatusShell';
 import ArtboardCanvas from './ArtboardCanvas';
 import AppDialog from './AppDialog';
 import { clientToLogical } from './clientToLogical';
+const { updateScreenshotApiCredits } = useCredits();
 
 const LIBRARY_W_KEY = 'pixelMockup.libraryWidth';
 const LIBRARY_W_LEGACY_KEY = 'mockupStudio.libraryWidth';
@@ -460,7 +461,7 @@ export default function MockupStudio({
   const [microlinkApiKeyState, setMicrolinkApiKeyState] = useState(
     getMicrolinkApiKey,
   );
-  const { credits, updateCredits } = useCredits();
+  const { credits, updateCredits, refreshCredits } = useCredits();
 
   useEffect(() => {
     onCreditsUpdate(updateCredits);
@@ -603,6 +604,10 @@ export default function MockupStudio({
   const handleScreenshotProviderChange = useCallback((provider: ScreenshotProvider) => {
     setScreenshotProviderState(provider);
     setScreenshotProvider(provider);
+
+    // Refresh credits when the provider changes
+    refreshCredits();
+
     const label =
       provider === 'playwright'
         ? 'Local Playwright'
@@ -610,7 +615,7 @@ export default function MockupStudio({
           ? 'ScreenshotAPI'
           : 'Microlink';
     announce(`${label} selected`);
-  }, []);
+  }, [refreshCredits]);
 
   const openCaptureNotice = useCallback((notice: CaptureNotice, urlKey?: string) => {
     if (urlKey != null) {
@@ -1924,6 +1929,7 @@ export default function MockupStudio({
         softEmptyDownload={softEmptyDownload}
         onDownload={() => void downloadCanvas()}
         credits={credits}
+        screenshotProvider={getScreenshotProvider()}
         onOpenScreenshotSettings={() => setScreenshotSettingsOpen(true)}
       />
 
@@ -2224,6 +2230,10 @@ export default function MockupStudio({
         isOpen={screenshotSettingsOpen}
         onClose={() => setScreenshotSettingsOpen(false)}
         onNotify={(msg, tone) => announce(msg, tone)}
+        onProviderChange={handleScreenshotProviderChange}
+        credits={credits}
+        updateScreenshotApiCredits={updateScreenshotApiCredits}
+        refreshCredits={refreshCredits}
       />
 
       {contextMenu ? (
