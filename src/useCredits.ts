@@ -26,7 +26,7 @@ async function fetchMicrolinkCredits(): Promise<Partial<MicrolinkUsage>> {
       headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
     });
     if (!res.ok) return {};
-    const data = await.json();
+    const data = await res.json();
     return {
       remaining: data.remaining ?? null,
       limit: data.limit ?? null,
