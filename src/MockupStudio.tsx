@@ -132,6 +132,7 @@ import StatusShell from './StatusShell';
 import ArtboardCanvas from './ArtboardCanvas';
 import AppDialog from './AppDialog';
 import { clientToLogical } from './clientToLogical';
+const { updateScreenshotApiCredits } = useCredits();
 
 const LIBRARY_W_KEY = 'pixelMockup.libraryWidth';
 const LIBRARY_W_LEGACY_KEY = 'mockupStudio.libraryWidth';
@@ -460,7 +461,7 @@ export default function MockupStudio({
   const [microlinkApiKeyState, setMicrolinkApiKeyState] = useState(
     getMicrolinkApiKey,
   );
-  const { credits, updateCredits, refreshCredits, updateScreenshotApiCredits } = useCredits();
+  const { credits, updateCredits, refreshCredits } = useCredits();
 
   useEffect(() => {
     onCreditsUpdate(updateCredits);
@@ -2230,6 +2231,9 @@ export default function MockupStudio({
         onClose={() => setScreenshotSettingsOpen(false)}
         onNotify={(msg, tone) => announce(msg, tone)}
         onProviderChange={handleScreenshotProviderChange}
+        credits={credits}
+        updateScreenshotApiCredits={updateScreenshotApiCredits}
+        refreshCredits={refreshCredits}
       />
 
       {contextMenu ? (

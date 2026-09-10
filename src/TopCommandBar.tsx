@@ -2,7 +2,6 @@ import { Download, X } from 'lucide-react';
 import BrandMark from './BrandMark';
 import type { CreditState } from './useCredits';
 import { formatResetTime } from './utils/formatResetTime';
-import { getScreenshotProvider } from './screenshotProviders';
 import type { ScreenshotProvider } from './screenshotProviders';  // ← ADD
 
 type Props = {
