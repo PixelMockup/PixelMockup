@@ -18,6 +18,20 @@ export interface CreditState {
 const EMPTY_USAGE: MicrolinkUsage = { remaining: null, limit: null, resetAt: null };
 const SA_FREE_TIER_LIMIT = 200;
 
+export function updateScreenshotApiCredits(
+  prev: CreditState,
+  remaining: number | null,
+  limit?: number | null,
+  resetAt?: number | null
+): CreditState {
+  return {
+    ...prev,
+    screenshotapi: remaining,
+    screenshotapiLimit: limit ?? prev.screenshotapiLimit,
+    screenshotapiResetAt: resetAt ?? prev.screenshotapiResetAt,
+  }
+};
+
 export function useCredits() {
   const [credits, setCredits] = useState<CreditState>({
     screenshotapi: null,
@@ -78,15 +92,6 @@ export function useCredits() {
     fetchCredits();
   }, [fetchCredits]);
 
-  const updateScreenshotApiCredits = useCallback((remaining: number | null, limit?: number | null, resetAt?: number | null) => {
-    setCredits((prev) => ({
-      ...prev,
-      screenshotapi: remaining,
-      screenshotapiLimit: limit ?? prev.screenshotapiLimit,
-      screenshotapiResetAt: resetAt ?? prev.screenshotapiResetAt,
-    }));
-  }, []);
-
   const updateMicrolinkUsage = useCallback((usage: Partial<MicrolinkUsage>) => {
     setCredits((prev) => ({
       ...prev,
@@ -101,7 +106,7 @@ export function useCredits() {
       extras?: { limit?: number | null; resetAt?: number | null },
     ) => {
       if (provider === 'screenshotapi') {
-        updateScreenshotApiCredits(remaining, extras?.limit ?? null, extras?.resetAt ?? null);
+        setCredits((prev) => updateScreenshotApiCredits(prev, remaining, extras?.limit ?? null, extras?.resetAt ?? null));
       } else if (provider === 'microlink') {
         updateMicrolinkUsage({
           remaining,
@@ -117,10 +122,14 @@ export function useCredits() {
     setCredits((prev) => ({ ...prev, microlink: { ...EMPTY_USAGE } }));
   }, []);
 
+  const updateScreenshotApiCreditsHook = useCallback((remaining: number | null, limit?: number | null, resetAt?: number | null) => {
+    setCredits((prev) => updateScreenshotApiCredits(prev, remaining, limit, resetAt));
+  }, []);
+
   return {
     credits,
     updateCredits,
-    updateScreenshotApiCredits,
+    updateScreenshotApiCredits: updateScreenshotApiCreditsHook,
     updateMicrolinkUsage,
     resetMicrolinkUsage,
     refreshCredits: fetchCredits,
