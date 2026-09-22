@@ -99,12 +99,10 @@ export async function handler(req: VercelRequest, res: VercelResponse): Promise<
   }
 
   const apiKey = headerValue(req.headers, 'x-api-key') || process.env.SCREENSHOTAPI_KEY || '';
-  if (!apiKey) {
-    respondJson(res, 400, {
-      error: 'ScreenshotAPI requires an API key. Enter one in the API Keys section.',
-    });
-    return;
-  }
+  const isPublic = !apiKey;
+  const endpoint = isPublic
+    ? 'https://screenshotapi.to/api/v1/public/screenshot'
+    : SCREENSHOTAPI_ENDPOINT;
 
   const params = new URLSearchParams({
     url: normalised,
@@ -119,8 +117,8 @@ export async function handler(req: VercelRequest, res: VercelResponse): Promise<
 
     let upstream: Response;
     try {
-      upstream = await fetch(`${SCREENSHOTAPI_ENDPOINT}?${params}`, {
-        headers: { 'x-api-key': apiKey },
+      upstream = await fetch(`${endpoint}?${params}`, {
+        headers: isPublic ? {} : { 'x-api-key': apiKey },
         signal: controller.signal,
       });
     } finally {
@@ -134,6 +132,10 @@ export async function handler(req: VercelRequest, res: VercelResponse): Promise<
       });
       return;
     }
+
+    // Only true HTTP/2 200 reduces balance; errors or 4xx/5xx do not trigger decrement
+    const { decrement } = await import('../src/middleware.js');
+    if (upstream.ok) { try { decrement(); } catch {} }
 
     const buffer = Buffer.from(await upstream.arrayBuffer());
     const contentType = upstream.headers.get('content-type') || 'image/png';

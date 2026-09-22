@@ -459,7 +459,7 @@ export default function MockupStudio({
   const [microlinkApiKeyState, setMicrolinkApiKeyState] = useState(
     getMicrolinkApiKey,
   );
-  const { credits, updateCredits, updateScreenshotApiCredits, refreshCredits } = useCredits();
+  const { credits, updateCredits, updateUsage, refreshCredits } = useCredits();
 
   useEffect(() => {
     onCreditsUpdate(updateCredits);
@@ -2230,7 +2230,7 @@ export default function MockupStudio({
         onNotify={(msg, tone) => announce(msg, tone)}
         onProviderChange={handleScreenshotProviderChange}
         credits={credits}
-        updateScreenshotApiCredits={updateScreenshotApiCredits}
+        updateUsage={updateUsage}
         refreshCredits={refreshCredits}
       />
 

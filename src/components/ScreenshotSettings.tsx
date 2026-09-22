@@ -17,7 +17,7 @@ interface ScreenshotSettingsProps {
   onClose: () => void;
   credits: CreditState;
   onNotify: (msg: string, tone?: 'info' | 'error') => void;
-  updateScreenshotApiCredits: (remaining: number | null, limit?: number | null, resetAt?: number | null) => void;
+  updateUsage: (provider: 'microlink' | 'screenshotapi', usage: any) => void;
   refreshCredits: () => Promise<void>;
   onProviderChange?: (provider: Provider) => void;
 }
@@ -28,11 +28,13 @@ const MICROLINK_KEYS_URL = 'https://microlink.io/docs';
 export default function ScreenshotSettings({
   isOpen,
   onClose,
+  credits,
   onNotify,
+  updateUsage,
+  refreshCredits,
   onProviderChange,
 }: ScreenshotSettingsProps) {
-  // This is updated automatically by `captureWebsite.ts` after actual captures, costing ZERO extra API calls.
-  const { credits, updateScreenshotApiCredits, refreshCredits } = useCredits();
+  // Props from MockupStudio feed the live global credit state (no shadow hook)
   const [view, setView] = useState<Provider>(() =>
     getScreenshotProvider() === 'screenshotapi' ? 'screenshotapi' : 'microlink',
   );
@@ -120,7 +122,7 @@ export default function ScreenshotSettings({
 
       if (data.valid) {
         try {
-          updateScreenshotApiCredits(creditsRemaining, limit, resetAt);
+          updateUsage('screenshotapi', { remaining: creditsRemaining, limit, resetAt });
         } catch (err) {
           console.log('Failed to update ScreenshotAPI credits state: ', err);
         }
@@ -128,7 +130,7 @@ export default function ScreenshotSettings({
     } catch {
       setSaStatus({ valid: false, reason: 'network_error', loading: false });
     }
-  }, [saKey, updateScreenshotApiCredits]);
+  }, [saKey, updateUsage]);
 
   const handleViewScreenshotApi = useCallback(() => {
     setView('screenshotapi');
@@ -139,22 +141,34 @@ export default function ScreenshotSettings({
   }, []);
 
   const handleUseScreenshotApi = useCallback(() => {
-    if (saStatus.valid !== true) {
-      onNotify('Enter and validate a ScreenshotAPI key to use it', 'error');
-      return;
-    }
+    // Allow using ScreenshotAPI with no validated key (public access) or with key
+    const useKeyCredits = saStatus.valid === true;
+    updateUsage('screenshotapi', useKeyCredits ? {
+      remaining: saStatus.creditsRemaining ?? null,
+      limit: 200,
+      resetAt: null,
+      remainingwithoutapi: null,
+      limitwithoutapi: null,
+    } : {
+      remaining: null,
+      limit: null,
+      resetAt: null,
+      remainingwithoutapi: credits.screenshotapi.remainingwithoutapi ?? null,
+      limitwithoutapi: credits.screenshotapi.limitwithoutapi ?? 8,
+    });
     setScreenshotProvider('screenshotapi');
     onProviderChange?.('screenshotapi');
     onNotify('Using ScreenshotAPI');
     onClose();
-  }, [saStatus.valid, onNotify, onProviderChange, onClose]);
+  }, [saStatus, credits, onNotify, onProviderChange, onClose, updateUsage]);
 
   const handleUseMicrolink = useCallback(() => {
+    updateUsage('microlink', { remaining: null, limit: 25, resetAt: null });
     setScreenshotProvider('microlink');
     onNotify('Using Microlink');
     onClose();
     onProviderChange?.('microlink');
-  }, [onNotify, onClose, onProviderChange]);
+  }, [onNotify, onClose, onProviderChange, updateUsage]);
 
   if (!isOpen) return null;
 
@@ -210,11 +224,28 @@ export default function ScreenshotSettings({
               <div className="ms-ss-key-group">
                 <div className="ms-ss-key-header">
                   <span className="ms-ss-key-name">ScreenshotAPI</span>
-                  <span className="ms-ss-badge ms-ss-badge--required">Key required</span>
+                  <span className="ms-ss-badge ms-ss-badge--optional">Shared key</span>
                 </div>
                 <p className="ms-ss-desc">
-                  ~200 requests per month on the free plan. Paste your key to enable this provider.
+                  Free ~200 requests per month with API key, ~8 requests per minute without API key.
                 </p>
+                <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
+                  {credits.screenshotapi.resetAt ? `Reset at ${new Date(credits.screenshotapi.resetAt * 1000).toUTCString()}` : ''}
+
+                  {/* No API key timer: only when not validated */}
+                  {saStatus.valid !== true && (
+                    <span style={{ marginLeft: 12 }}>
+                      {credits.screenshotapi.remainingwithoutapi}/{credits.screenshotapi.limitwithoutapi}. Refresh in: {Math.max(0, 60 - (new Date().getSeconds()))}s
+                    </span>
+                  )}
+
+                  {/* Validated API key: show credits without timer */}
+                  {saStatus.valid === true && credits.screenshotapi.limit != null && (
+                    <span style={{ marginLeft: 12 }}>
+                      {credits.screenshotapi.remaining ?? '-'}/{credits.screenshotapi.limit}
+                    </span>
+                  )}
+                </div>
                 <div className="ms-ss-key-row">
                   <input
                     type="password"
@@ -269,6 +300,7 @@ export default function ScreenshotSettings({
                 <p className="ms-ss-desc">
                   Microlink works out of the box with a shared server key. Paste your own key if you bought one.
                 </p>
+                // TODO: Implement 24h countdown
                 <div className="ms-ss-key-row">
                   <input
                     type="password"
@@ -330,13 +362,13 @@ export default function ScreenshotSettings({
           <button
             type="button"
             className="ms-btn ms-btn--primary"
-            disabled={view === 'screenshotapi' && saStatus.valid !== true}
+            disabled={false}
             onClick={view === 'screenshotapi' ? handleUseScreenshotApi : handleUseMicrolink}
           >
             {view === 'screenshotapi' ? 'Use ScreenshotAPI' : 'Use Microlink'}
           </button>
         </div>
       </div>
-    </dialog>
+    </dialog >
   );
 }

@@ -2,7 +2,7 @@ import { Download, X } from 'lucide-react';
 import BrandMark from './BrandMark';
 import type { CreditState } from './useCredits';
 import { formatResetTime } from './utils/formatResetTime';
-import type { ScreenshotProvider } from './screenshotProviders';  // ← ADD
+import type { ScreenshotProvider } from './screenshotProviders';
 
 type Props = {
   hasDevices: boolean;
@@ -106,8 +106,26 @@ export default function TopCommandBar({
 
           // --- SCREENSHOTAPI DYNAMIC DISPLAY ---
           if (provider === 'screenshotapi') {
-            const saRemaining = credits.screenshotapi;
-            const saLimit = credits.screenshotapiLimit ?? 200; // Dynamic fallback
+            const sa = credits.screenshotapi;
+            const hasData = sa.limit != null || sa.limitwithoutapi != null;
+            if (!hasData) {
+              return (
+                <button
+                  type="button"
+                  className="ms-presence-pill ms-presence-pill--clickable"
+                  role="button"
+                  title="ScreenshotAPI — validate or configure"
+                  aria-label="Validate ScreenshotAPI"
+                  onClick={onOpenScreenshotSettings}
+                >
+                  <span className="ms-presence-pill__dot" aria-hidden />
+                  Validate API — ScreenshotAPI
+                </button>
+              );
+            }
+            const isKeyMode = sa.limit === 200;
+            const saRemaining = isKeyMode ? sa.remaining : (sa.remainingwithoutapi ?? null);
+            const saLimit = isKeyMode ? sa.limit : sa.limitwithoutapi;
 
             return (
               <button
