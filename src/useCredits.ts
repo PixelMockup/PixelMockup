@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect } from 'react';
-import { getCounter, initCounter, decrement, isBlocked, resetCounter } from './middleware';
+import { isBlocked } from './middleware';
 
 export interface MicrolinkUsage {
   remaining: number | null;

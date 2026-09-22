@@ -66,8 +66,8 @@ async function validateScreenshotapi(apiKey: string | undefined, res: VercelResp
       const publicLim = headerStr(response.headers, 'x-ratelimit-limit') ?? publicRateLimitLimit;
       respondJson(res, 200, {
         valid: true,
-        remainingwithoutapi: publicRem ? parseInt(publicRem, 10) : (publicRateLimitRemaining ?? null),
-        limitwithoutapi: publicLim ? parseInt(publicLim, 10) : (publicRateLimitLimit ?? null),
+        remainingwithoutapi: publicRem ? parseInt(String(publicRem), 10) : (publicRateLimitRemaining ?? null),
+        limitwithoutapi: publicLim ? parseInt(String(publicLim), 10) : (publicRateLimitLimit ?? null),
         tier: 'free',
       });
       return;

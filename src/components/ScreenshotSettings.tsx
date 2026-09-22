@@ -9,7 +9,6 @@ import {
   getMicrolinkApiKey,
   setMicrolinkApiKey,
 } from '../screenshotProviders';
-import { useCredits } from '../useCredits';
 import type { CreditState } from '../useCredits';
 
 interface ScreenshotSettingsProps {
