@@ -43,7 +43,7 @@ export default function ScreenshotSettings({
   const [_resetTick, setResetTick] = useState(0);
 
   // Derive Microlink status directly from the live credits state
-  const ml = credits.microlink;
+  const ml = credits?.microlink ?? { remaining: null, limit: null, resetAt: null };
   const mlExhausted = ml.remaining != null && ml.remaining <= 0;
   const usingPersonalMlKey = ml.tier === 'paid' || ml.tier === 'pro' || ml.tier === 'enterprise';
 
