@@ -181,7 +181,7 @@ export default function ScreenshotSettings({
       <div className="ms-modal ms-ss-modal">
         <div className="ms-modal-header">
           <div>
-            <h2>API &amp; keys</h2>
+            <h2>API &amp; Keys</h2>
             <p className="ms-modal-sub">
               Configure cloud screenshot providers. Microlink uses a shared key by default (optionally yours). ScreenshotAPI needs your own key.
             </p>
@@ -228,18 +228,17 @@ export default function ScreenshotSettings({
                 <p className="ms-ss-desc">
                   Free ~200 requests per month with API key, ~8 requests per minute without API key.
                 </p>
+                <div style={{ fontSize: 12, color: '#666' }}>
+                  {ml.resetAt ? (`Reset at ${new Date(ml.resetAt * 1000).toUTCString()}`) : ''}
+                </div>
                 <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
-                  {credits.screenshotapi.resetAt ? `Reset at ${new Date(credits.screenshotapi.resetAt * 1000).toUTCString()}` : ''}
-
-                  {/* No API key timer: only when not validated */}
-                  {saStatus.valid !== true && (
+                  {saStatus.valid !== true && (credits.screenshotapi?.limitwithoutapi != null || credits.screenshotapi?.remainingwithoutapi != null) && (
                     <span style={{ marginLeft: 12 }}>
-                      {credits.screenshotapi.remainingwithoutapi}/{credits.screenshotapi.limitwithoutapi}. Refresh in: {Math.max(0, 60 - (new Date().getSeconds()))}s
+                      {credits.screenshotapi.remainingwithoutapi ?? '-'} / {credits.screenshotapi.limitwithoutapi ?? '-'}
+                      . Refresh in: {Math.max(0, 60 - (new Date().getSeconds()))}s
                     </span>
                   )}
-
-                  {/* Validated API key: show credits without timer */}
-                  {saStatus.valid === true && credits.screenshotapi.limit != null && (
+                  {saStatus.valid === true && credits.screenshotapi?.limit != null && (
                     <span style={{ marginLeft: 12 }}>
                       {credits.screenshotapi.remaining ?? '-'}/{credits.screenshotapi.limit}
                     </span>
@@ -299,7 +298,7 @@ export default function ScreenshotSettings({
                 <p className="ms-ss-desc">
                   Microlink works out of the box with a shared server key. Paste your own key if you bought one.
                 </p>
-                // TODO: Implement 24h countdown
+                {/*TODO: Implement 24h countdown*/}
                 <div className="ms-ss-key-row">
                   <input
                     type="password"

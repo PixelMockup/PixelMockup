@@ -1,5 +1,6 @@
 import { useCallback, useState, useEffect } from 'react';
 import { isBlocked } from './middleware';
+import * as m from './middleware';
 
 export interface MicrolinkUsage {
   remaining: number | null;
@@ -52,9 +53,21 @@ export function resetUsage(
 }
 
 export function useCredits() {
-  const [credits, setCredits] = useState<CreditState>({
-    screenshotapi: { ...EMPTY_SA_USAGE },
-    microlink: { ...EMPTY_USAGE, limit: ML_DEFAULT_LIMIT },
+  const [credits, setCredits] = useState<CreditState>(() => {
+    try {
+      // const m = require('./middleware');
+      const sa = m.getCounter() ? m.getCounter('screenshotapi', false) : null;
+      const ml = m.getCounter ? m.getCounter('microlink', false) : null;
+      return {
+        screenshotapi: sa ? { remaining: sa.remaining, limit: sa.limit, resetAt: sa.resetAt, remainingwithoutapi: sa.remaining, limitwithoutapi: sa.limit } : { ...EMPTY_SA_USAGE, limit: SA_DEFAULT_LIMIT },
+        microlink: ml ? { remaining: ml.remaining, limit: ml.limit, resetAt: ml.resetAt } : { ...EMPTY_USAGE, limit: ML_DEFAULT_LIMIT },
+      };
+    } catch {
+      return {
+        screenshotapi: { ...EMPTY_SA_USAGE, limit: SA_DEFAULT_LIMIT },
+        microlink: { ...EMPTY_USAGE, limit: ML_DEFAULT_LIMIT },
+      };
+    }
   });
   const [isLoadingCredits, setIsLoadingCredits] = useState(false);
   const [countdown, setCountdown] = useState(60);
@@ -80,7 +93,7 @@ export function useCredits() {
           setCredits((prev) => updateUsage(prev, 'microlink', {
             remaining: data.remaining ?? prev.microlink.remaining,
             limit: data.limit ?? prev.microlink.limit,
-            resetAt: data.resetAt ?? prev.microlink.resetAt,
+            resetAt: data.resetAt !== undefined ? data.resetAt : prev.microlink.resetAt,
             tier: data.tier ?? prev.microlink.tier,
           }));
         }
@@ -140,6 +153,13 @@ export function useCredits() {
   useEffect(() => {
     fetchCredits();
   }, [fetchCredits]);
+  // Refresh when Microlink provider is active (without requiring manual POST)
+  useEffect(() => {
+    const provider = (credits.screenshotapi?.limit != null || credits.screenshotapi?.remainingwithoutapi != null) ? 'screenshotapi' : 'microlink';
+    if (provider === 'microlink') {
+      fetchCredits();
+    }
+  }, [credits.microlink?.remaining, credits.microlink?.limit, fetchCredits]);
 
   useEffect(() => {
     // 60-second countdown for ScreenshotAPI free tier (8 req/min)

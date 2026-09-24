@@ -1,44 +1,73 @@
-// In-memory middle-layer counter per package.docx
-// First request retrieves endpoint headers; counts down; halts at 0; resets at endpoint reset
+// Middleware state map: provider + hasKey -> counter state
+// Updated by /api/credits POST/GET; read by useCredits (Approach B)
 
-let counterState = {
-  limit: 25, // default free tier (microlink / screenshotapi free)
-  remaining: 25,
-  resetAt: null as number | null,
-  initialized: false,
-  firstRequestTime: null as number | null, // timestamp of initial POST calibration for 60s countdown
+type State = {
+  limit: number;
+  remaining: number;
+  resetAt: number | null;
+  firstRequestTime: number | null;
+  initialized: boolean;
 };
 
-export function getCounter() { return counterState; }
+const stateMap = new Map<string, State>();
 
-export function initCounter(data: { limit?: number; remaining?: number; resetAt?: number }) {
-  if (!counterState.initialized) {
-    counterState.limit = data.limit ?? 25;
-    counterState.remaining = data.remaining ?? 25;
-    counterState.resetAt = data.resetAt ?? null;
-    counterState.firstRequestTime = Date.now(); // record calibration time for 60s refresh sync
-    counterState.initialized = true;
+function key(provider: string, hasKey?: boolean): string {
+  return `${provider}:${hasKey ? 'withKey' : 'withoutKey'}`;
+}
+
+export function getCounter(provider?: string, hasKey?: boolean): State {
+  const k = provider ? key(provider, hasKey) : 'default';
+  if (!stateMap.has(k)) {
+    stateMap.set(k, { limit: 25, remaining: 25, resetAt: null, firstRequestTime: null, initialized: false });
+  }
+  const s = stateMap.get(k)!;
+  // Auto-reset when reset window passed and balance exhausted
+  if (s.resetAt != null && s.remaining <= 0 && Date.now() >= s.resetAt * 1000) {
+    s.remaining = s.limit;
+    s.resetAt = null;
+    s.initialized = false;
+  }
+  return s;
+}
+
+export function initCounter(provider: string, hasKey: boolean, data: { limit?: number; remaining?: number; resetAt?: number }) {
+  const k = key(provider, hasKey);
+  if (!stateMap.has(k) || !stateMap.get(k)!.initialized) {
+    stateMap.set(k, {
+      limit: data.limit ?? 25,
+      remaining: data.remaining ?? 25,
+      resetAt: data.resetAt ?? null,
+      firstRequestTime: Date.now(),
+      initialized: true,
+    });
   }
 }
 
-// Decrement only when upstream GET returns true HTTP/2 200 — errors do not reduce balance
-export function decrement() {
-  if (counterState.remaining > 0) counterState.remaining--;
-  return counterState.remaining;
+export function decrement(provider?: string, hasKey?: boolean) {
+  const s = getCounter(provider, hasKey);
+  if (s.remaining > 0) s.remaining--;
+  return s.remaining;
 }
 
-// 60-second cooldown timer sync for ScreenshotAPI no-key (8 req/min)
-export function getRefreshSeconds(): number {
-  if (!counterState.firstRequestTime) return 60;
-  const elapsed = Math.floor((Date.now() - counterState.firstRequestTime) / 1000);
+export function getRefreshSeconds(provider?: string, hasKey?: boolean): number {
+  const s = getCounter(provider, hasKey);
+  if (!s.firstRequestTime) return 60;
+  if (provider === 'microlink' && s.resetAt) {
+    const resetDiff = Math.floor((s.resetAt * 1000 - Date.now()) / 1000);
+    return Math.max(0, resetDiff);
+  }
+  const elapsed = Math.floor((Date.now() - s.firstRequestTime) / 1000);
   return Math.max(0, 60 - elapsed);
 }
 
-export function isBlocked() {
-  return counterState.remaining <= 0;
+export function isBlocked(provider?: string, hasKey?: boolean) {
+  return getCounter(provider, hasKey).remaining <= 0;
 }
 
-export function resetCounter() {
-  counterState.remaining = counterState.limit;
-  counterState.initialized = false;
+export function resetCounter(provider?: string, hasKey?: boolean) {
+  const s = getCounter(provider, hasKey);
+  s.remaining = s.limit;
+  s.initialized = false;
+  s.firstRequestTime = null;
 }
+
