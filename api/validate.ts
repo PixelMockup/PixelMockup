@@ -27,25 +27,58 @@ function headerStr(headers: Headers, name: string): string | undefined {
   return v != null ? v : undefined;
 }
 
-async function validateScreenshotapi(apiKey: string, res: VercelResponse): Promise<void> {
+async function validateScreenshotapi(apiKey: string | undefined, res: VercelResponse): Promise<void> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  const isPublic = !apiKey;
 
   let response: Response;
   try {
     response = await fetch(
-      'https://screenshotapi.to/api/v1/screenshot?url=https://example.com&type=png&width=100&height=100',
-      { headers: { 'x-api-key': apiKey }, signal: controller.signal },
+      isPublic
+        ? 'https://screenshotapi.to/api/v1/public/screenshot?url=https://example.com&type=png&width=100&height=100'
+        : 'https://screenshotapi.to/api/v1/screenshot?url=https://example.com&type=png&width=100&height=100',
+      { headers: isPublic ? {} : { 'x-api-key': apiKey }, signal: controller.signal },
     );
   } finally {
     clearTimeout(timer);
   }
 
+  // Extract public no-key rate-limit headers (package.docx)
+  let publicRateLimitLimit: number | null = null;
+  let publicRateLimitRemaining: number | null = null;
+
+  try {
+    const pub = await fetch('https://screenshotapi.to/api/v1/public/screenshot?url=https://example.com', { signal: controller.signal });
+    const pl = headerStr(pub.headers, 'x-ratelimit-limit');
+    const pr = headerStr(pub.headers, 'x-ratelimit-remaining');
+    publicRateLimitLimit = pl ? parseInt(pl, 10) : null;
+    publicRateLimitRemaining = pr ? parseInt(pr, 10) : null;
+  } catch { /* ignore public fetch */ }
+
   if (response.ok) {
     const creditsRemaining = headerStr(response.headers, 'x-credits-remaining');
+    const rateLimitLimit = headerStr(response.headers, 'x-ratelimit-limit');
+    const rateLimitRemaining = headerStr(response.headers, 'x-ratelimit-remaining');
+    // For public (no-key) access, derive limits from response headers directly
+    if (isPublic) {
+      const publicRem = headerStr(response.headers, 'x-ratelimit-remaining') ?? publicRateLimitRemaining;
+      const publicLim = headerStr(response.headers, 'x-ratelimit-limit') ?? publicRateLimitLimit;
+      respondJson(res, 200, {
+        valid: true,
+        remainingwithoutapi: publicRem ? parseInt(String(publicRem), 10) : (publicRateLimitRemaining ?? null),
+        limitwithoutapi: publicLim ? parseInt(String(publicLim), 10) : (publicRateLimitLimit ?? null),
+        tier: 'free',
+      });
+      return;
+    }
     respondJson(res, 200, {
       valid: true,
       creditsRemaining: creditsRemaining ? parseInt(creditsRemaining, 10) : null,
+      rateLimitLimit: rateLimitLimit ? parseInt(rateLimitLimit, 10) : null,
+      rateLimitRemaining: rateLimitRemaining ? parseInt(rateLimitRemaining, 10) : (publicRateLimitRemaining ?? null),
+      publicRateLimitLimit: publicRateLimitLimit ?? rateLimitLimit ?? null,
+      publicRateLimitRemaining: publicRateLimitRemaining ?? rateLimitRemaining ?? null,
     });
     return;
   }
@@ -163,10 +196,29 @@ export async function handler(req: VercelRequest, res: VercelResponse): Promise<
   try {
     if (provider === 'screenshotapi') {
       if (!key) {
+        // Fetch public rate limits, frontend can show the timer
+        let publicRateLimitLimit: number | null = null;
+        let publicRateLimitRemaining: number | null = null;
+
+        try {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+          const pub = await fetch(
+            'https://screenshotapi.to/api/v1/public/screenshot?url=https://example.com',
+            { signal: controller.signal });
+          clearTimeout(timer);
+          const pl = headerStr(pub.headers, 'x-ratelimit-limit');
+          const pr = headerStr(pub.headers, 'x-ratelimit-remaining');
+          publicRateLimitLimit = pl ? parseInt(pl, 10) : null;
+          publicRateLimitRemaining = pr ? parseInt(pr, 10) : null;
+        } catch { /* ignore public fetch */ }
+
         respondJson(res, 200, {
           valid: false,
           reason: 'no_key',
-          message: 'ScreenshotAPI requires an API key',
+          message: 'ScreenshotAPI requires an API key for long-time use',
+          publicRateLimitLimit: publicRateLimitLimit,
+          publicRateLimitRemaining: publicRateLimitRemaining,
         });
         return;
       }

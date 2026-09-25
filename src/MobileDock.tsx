@@ -104,8 +104,8 @@ export default function MobileDock({
   onScreenshotProviderChange,
   screenshotApiKey,
   onScreenshotApiKeyChange,
-  microlinkApiKey,
-  onMicrolinkApiKeyChange,
+  // microlinkApiKey,
+  // onMicrolinkApiKeyChange,
   onTakeTour,
 }: Readonly<MobileDockProps>) {
   const [openSheet, setOpenSheet] = useState<SheetId>(null);
@@ -426,13 +426,13 @@ export default function MobileDock({
                     {screenshotProvider === 'microlink' && (
                       <label className="ms-field" style={{ marginTop: 8 }}>
                         <span className="ms-field__label">API key</span>
-                        <input
+                        {/* <input
                           className="ms-menu__input"
                           type="password"
                           placeholder="Microlink API key (optional)"
                           value={microlinkApiKey}
                           onChange={(e) => onMicrolinkApiKeyChange(e.target.value)}
-                        />
+                        /> */}
                       </label>
                     )}
                   </div>

@@ -34,6 +34,30 @@ function headerValue(headers: VercelRequest['headers'], name: string): string | 
 }
 
 export async function handler(req: VercelRequest, res: VercelResponse): Promise<void> {
+  // POST initiates counter once from live API headers; GET returns current state; decrement happens in middleware on 200
+  if (req.method === 'POST') {
+    try {
+      const parsed = new URL(req.url ?? '/', 'http://local');
+      const provider = (parsed.searchParams.get('provider') || 'microlink') as string;
+      // Initialize middleware counter from external endpoint (one-time)
+      const { initCounter } = await import('../src/middleware.js');
+      // Probe public endpoint for screenshotapi no-key, or key endpoint if key present
+      const key = headerValue(req.headers, 'x-api-key') || (req.body as any)?.key || process.env.SCREENSHOTAPI_KEY;
+      const isSA = provider === 'screenshotapi';
+      const endpoint = (isSA && key) ? 'https://screenshotapi.to/api/v1/screenshot?url=https://example.com&type=png' : (isSA ? 'https://screenshotapi.to/api/v1/public/screenshot?url=https://example.com' : 'https://api.microlink.io?url=https://example.com&screenshot=true&meta=false');
+      const headers: Record<string, string> = {};
+      if (key && isSA) headers['x-api-key'] = key;
+      const probe = await fetch(endpoint, { headers, signal: AbortSignal.timeout(15000) });
+      const rem = probe.headers.get('x-ratelimit-remaining') || probe.headers.get('x-rate-limit-remaining');
+      const lim = probe.headers.get('x-ratelimit-limit') || probe.headers.get('x-rate-limit-limit');
+      const reset = probe.headers.get('x-ratelimit-reset') || probe.headers.get('x-rate-limit-reset');
+      initCounter({ limit: lim ? parseInt(lim, 10) : (isSA ? 8 : 25), remaining: rem ? parseInt(rem, 10) : (isSA ? 8 : 25), resetAt: reset ? parseInt(reset, 10) : null });
+      respondJson(res, 200, { initialized: true, provider, remaining: rem ? parseInt(rem, 10) : null, limit: lim ? parseInt(lim, 10) : null });
+    } catch (e) {
+      respondJson(res, 500, { error: String(e) });
+    }
+    return;
+  }
   if (req.method !== 'GET') {
     respondJson(res, 405, { error: 'Method not allowed' });
     return;
@@ -128,16 +152,38 @@ export async function handler(req: VercelRequest, res: VercelResponse): Promise<
     finalResetAt = null; // Will be updated on next successful fresh probe
   }
 
+  // Updating the state
+  setCreditState('microlink', finalRemaining, finalLimit, finalResetAt)
+
   // 5. Update store only with the corrected, smart values
   if (finalRemaining !== null || finalLimit !== null || finalResetAt !== null) {
     setCreditState('microlink', finalRemaining, finalLimit, finalResetAt);
   }
 
+  // 6. Probe ScreenshotAPI public endpoint (no key) for rate-limit headers
+  let saPublicRemaining = null;
+  let saPublicLimit = null;
+  try {
+    const saCtrl = new AbortController();
+    const saTimer = setTimeout(() => saCtrl.abort(), 5000);
+    const saPublicRes = await fetch('https://screenshotapi.to/api/v1/public/screenshot?url=https://example.com', { method: 'HEAD', signal: saCtrl.signal });
+    clearTimeout(saTimer);
+    const rem = saPublicRes.headers.get('x-ratelimit-remaining');
+    const lim = saPublicRes.headers.get('x-ratelimit-limit');
+    if (rem != null) saPublicRemaining = parseInt(rem, 10);
+    if (lim != null) saPublicLimit = parseInt(lim, 10);
+  } catch {
+    // ignore
+  }
+
   respondJson(res, 200, {
     provider: 'microlink',
-    remaining: remaining ?? (mlStored ? mlStored.remaining : 25),
-    limit: limit ?? (mlStored ? mlStored.limit : 25),
-    resetAt: resetAt ?? (mlStored ? mlStored.resetAt : null),
+    remaining: finalRemaining ?? (mlStored ? mlStored.remaining : 25),
+    limit: finalLimit ?? (mlStored ? mlStored.limit : 25),
+    resetAt: finalResetAt ?? (mlStored ? mlStored.resetAt : null),
+    remainingwithoutapi: saPublicRemaining,
+    limitwithoutapi: saPublicLimit,
+    refreshSeconds: (await import('../src/middleware.js')).getRefreshSeconds ? (await import('../src/middleware.js')).getRefreshSeconds() : Math.max(0, 60 - (Math.floor(Date.now() / 1000) % 60)),
   });
 }
 
