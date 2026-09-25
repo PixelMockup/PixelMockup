@@ -45,7 +45,12 @@ export function initCounter(provider: string, hasKey: boolean, data: { limit?: n
 
 export function decrement(provider?: string, hasKey?: boolean) {
   const s = getCounter(provider, hasKey);
-  if (s.remaining > 0) s.remaining--;
+  if (s.remaining > 0) {
+    s.remaining--;
+  } else {
+    // Queue when blocked (screenshotapi rate limit / monthly reset)
+    enqueueCapture(provider, hasKey);
+  }
   return s.remaining;
 }
 
@@ -71,3 +76,37 @@ export function resetCounter(provider?: string, hasKey?: boolean) {
   s.firstRequestTime = null;
 }
 
+
+// ScreenshotAPI queue system
+export const captureQueue: Array<{ provider?: string; hasKey?: boolean }> = [];
+
+export function enqueueCapture(provider?: string, hasKey?: boolean) {
+  captureQueue.push({ provider, hasKey });
+}
+
+export function processCaptureQueue() {
+  const remaining: typeof captureQueue = [];
+  for (const item of captureQueue) {
+    const s = getCounter(item.provider, item.hasKey);
+    if (s.remaining > 0) {
+      s.remaining--;
+    } else {
+      remaining.push(item);
+    }
+  }
+  captureQueue.length = 0;
+  captureQueue.push(...remaining);
+  return captureQueue.length === 0;
+}
+
+export function getQueueLength() {
+  return captureQueue.length;
+}
+
+
+// Auto-process capture queue every 30s (after resets / validation)
+export function startQueueTimer() {
+  setInterval(() => {
+    processCaptureQueue();
+  }, 30_000);
+}

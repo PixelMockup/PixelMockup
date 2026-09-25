@@ -44,6 +44,7 @@ export default function ScreenshotSettings({
 
   // Derive Microlink status directly from the live credits state
   const ml = credits?.microlink ?? { remaining: null, limit: null, resetAt: null };
+  const sa = credits?.screenshotapi ?? { remaining: null, limit: null, resetAt: null, remainingwithoutapi: null, limitwithoutapi: null };
   const mlExhausted = ml.remaining != null && ml.remaining <= 0;
   const usingPersonalMlKey = ml.tier === 'paid' || ml.tier === 'pro' || ml.tier === 'enterprise';
 
@@ -79,6 +80,27 @@ export default function ScreenshotSettings({
     }, 30_000);
     return () => window.clearInterval(id);
   }, [isOpen, ml.resetAt, ml.remaining, refreshCredits, setResetTick]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (sa.resetAt && hasResetTimePassed(sa.resetAt)) {
+      const refreshTimer = window.setTimeout(() => {
+        refreshCredits();
+      }, 5_000);
+      return () => window.clearTimeout(refreshTimer);
+    }
+  }, [isOpen, sa.resetAt, sa.remaining, refreshCredits]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const id = window.setInterval(() => {
+      setResetTick((t) => t + 1);
+      if (sa.resetAt && hasResetTimePassed(sa.resetAt) && sa.remaining === 0) {
+        refreshCredits();
+      }
+    }, 30_000);
+    return () => window.clearInterval(id);
+  }, [isOpen, sa.resetAt, sa.remaining, refreshCredits, setResetTick]);
 
   const handleSaKeyChange = useCallback((key: string) => {
     setSaKeyState(key);
@@ -226,16 +248,17 @@ export default function ScreenshotSettings({
                   <span className="ms-ss-badge ms-ss-badge--optional">Shared key</span>
                 </div>
                 <p className="ms-ss-desc">
-                  Free ~200 requests per month with API key, ~8 requests per minute without API key.
+                  No API key: 8 requests per min<br />
+                  With API key: 200 requests per month
                 </p>
                 <div style={{ fontSize: 12, color: '#666' }}>
-                  {ml.resetAt ? (`Reset at ${new Date(ml.resetAt * 1000).toUTCString()}`) : ''}
+                  {saStatus.valid === true && sa.resetAt ? `Reset at ${formatResetTime(sa.resetAt)}` : ''}
                 </div>
                 <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
                   {saStatus.valid !== true && (credits.screenshotapi?.limitwithoutapi != null || credits.screenshotapi?.remainingwithoutapi != null) && (
                     <span style={{ marginLeft: 12 }}>
-                      {credits.screenshotapi.remainingwithoutapi ?? '-'} / {credits.screenshotapi.limitwithoutapi ?? '-'}
-                      . Refresh in: {Math.max(0, 60 - (new Date().getSeconds()))}s
+                      Usage: {credits.screenshotapi.remainingwithoutapi ?? '-'} / {credits.screenshotapi.limitwithoutapi ?? '-'}
+                      . Resets in: {Math.max(0, 60 - (new Date().getSeconds()))}s
                     </span>
                   )}
                   {saStatus.valid === true && credits.screenshotapi?.limit != null && (
@@ -296,7 +319,7 @@ export default function ScreenshotSettings({
                   </span>
                 </div>
                 <p className="ms-ss-desc">
-                  Microlink works out of the box with a shared server key. Paste your own key if you bought one.
+                  Microlink works out of the box with a shared server key.{ /*Paste your own key if you bought one.*/}
                 </p>
                 {/*TODO: Implement 24h countdown*/}
                 {/* Microlink key input commented out per user request */}
