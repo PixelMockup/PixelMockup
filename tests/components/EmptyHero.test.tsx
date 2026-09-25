@@ -10,8 +10,6 @@ describe('EmptyHero', () => {
     render(
       <EmptyHero
         onShowOnDevices={onShow}
-        onStartLayoutOnly={vi.fn()}
-        onBrowseDevices={vi.fn()}
       />,
     );
     expect(screen.getByRole('button', { name: /Show on devices/i })).toBeDisabled();
@@ -21,22 +19,5 @@ describe('EmptyHero', () => {
     );
     await user.click(screen.getByRole('button', { name: /Show on devices/i }));
     expect(onShow).toHaveBeenCalledWith('https://example.com/');
-  });
-
-  it('exposes quiet layout and browse actions', async () => {
-    const user = userEvent.setup();
-    const onLayout = vi.fn();
-    const onBrowse = vi.fn();
-    render(
-      <EmptyHero
-        onShowOnDevices={vi.fn()}
-        onStartLayoutOnly={onLayout}
-        onBrowseDevices={onBrowse}
-      />,
-    );
-    await user.click(screen.getByRole('button', { name: /Start layout only/i }));
-    await user.click(screen.getByRole('button', { name: /Browse devices/i }));
-    expect(onLayout).toHaveBeenCalled();
-    expect(onBrowse).toHaveBeenCalled();
   });
 });

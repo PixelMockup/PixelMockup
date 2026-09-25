@@ -1,4 +1,6 @@
 import { useCallback, useState, useEffect } from 'react';
+import { isBlocked, startQueueTimer } from './middleware';
+import * as m from './middleware';
 
 export interface MicrolinkUsage {
   remaining: number | null;
@@ -8,69 +10,172 @@ export interface MicrolinkUsage {
   reason?: string;
 }
 
+export interface ScreenshotAPIUsage {
+  remainingwithoutapi: number | null; // Remaining requests without API key
+  limitwithoutapi: number | null; // Limit of requests without API key
+  remaining: number | null;
+  limit: number | null;
+  resetAt: number | null;
+  tier?: string;
+  reason?: string;
+}
+
 export interface CreditState {
-  screenshotapi: number | null;
+  screenshotapi: ScreenshotAPIUsage;
   microlink: MicrolinkUsage;
 }
 
-const STORAGE_KEY = 'pixelMockup_microlink_usage';
-
-// Read the last known state from STORAGE_KEY
-function getStoredUsage(): MicrolinkUsage {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-
-      // Optimistic Reset: If the reset time has passed, assume it's back to the limit
-      // This prevents showing "0/25" for hours after the UTC rollover.
-      if (parsed.resetAt && Date.now() / 1000 > parsed.resetAt) {
-        return {
-          remaining: parsed.limit ?? 25,
-          limit: parsed.limit ?? 25,
-          resetAt: null
-        };
-      }
-      return parsed;
-    }
-  } catch {
-    // Ignore parse errors (e.g., corrupted storage)
-  }
-  return { remaining: null, limit: null, resetAt: null };
-}
-
-// ✅ NEW: Save state to localStorage whenever it updates
-function setStoredUsage(usage: MicrolinkUsage) {
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(usage));
-  } catch {
-    // Ignore (e.g., private browsing mode)
-  }
-}
-
 const EMPTY_USAGE: MicrolinkUsage = { remaining: null, limit: null, resetAt: null };
+const EMPTY_SA_USAGE: ScreenshotAPIUsage = { remaining: null, limit: null, resetAt: null, remainingwithoutapi: null, limitwithoutapi: null };
+const ML_DEFAULT_LIMIT = 25;
+const SA_DEFAULT_LIMIT = 200;
+const SA_DEFAULT_LIMIT_NO_KEY = 8;
+
+export function updateUsage(
+  prev: CreditState,
+  provider: 'microlink' | 'screenshotapi',
+  usage: Partial<MicrolinkUsage> | Partial<ScreenshotAPIUsage>
+): CreditState {
+  if (provider === 'microlink') {
+    return { ...prev, microlink: { ...prev.microlink, ...usage as Partial<MicrolinkUsage> } };
+  }
+  return { ...prev, screenshotapi: { ...prev.screenshotapi, ...usage as Partial<ScreenshotAPIUsage> } };
+}
+
+export function resetUsage(
+  prev: CreditState,
+  provider: 'microlink' | 'screenshotapi'
+): CreditState {
+  if (provider === 'microlink') {
+    return { ...prev, microlink: { remaining: null, limit: ML_DEFAULT_LIMIT, resetAt: null } };
+  }
+  return { ...prev, screenshotapi: { remaining: null, limit: SA_DEFAULT_LIMIT, resetAt: null, remainingwithoutapi: null, limitwithoutapi: SA_DEFAULT_LIMIT_NO_KEY } };
+}
 
 export function useCredits() {
-  // Initialize from localstorage insted of empty state
-  const [credits, setCredits] = useState<CreditState>({
-    screenshotapi: null,
-    microlink: getStoredUsage(),
+  const [credits, setCredits] = useState<CreditState>(() => {
+    try {
+      // const m = require('./middleware');
+      const sa = m.getCounter() ? m.getCounter('screenshotapi', false) : null;
+      const ml = m.getCounter ? m.getCounter('microlink', false) : null;
+      return {
+        screenshotapi: sa ? { remaining: sa.remaining, limit: sa.limit, resetAt: sa.resetAt, remainingwithoutapi: sa.remaining, limitwithoutapi: sa.limit } : { ...EMPTY_SA_USAGE, limit: SA_DEFAULT_LIMIT },
+        microlink: ml ? { remaining: ml.remaining, limit: ml.limit, resetAt: ml.resetAt } : { ...EMPTY_USAGE, limit: ML_DEFAULT_LIMIT },
+      };
+    } catch {
+      return {
+        screenshotapi: { ...EMPTY_SA_USAGE, limit: SA_DEFAULT_LIMIT },
+        microlink: { ...EMPTY_USAGE, limit: ML_DEFAULT_LIMIT },
+      };
+    }
   });
+  const [isLoadingCredits, setIsLoadingCredits] = useState(false);
+  const [countdown, setCountdown] = useState(60);
 
-  // Automatically persist to localStorage whenever microlink usage changes
-  useEffect(() => {
-    setStoredUsage(credits.microlink);
-  }, [credits.microlink]);
+  const fetchCredits = useCallback(async () => {
+    setIsLoadingCredits(true);
 
-  const updateScreenshotApiCredits = useCallback((remaining: number | null) => {
-    setCredits((prev) => ({ ...prev, screenshotapi: remaining }));
+    try {
+      // Middle-layer guard: halt at 0 per package.docx
+      if (isBlocked()) { console.warn("Counter blocked at 0 — halting API request"); return; }
+
+      // Cache busting ensure to never get stale vercel edge cache data
+      const res = await fetch(`/api/credits?t=${Date.now()}`, {
+        cache: 'no-store',
+        headers: { 'Cache-Control': 'no-cache, no-store, must-revalidate' }
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+
+        // update Microlink state
+        if (data.remaining != null || data.limit != null || data.resetAt != null) {
+          setCredits((prev) => updateUsage(prev, 'microlink', {
+            remaining: data.remaining ?? prev.microlink.remaining,
+            limit: data.limit ?? prev.microlink.limit,
+            resetAt: data.resetAt !== undefined ? data.resetAt : prev.microlink.resetAt,
+            tier: data.tier ?? prev.microlink.tier,
+          }));
+        }
+        // update ScreenshotAPI state
+        // Only treat microlink fields as SA when the response is explicitly SA
+        const saRemaining = (data.provider === 'screenshotapi' || data.saRemaining != null) ? (data.saRemaining ?? data.remaining) : null;
+        const saLimit = (data.provider === 'screenshotapi' || data.saLimit != null) ? (data.saLimit ?? data.limit) : null;
+        const saResetAt = (data.provider === 'screenshotapi' || data.saResetAt != null) ? (data.saResetAt ?? data.resetAt) : null;
+        const saNoApiRemaining = data.remainingwithoutapi;
+        const saNoApiLimit = data.limitwithoutapi;
+
+        // Clear stale key-based values when only public/no-key data arrives
+        const clearKeyFields = (saNoApiRemaining != null || saNoApiLimit != null) && (saRemaining == null && saLimit == null);
+        if (saRemaining != null || saLimit != null || saResetAt != null || saNoApiRemaining != null || saNoApiLimit != null) {
+          setCredits((prev) => updateUsage(prev, 'screenshotapi', {
+            remaining: saRemaining ?? (clearKeyFields ? null : prev.screenshotapi.remaining),
+            limit: saLimit ?? (clearKeyFields ? null : prev.screenshotapi.limit),
+            resetAt: saResetAt ?? prev.screenshotapi.resetAt,
+            remainingwithoutapi: saNoApiRemaining ?? prev.screenshotapi.remainingwithoutapi,
+            limitwithoutapi: saNoApiLimit ?? prev.screenshotapi.limitwithoutapi,
+          }));
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching credits:', error);
+    } finally {
+      setIsLoadingCredits(false);
+    }
   }, []);
 
-  const updateMicrolinkUsage = useCallback((usage: Partial<MicrolinkUsage>) => {
-    setCredits((prev) => ({
-      ...prev,
-      microlink: { ...prev.microlink, ...usage },
-    }));
+  // Initialize ScreenshotAPI no-key rate limits via POST (one-time calibration with curl-style header probe)
+  useEffect(() => {
+    const initScreenshotApi = async () => {
+      try {
+        const res = await fetch(`/api/credits?provider=screenshotapi`, {
+          method: 'POST',
+          cache: 'no-store',
+          headers: { 'Content-Type': 'application/json', 'Cache-Control': 'no-cache' },
+          body: JSON.stringify({}),
+        });
+        if (res.ok) {
+          const d = await res.json();
+          if (d.remainingwithoutapi != null || d.limitwithoutapi != null) {
+            setCredits((prev) => updateUsage(prev, 'screenshotapi', {
+              remainingwithoutapi: d.remainingwithoutapi ?? prev.screenshotapi.remainingwithoutapi,
+              limitwithoutapi: d.limitwithoutapi ?? prev.screenshotapi.limitwithoutapi,
+            }));
+          }
+        }
+      } catch (e) { console.error('ScreenshotAPI init POST failed:', e); }
+    };
+    // Retry until we have no-key data; only for screenshotapi without validated key
+    const hasNoKeyData = credits.screenshotapi.limitwithoutapi != null || credits.screenshotapi.remainingwithoutapi != null;
+    if (!hasNoKeyData) { initScreenshotApi(); }
+  }, [credits.screenshotapi.limitwithoutapi, credits.screenshotapi.remainingwithoutapi]);
+
+  useEffect(() => {
+    fetchCredits();
+  }, [fetchCredits]);
+
+  // Start middleware capture-queue drain timer (client-side only)
+  useEffect(() => {
+    startQueueTimer();
+  }, []);
+  // Refresh when Microlink provider is active (without requiring manual POST)
+  useEffect(() => {
+    const provider = (credits.screenshotapi?.limit != null || credits.screenshotapi?.remainingwithoutapi != null) ? 'screenshotapi' : 'microlink';
+    if (provider === 'microlink') {
+      fetchCredits();
+    }
+  }, [credits.microlink?.remaining, credits.microlink?.limit, fetchCredits]);
+
+  useEffect(() => {
+    // 60-second countdown for ScreenshotAPI free tier (8 req/min)
+    if (countdown > 0) {
+      const t = setInterval(() => setCountdown((c) => c - 1), 1000);
+      return () => clearInterval(t);
+    }
+  }, [countdown]);
+
+  const updateUsageCallback = useCallback((provider: 'microlink' | 'screenshotapi', usage: Partial<MicrolinkUsage> | Partial<ScreenshotAPIUsage>) => {
+    setCredits((prev) => updateUsage(prev, provider, usage));
   }, []);
 
   const updateCredits = useCallback(
@@ -79,28 +184,25 @@ export function useCredits() {
       remaining: number | null,
       extras?: { limit?: number | null; resetAt?: number | null },
     ) => {
-      if (provider === 'screenshotapi') {
-        updateScreenshotApiCredits(remaining);
-      } else if (provider === 'microlink') {
-        updateMicrolinkUsage({
-          remaining,
-          limit: extras?.limit ?? undefined,
-          resetAt: extras?.resetAt ?? undefined,
-        });
-      }
+      setCredits((prev) => updateUsage(prev, provider as 'microlink' | 'screenshotapi', {
+        remaining,
+        limit: extras?.limit ?? undefined,
+        resetAt: extras?.resetAt ?? undefined,
+      }));
     },
-    [updateScreenshotApiCredits, updateMicrolinkUsage],
+    [updateUsage, resetUsage],
   );
 
-  const resetMicrolinkUsage = useCallback(() => {
-    setCredits((prev) => ({ ...prev, microlink: { ...EMPTY_USAGE } }));
+  const resetUsageCallback = useCallback((provider: 'microlink' | 'screenshotapi') => {
+    setCredits((prev) => resetUsage(prev, provider));
   }, []);
 
   return {
     credits,
     updateCredits,
-    updateScreenshotApiCredits,
-    updateMicrolinkUsage,
-    resetMicrolinkUsage,
+    updateUsage: updateUsageCallback,
+    resetUsage: resetUsageCallback,
+    refreshCredits: fetchCredits,
+    isLoadingCredits,
   };
 }

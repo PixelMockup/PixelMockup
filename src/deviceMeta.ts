@@ -63,6 +63,18 @@ const SIMPLE_COLORS = [
   'gray',
 ];
 
+function isBlackVariant(name: string | undefined): boolean {
+  const n = (name ?? '').toLowerCase();
+  if (/\bmidnight\s+black\b/.test(n)) return true;
+  if (/\bjet\s+black\b/.test(n)) return true;
+  if (/\bmatte\s+black\b/.test(n)) return true;
+  if (/\bjust\s+black\b/.test(n)) return true;
+  if (/\bspace\s+grey\b/.test(n)) return true;
+  if (/\bspace\s+gray\b/.test(n)) return true;
+  if (/\bblack\b/.test(n)) return true;
+  return false;
+}
+
 export function normalizeDeviceText(input: string): string {
   return input
     .toLowerCase()
@@ -195,6 +207,7 @@ export function formatDeviceDisplayName(name: string | undefined): string {
 export function isPriorityPhone(name: string | undefined): boolean {
   const n = (name ?? '').toLowerCase();
   if (!n) return false;
+  if (!isBlackVariant(n)) return false;
 
   // Apple: iPhone X / XR / XS and 11+ (including Pro / Max / Plus).
   // SE 2nd/3rd gen filenames are typically "iPhone SE" without a generation
@@ -203,13 +216,40 @@ export function isPriorityPhone(name: string | undefined): boolean {
   if (/\biphone\s+(1[1-9]|[2-9]\d)\b/.test(n)) return true;
   if (/\biphone\s+se\b/.test(n)) return true;
 
-  // Samsung Galaxy S7+ and Note 5+ (covers the current catalog and newer models).
-  if (/\bgalaxy\s+s([7-9]|1[0-9]|2[0-9])\b/.test(n)) return true;
+  // Samsung Galaxy S8+ and Note 5+.
+  if (/\bgalaxy\s+s([8-9]|1[0-9]|2[0-9])\b/.test(n)) return true;
   if (/\bgalaxy\s+note\s*([5-9]|1[0-9]|20)\b/.test(n)) return true;
 
   // Google Pixel 3+.
   if (/\bpixel\s*([3-9]|[1-9]\d)\b/.test(n)) return true;
 
+  // Huawei P8+.
+  if (/\bhuawei\s+p\s*([8-9]|[1-9]\d)\b/.test(n)) return true;
+
+  return false;
+}
+
+export function isPriorityTablet(name: string | undefined): boolean {
+  const n = (name ?? '').toLowerCase();
+  if (!n) return false;
+  // iPad Pro (11-inch or 13-inch) in Space Gray — priority
+  if (/\bipad\s+pro\b/.test(n) && (/\bspace\s+gray\b/.test(n) || /\bspace\s+grey\b/.test(n))) return true;
+  return false;
+}
+
+export function isPriorityWatch(name: string | undefined): boolean {
+  const n = name ?? '';
+  const nl = n.toLowerCase();
+  if (nl.includes('space gray aluminum') || nl.includes('space grey aluminum')) {
+    const plusIdx = n.indexOf('+');
+    if (plusIdx !== -1) {
+      const strap = n.slice(plusIdx + 1).toLowerCase().trim();
+      if (strap.includes('black closed')) return true;
+    }
+  }
+  if (nl.includes('sony smartwatch 3 black closed')) return true;
+  if (nl.includes('moto 360 men black + black closed')) return true;
+  if (nl.includes('moto 360 woman gold + stone closed')) return true;
   return false;
 }
 

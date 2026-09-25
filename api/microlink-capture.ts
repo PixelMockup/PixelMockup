@@ -1,4 +1,5 @@
 import { lookup } from 'node:dns/promises';
+import { setCreditState } from './creditsStore.js';
 import { isBlockedAddress, normalizeWebsiteUrl } from '../src/websiteUrl.js';
 
 type VercelRequest = {
@@ -104,7 +105,7 @@ export async function handler(req: VercelRequest, res: VercelResponse): Promise<
     'viewport.isMobile': String(Number(width) < 768),
   });
 
-  const baseUrl = userApiKey ? 'https://pro.microlink.io' : 'https://api.microlink.io';
+  const baseUrl = 'https://api.microlink.io';
   const requestHeaders: Record<string, string> = {};
   if (userApiKey) requestHeaders['x-api-key'] = userApiKey;
 
@@ -125,6 +126,10 @@ export async function handler(req: VercelRequest, res: VercelResponse): Promise<
     const rateLimitRemaining = headerStr(apiResponse.headers, 'x-rate-limit-remaining');
     const rateLimitLimit = headerStr(apiResponse.headers, 'x-rate-limit-limit');
     const rateLimitReset = headerStr(apiResponse.headers, 'x-rate-limit-reset');
+    // Update server-side credit storage with real-time header values
+    if (rateLimitRemaining || rateLimitLimit) {
+      setCreditState('microlink', rateLimitRemaining ? parseInt(rateLimitRemaining, 10) : null, rateLimitLimit ? parseInt(rateLimitLimit, 10) : 25, rateLimitReset ? parseInt(rateLimitReset, 10) : null);
+    }
 
     const json = await apiResponse.json() as {
       status?: string;

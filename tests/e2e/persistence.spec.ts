@@ -1,7 +1,7 @@
 import { test, expect, type Page } from '@playwright/test';
 
 async function openCanvasTools(page: Page) {
-  const moreBtn = page.locator('[aria-label="Canvas tools"]');
+  const moreBtn = page.locator('[aria-label="Canvas Settings"]');
   if (!(await moreBtn.isVisible())) {
     const rail = page.locator('.ms-icon-rail');
     if (await rail.isVisible()) {
@@ -48,7 +48,7 @@ test.describe('settings persistence', () => {
     await expect(rail).toBeVisible();
 
     // Snap toggle is in the Canvas tools menu (More button).
-    const moreBtn = rail.locator('[aria-label="Canvas tools"]');
+    const moreBtn = rail.locator('[aria-label="Canvas Settings"]');
     await moreBtn.click();
     const menu = page.locator('.ms-rail-menu--wide');
     await expect(menu).toBeVisible();
@@ -69,7 +69,7 @@ test.describe('settings persistence', () => {
     });
 
     // Open Canvas tools menu again.
-    await rail.locator('[aria-label="Canvas tools"]').click();
+    await rail.locator('[aria-label="Canvas Settings"]').click();
     await expect(menu).toBeVisible();
     const persistedSnap = await snapCheckbox.isChecked();
     expect(persistedSnap).toBe(afterToggle);
@@ -80,7 +80,7 @@ test.describe('settings persistence', () => {
     await expect(rail).toBeVisible();
 
     // Canvas size is in the Canvas tools menu.
-    const moreBtn = rail.locator('[aria-label="Canvas tools"]');
+    const moreBtn = rail.locator('[aria-label="Canvas Settings"]');
     await moreBtn.click();
     const menu = page.locator('.ms-rail-menu--wide');
     await expect(menu).toBeVisible();
@@ -103,7 +103,7 @@ test.describe('settings persistence', () => {
         timeout: 60_000,
       });
 
-      await rail.locator('[aria-label="Canvas tools"]').click();
+      await rail.locator('[aria-label="Canvas Settings"]').click();
       await expect(menu).toBeVisible();
       const persisted = await canvasSelect.inputValue();
       expect(persisted).toBe(afterChange);
