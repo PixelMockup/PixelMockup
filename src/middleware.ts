@@ -85,17 +85,11 @@ export function enqueueCapture(provider?: string, hasKey?: boolean) {
 }
 
 export function processCaptureQueue() {
-  const remaining: typeof captureQueue = [];
-  for (const item of captureQueue) {
-    const s = getCounter(item.provider, item.hasKey);
-    if (s.remaining > 0) {
-      s.remaining--;
-    } else {
-      remaining.push(item);
-    }
+  const s = getCounter('screenshotapi', false);
+  if (captureQueue.length > 0 && s.remaining > 0) {
+    s.remaining--;
+    captureQueue.shift();
   }
-  captureQueue.length = 0;
-  captureQueue.push(...remaining);
   return captureQueue.length === 0;
 }
 
@@ -108,5 +102,5 @@ export function getQueueLength() {
 export function startQueueTimer() {
   setInterval(() => {
     processCaptureQueue();
-  }, 30_000);
+  }, 6000);
 }
