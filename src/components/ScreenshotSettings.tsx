@@ -299,15 +299,18 @@ export default function ScreenshotSettings({
                   Microlink works out of the box with a shared server key. Paste your own key if you bought one.
                 </p>
                 {/*TODO: Implement 24h countdown*/}
+                {/* Microlink key input commented out per user request */}
+                {/*
                 <div className="ms-ss-key-row">
                   <input
                     type="password"
                     className="ms-ss-key-input"
-                    placeholder="Microlink API key (optional)"
+                  placeholder="Microlink API key (optional)"
                     value={mlKey}
                     onChange={(e) => handleMlKeyChange(e.target.value)}
                   />
                 </div>
+                */}
 
                 {ml.remaining != null ? (
                   hasResetTimePassed(ml.resetAt || 0) && ml.remaining <= 0 ? (
@@ -341,6 +344,7 @@ export default function ScreenshotSettings({
                     The shared Microlink key is used up for today. Get your own key via the link below to keep capturing.
                   </div>
                 )}
+                {/* 
                 <div className="ms-ss-actions">
                   <a
                     className="ms-ss-link"
@@ -349,8 +353,9 @@ export default function ScreenshotSettings({
                     rel="noreferrer noopener"
                   >
                     About Microlink / get your own key →
-                  </a>
+                  </a> 
                 </div>
+                  */}
               </div>
             </div>
           )}
