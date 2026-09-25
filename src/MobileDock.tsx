@@ -104,8 +104,8 @@ export default function MobileDock({
   onScreenshotProviderChange,
   screenshotApiKey,
   onScreenshotApiKeyChange,
-  microlinkApiKey,
-  onMicrolinkApiKeyChange,
+  // microlinkApiKey,
+  // onMicrolinkApiKeyChange,
   onTakeTour,
 }: Readonly<MobileDockProps>) {
   const [openSheet, setOpenSheet] = useState<SheetId>(null);

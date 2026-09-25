@@ -6,8 +6,8 @@ import {
   setScreenshotProvider,
   getScreenshotApiKey,
   setScreenshotApiKey,
-  getMicrolinkApiKey,
-  setMicrolinkApiKey,
+  // getMicrolinkApiKey,
+  // setMicrolinkApiKey,
 } from '../screenshotProviders';
 import type { CreditState } from '../useCredits';
 
@@ -22,7 +22,7 @@ interface ScreenshotSettingsProps {
 }
 
 const SCREENSHOT_API_KEYS_URL = 'https://screenshotapi.to';
-const MICROLINK_KEYS_URL = 'https://microlink.io/docs';
+// const MICROLINK_KEYS_URL = 'https://microlink.io/docs';
 
 export default function ScreenshotSettings({
   isOpen,
@@ -38,7 +38,7 @@ export default function ScreenshotSettings({
     getScreenshotProvider() === 'screenshotapi' ? 'screenshotapi' : 'microlink',
   );
   const [saKey, setSaKeyState] = useState(getScreenshotApiKey);
-  const [mlKey, setMlKeyState] = useState(getMicrolinkApiKey);
+  // const [mlKey, setMlKeyState] = useState(getMicrolinkApiKey);
   const [saStatus, setSaStatus] = useState<SaStatus>({ valid: null });
   const [_resetTick, setResetTick] = useState(0);
 
@@ -52,7 +52,7 @@ export default function ScreenshotSettings({
     const stored = getScreenshotProvider();
     setView(stored === 'screenshotapi' ? 'screenshotapi' : 'microlink');
     setSaKeyState(getScreenshotApiKey());
-    setMlKeyState(getMicrolinkApiKey());
+    // setMlKeyState(getMicrolinkApiKey());
     setSaStatus({ valid: null });
   }, [isOpen]);
 
@@ -85,10 +85,10 @@ export default function ScreenshotSettings({
     setScreenshotApiKey(key);
   }, []);
 
-  const handleMlKeyChange = useCallback((key: string) => {
-    setMlKeyState(key);
-    setMicrolinkApiKey(key);
-  }, []);
+  // const handleMlKeyChange = useCallback((key: string) => {
+  //   setMlKeyState(key);
+  //   setMicrolinkApiKey(key);
+  // }, []);
 
   const validateSa = useCallback(async () => {
     if (!saKey) return;
