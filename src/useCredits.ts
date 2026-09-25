@@ -1,5 +1,5 @@
 import { useCallback, useState, useEffect } from 'react';
-import { isBlocked } from './middleware';
+import { isBlocked, startQueueTimer } from './middleware';
 import * as m from './middleware';
 
 export interface MicrolinkUsage {
@@ -153,6 +153,11 @@ export function useCredits() {
   useEffect(() => {
     fetchCredits();
   }, [fetchCredits]);
+
+  // Start middleware capture-queue drain timer (client-side only)
+  useEffect(() => {
+    startQueueTimer();
+  }, []);
   // Refresh when Microlink provider is active (without requiring manual POST)
   useEffect(() => {
     const provider = (credits.screenshotapi?.limit != null || credits.screenshotapi?.remainingwithoutapi != null) ? 'screenshotapi' : 'microlink';
