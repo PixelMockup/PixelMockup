@@ -625,7 +625,7 @@
 
 .ms-tour__card {
   position: absolute;
-  left: max(0.5rem, calc(1%));
+  left: max(0.5rem, calc(1%)) !important;
   display: flex;
   flex-direction: column;
   width: min(92vw, 380px);
