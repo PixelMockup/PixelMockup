@@ -257,8 +257,10 @@ export default function ScreenshotSettings({
                 <div style={{ marginTop: 8, fontSize: 12, color: '#666' }}>
                   {saStatus.valid !== true && (credits.screenshotapi?.limitwithoutapi != null || credits.screenshotapi?.remainingwithoutapi != null) && (
                     <span style={{ marginLeft: 12 }}>
-                      Usage: {credits.screenshotapi.remainingwithoutapi ?? '-'} / {credits.screenshotapi.limitwithoutapi ?? '-'}
-                      . Resets in: {Math.max(0, 60 - (new Date().getSeconds()))}s
+                      Usage: {credits.screenshotapi.remainingwithoutapi ?? '-'} / {credits.screenshotapi.limitwithoutapi ?? '-'}.
+                      {credits.screenshotapi.remainingwithoutapi !== credits.screenshotapi.limitwithoutapi && (
+                        <>Resets in: {Math.max(0, 60 - (new Date().getSeconds()))}s</>
+                      )}
                     </span>
                   )}
                   {saStatus.valid === true && credits.screenshotapi?.limit != null && (

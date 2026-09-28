@@ -25,7 +25,15 @@ export function getCounter(provider?: string, hasKey?: boolean): State {
       defaultLimit = 25
     } else defaultLimit = 0;
     // const defaultLimit = provider === 'screenshotapi' ? (hasKey ? 200 : 8) : 25;
-    stateMap.set(k, { limit: defaultLimit, remaining: defaultLimit, resetAt: null, firstRequestTime: null, initialized: false });
+    stateMap.set(
+      k,
+      {
+        limit: defaultLimit,
+        remaining: defaultLimit,
+        resetAt: null,
+        firstRequestTime: null,
+        initialized: false
+      });
   }
   const s = stateMap.get(k)!;
   // Auto-reset when reset window passed (always refresh at reset time, not just at 0)
@@ -38,7 +46,14 @@ export function getCounter(provider?: string, hasKey?: boolean): State {
   return s;
 }
 
-export function updateCounter(provider: string, hasKey: boolean, data: { limit?: number; remaining?: number; resetAt?: number }) {
+export function updateCounter(
+  provider: string,
+  hasKey: boolean,
+  data: {
+    limit?: number;
+    remaining?: number;
+    resetAt?: number
+  }) {
   const k = key(provider, hasKey);
   if (stateMap.has(k)) {
     const s = stateMap.get(k)!;

@@ -178,12 +178,15 @@ export function useCredits() {
   }, [credits.microlink?.remaining, credits.microlink?.limit, fetchCredits]);
 
   useEffect(() => {
-    // 60-second countdown for ScreenshotAPI free tier (8 req/min)
-    if (countdown > 0) {
+    // 60-second countdown for ScreenshotAPI free tier (8 req/min) — only when below full
+    const saRemaining = credits.screenshotapi?.remainingwithoutapi ?? credits.screenshotapi?.remaining;
+    const saLimit = credits.screenshotapi?.limitwithoutapi ?? credits.screenshotapi?.limit;
+    const isBelowFull = saRemaining != null && saLimit != null && saRemaining < saLimit;
+    if (isBelowFull && countdown > 0) {
       const t = setInterval(() => setCountdown((c) => c - 1), 1000);
       return () => clearInterval(t);
     }
-  }, [countdown]);
+  }, [countdown, credits.screenshotapi?.remaining, credits.screenshotapi?.remainingwithoutapi, credits.screenshotapi?.limit, credits.screenshotapi?.limitwithoutapi]);
 
   // Auto-refresh at exact reset time without browser reload
   useEffect(() => {
