@@ -32,7 +32,7 @@ export function getScreenshotProvider(): ScreenshotProvider {
   const raw = storageGet(STORAGE_KEY, STORAGE_KEY);
   return PROVIDER_VALUES.has(raw as ScreenshotProvider)
     ? (raw as ScreenshotProvider)
-    : 'microlink';
+    : 'screenshotapi';
 }
 
 export function setScreenshotProvider(provider: ScreenshotProvider): void {
@@ -370,8 +370,10 @@ async function captureScreenshotApi(
 
   const remaining = res.headers.get('x-credits-remaining');
   const creditsRemaining = remaining != null ? Number(remaining) : null;
+  const resetHeader = res.headers.get('x-rate-limit-reset');
+  const resetAt = resetHeader != null ? Number(resetHeader) : null;
 
-  return { dataUrl, creditsRemaining, provider: 'screenshotapi' };
+  return { dataUrl, creditsRemaining, provider: 'screenshotapi', resetAt };
 }
 
 async function captureMicrolink(

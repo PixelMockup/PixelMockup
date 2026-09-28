@@ -21,13 +21,26 @@ export function getCounter(provider?: string, hasKey?: boolean): State {
     stateMap.set(k, { limit: 25, remaining: 25, resetAt: null, firstRequestTime: null, initialized: false });
   }
   const s = stateMap.get(k)!;
-  // Auto-reset when reset window passed and balance exhausted
-  if (s.resetAt != null && s.remaining <= 0 && Date.now() >= s.resetAt * 1000) {
+  // Auto-reset when reset window passed (always refresh at reset time, not just at 0)
+  if (s.resetAt != null && Date.now() >= s.resetAt * 1000) {
     s.remaining = s.limit;
     s.resetAt = null;
     s.initialized = false;
+    s.firstRequestTime = null;
   }
   return s;
+}
+
+export function updateCounter(provider: string, hasKey: boolean, data: { limit?: number; remaining?: number; resetAt?: number }) {
+  const k = key(provider, hasKey);
+  if (stateMap.has(k)) {
+    const s = stateMap.get(k)!;
+    if (data.limit != null) s.limit = data.limit;
+    if (data.remaining != null) s.remaining = data.remaining;
+    if (data.resetAt !== undefined) s.resetAt = data.resetAt;
+    s.initialized = true;
+    s.firstRequestTime = Date.now();
+  }
 }
 
 export function initCounter(provider: string, hasKey: boolean, data: { limit?: number; remaining?: number; resetAt?: number }) {
@@ -102,5 +115,5 @@ export function getQueueLength() {
 export function startQueueTimer() {
   setInterval(() => {
     processCaptureQueue();
-  }, 6000);
+  }, 8500);
 }

@@ -95,7 +95,7 @@ export default function ScreenshotSettings({
     if (!isOpen) return;
     const id = window.setInterval(() => {
       setResetTick((t) => t + 1);
-      if (sa.resetAt && hasResetTimePassed(sa.resetAt) && sa.remaining === 0) {
+      if (sa.resetAt && hasResetTimePassed(sa.resetAt)) {
         refreshCredits();
       }
     }, 30_000);
@@ -388,7 +388,7 @@ export default function ScreenshotSettings({
           <button
             type="button"
             className="ms-btn ms-btn--primary"
-            disabled={false}
+            disabled={view === 'screenshotapi'}
             onClick={view === 'screenshotapi' ? handleUseScreenshotApi : handleUseMicrolink}
           >
             {view === 'screenshotapi' ? 'Use ScreenshotAPI' : 'Use Microlink'}

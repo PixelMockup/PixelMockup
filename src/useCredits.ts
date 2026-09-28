@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import { isBlocked, startQueueTimer } from './middleware';
 import * as m from './middleware';
 
@@ -71,6 +71,7 @@ export function useCredits() {
   });
   const [isLoadingCredits, setIsLoadingCredits] = useState(false);
   const [countdown, setCountdown] = useState(60);
+  const postInitDone = useRef(false);
 
   const fetchCredits = useCallback(async () => {
     setIsLoadingCredits(true);
@@ -115,6 +116,14 @@ export function useCredits() {
             remainingwithoutapi: saNoApiRemaining ?? prev.screenshotapi.remainingwithoutapi,
             limitwithoutapi: saNoApiLimit ?? prev.screenshotapi.limitwithoutapi,
           }));
+          // Sync middleware so decrement gets refreshed counts after server reset
+          const effLimit = (clearKeyFields ? saNoApiLimit : saLimit) ?? (clearKeyFields ? 8 : 200);
+          const effRemaining = (clearKeyFields ? saNoApiRemaining : saRemaining) ?? (clearKeyFields ? 8 : 200);
+          m.updateCounter('screenshotapi', false, {
+            limit: effLimit,
+            remaining: effRemaining,
+            resetAt: saResetAt ?? null,
+          });
         }
       }
     } catch (error) {
@@ -126,6 +135,8 @@ export function useCredits() {
 
   // Initialize ScreenshotAPI no-key rate limits via POST (one-time calibration with curl-style header probe)
   useEffect(() => {
+    if (postInitDone.current) return;
+    postInitDone.current = true;
     const initScreenshotApi = async () => {
       try {
         const res = await fetch(`/api/credits?provider=screenshotapi`, {
@@ -173,6 +184,21 @@ export function useCredits() {
       return () => clearInterval(t);
     }
   }, [countdown]);
+
+  // Auto-refresh at exact reset time without browser reload
+  useEffect(() => {
+    const resetAt = credits.screenshotapi?.resetAt;
+    if (resetAt == null || resetAt <= 0 || isLoadingCredits) return;
+    const delay = resetAt * 1000 - Date.now();
+    if (delay <= 0) {
+      fetchCredits();
+      return;
+    }
+    const timer = setTimeout(() => {
+      if (!isLoadingCredits) fetchCredits();
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [credits.screenshotapi?.resetAt, fetchCredits, isLoadingCredits]);
 
   const updateUsageCallback = useCallback((provider: 'microlink' | 'screenshotapi', usage: Partial<MicrolinkUsage> | Partial<ScreenshotAPIUsage>) => {
     setCredits((prev) => updateUsage(prev, provider, usage));

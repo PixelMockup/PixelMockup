@@ -135,21 +135,29 @@ export async function handler(req: VercelRequest, res: VercelResponse): Promise<
 
     // Only true HTTP/2 200 reduces balance; errors or 4xx/5xx do not trigger decrement
     const { decrement } = await import('../src/middleware.js');
-    if (upstream.ok) { try { decrement(); } catch {} }
+    if (upstream.ok) {
+      try {
+        decrement('screenshotapi', Boolean(apiKey));
+      } catch {}
+    }
 
     const buffer = Buffer.from(await upstream.arrayBuffer());
     const contentType = upstream.headers.get('content-type') || 'image/png';
     const creditsRemaining = headerNum(upstream.headers, 'x-credits-remaining');
-    // Update server-side credit storage with real-time header value
+    const resetHeader = upstream.headers.get('x-ratelimit-reset') || upstream.headers.get('x-rate-limit-reset');
+    const resetAt = resetHeader ? parseInt(resetHeader, 10) : null;
+    // Update server-side credit storage with real-time header value and reset time
     if (creditsRemaining != null) {
-      setCreditState('screenshotapi', creditsRemaining, 200, null, apiKey);
+      setCreditState('screenshotapi', creditsRemaining, 200, resetAt, apiKey);
     }
 
-    res.writeHead(200, {
+    const respHeaders: Record<string, string> = {
       'Content-Type': contentType,
       'Cache-Control': 'public, max-age=3600',
-      ...(creditsRemaining != null ? { 'x-credits-remaining': String(creditsRemaining) } : {}),
-    });
+    };
+    if (creditsRemaining != null) respHeaders['x-credits-remaining'] = String(creditsRemaining);
+    if (resetAt != null) respHeaders['x-rate-limit-reset'] = String(resetAt);
+    res.writeHead(200, respHeaders);
     res.write(buffer);
     res.end();
   } catch (err) {
