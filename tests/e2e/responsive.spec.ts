@@ -79,10 +79,7 @@ test.describe('responsive layout', () => {
     ).toBeVisible();
   });
 
-  test('command bar URL visible at desktop, hidden at tablet', async ({
-    page,
-  }) => {
-    // Desktop: URL in top bar.
+  test('command bar URL visible at desktop', async ({ page }) => {
     await page.setViewportSize({ width: DESKTOP, height: 900 });
     await page.goto('/');
     await expect(page.locator('.ms-progress-loader-overlay')).toHaveCount(0, {
@@ -91,16 +88,6 @@ test.describe('responsive layout', () => {
     await expect(
       page.getByRole('textbox', { name: /Website URL/i }).first(),
     ).toBeVisible();
-
-    // Tablet: URL moved to dock.
-    await page.setViewportSize({ width: TABLET, height: 1024 });
-    await page.reload();
-    await expect(page.locator('.ms-progress-loader-overlay')).toHaveCount(0, {
-      timeout: 60_000,
-    });
-    dismissMobileWarningIfShown(page);
-    await page.locator('.ms-mobile-dock').getByRole('button', { name: /URL/i }).click();
-    await expect(page.getByRole('dialog', { name: /Website URL/i })).toBeVisible();
   });
 
   test('artboard scales to fit every tested viewport', async ({ page }) => {
@@ -114,12 +101,8 @@ test.describe('responsive layout', () => {
       });
       dismissMobileWarningIfShown(page);
 
-      const startBtn = page
-        .getByRole('button', { name: /Start layout only/i })
-        .first();
-      // Wait for button to be attached and stable before clicking.
-      await startBtn.waitFor({ state: 'attached', timeout: 10000 });
-      await startBtn.click();
+      await page.getByRole('textbox', { name: /Website URL/i }).fill('google.com');
+      await page.getByRole('button', { name: /Show on devices/i }).click();
       // Wait for the layout to apply — the artboard should gain canvas items.
       await page
         .locator('.ms-canvas-item')

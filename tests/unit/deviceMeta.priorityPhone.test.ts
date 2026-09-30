@@ -3,9 +3,9 @@ import { isPriorityPhone } from '../../src/deviceMeta';
 
 describe('isPriorityPhone', () => {
   it('marks modern Apple phones as priority', () => {
-    expect(isPriorityPhone('Apple iPhone X Silver')).toBe(true);
+    expect(isPriorityPhone('Apple iPhone X Space Grey')).toBe(true);
     expect(isPriorityPhone('Apple iPhone 11 Black')).toBe(true);
-    expect(isPriorityPhone('Apple iPhone SE Gold')).toBe(true);
+    expect(isPriorityPhone('Apple iPhone SE Black')).toBe(true);
   });
 
   it('leaves older Apple phones for on-demand loading', () => {

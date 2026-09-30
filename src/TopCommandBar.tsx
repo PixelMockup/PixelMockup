@@ -1,28 +1,8 @@
-import { Download, Ellipsis, X } from 'lucide-react';
+import { Download, X } from 'lucide-react';
 import BrandMark from './BrandMark';
-import type { ExportFormat, ExportResolution } from './deviceScale';
 import type { CreditState } from './useCredits';
 import { formatResetTime } from './utils/formatResetTime';
-
-const EXPORT_FORMATS = new Set<ExportFormat>(['png', 'jpg']);
-const EXPORT_RESOLUTIONS = new Set<ExportResolution>([
-  'best',
-  '1440p',
-  '1080p',
-  '720p',
-]);
-
-function parseExportFormat(value: string): ExportFormat | null {
-  return EXPORT_FORMATS.has(value as ExportFormat)
-    ? (value as ExportFormat)
-    : null;
-}
-
-function parseExportResolution(value: string): ExportResolution | null {
-  return EXPORT_RESOLUTIONS.has(value as ExportResolution)
-    ? (value as ExportResolution)
-    : null;
-}
+import type { ScreenshotProvider } from './screenshotProviders';
 
 type Props = {
   hasDevices: boolean;
@@ -35,18 +15,10 @@ type Props = {
   captureCount: number;
   downloading: boolean;
   softEmptyDownload: boolean;
-  exportFormat: ExportFormat;
-  exportResolution: ExportResolution;
-  exportTransparentBg: boolean;
-  onExportFormat: (v: ExportFormat) => void;
-  onExportResolution: (v: ExportResolution) => void;
-  onExportTransparentBg: (v: boolean) => void;
   onDownload: () => void;
-  downloadMenuOpen: boolean;
-  onDownloadMenuOpenChange: (open: boolean) => void;
-  downloadMenuRef: React.RefObject<HTMLDivElement | null>;
   credits: CreditState;
   onOpenScreenshotSettings: () => void;
+  screenshotProvider: ScreenshotProvider;
 };
 
 function downloadLabel(downloading: boolean, softEmptyDownload: boolean): string {
@@ -66,18 +38,10 @@ export default function TopCommandBar({
   captureCount,
   downloading,
   softEmptyDownload,
-  exportFormat,
-  exportResolution,
-  exportTransparentBg,
-  onExportFormat,
-  onExportResolution,
-  onExportTransparentBg,
   onDownload,
-  downloadMenuOpen,
-  onDownloadMenuOpenChange,
-  downloadMenuRef,
   credits,
   onOpenScreenshotSettings,
+  screenshotProvider,
 }: Readonly<Props>) {
   const ml = credits.microlink;
   const mlExhausted = ml.remaining !== null && ml.remaining <= 0;
@@ -117,7 +81,7 @@ export default function TopCommandBar({
               title="Clear website"
               onClick={onClearUrl}
             >
-              <X size={16} strokeWidth={1.75} aria-hidden />
+              <X size={20} strokeWidth={1.75} aria-hidden />
             </button>
           ) : null}
           <button
@@ -137,49 +101,87 @@ export default function TopCommandBar({
       )}
 
       <div className="ms-top-command__end">
-        {credits.screenshotapi != null ? (
-          <span
-            className="ms-presence-pill"
-            role="status"
-            aria-live="polite"
-            title="ScreenshotAPI credits remaining"
-          >
-            <span className="ms-presence-pill__dot" aria-hidden />
-            {credits.screenshotapi} SA
-          </span>
-        ) : null}
-        {credits.microlink.remaining != null ? (
-          <button
-            type="button"
-            className={[
-              'ms-presence-pill',
-              'ms-presence-pill--clickable',
-              mlExhausted ? 'ms-presence-pill--exhausted' : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
-            role="button"
-            title={
-              mlExhausted
-                ? 'Shared Microlink key is used up for today — click for details'
-                : 'Microlink shared key availability — click to manage'
+        {(() => {
+          const provider = screenshotProvider;
+
+          // --- SCREENSHOTAPI DYNAMIC DISPLAY ---
+          if (provider === 'screenshotapi') {
+            const sa = credits.screenshotapi;
+            const hasData = sa.limit != null || sa.limitwithoutapi != null;
+            if (!hasData) {
+              return (
+                <button
+                  type="button"
+                  className="ms-presence-pill ms-presence-pill--clickable"
+                  role="button"
+                  title="ScreenshotAPI — validate or configure"
+                  aria-label="Validate ScreenshotAPI"
+                  onClick={onOpenScreenshotSettings}
+                >
+                  <span className="ms-presence-pill__dot" aria-hidden />
+                  Validate API — ScreenshotAPI
+                </button>
+              );
             }
-            aria-label="Microlink shared key usage — click to open API and keys"
-            onClick={onOpenScreenshotSettings}
-          >
-            <span className="ms-presence-pill__dot" aria-hidden />
-            {mlExhausted ? (
-              <>Microlink used{ml.resetAt != null ? ` — ${formatResetTime(ml.resetAt)}` : ''}</>
-            ) : (
-              <>
-                {(ml.limit != null ? `${ml.remaining}/${ml.limit} ` : `${ml.remaining} `)}Microlink
-              </>
-            )}
-          </button>
-        ) : null}
+            const isKeyMode = sa.limit === 200;
+            const saRemaining = isKeyMode ? sa.remaining : (sa.remainingwithoutapi ?? null);
+            const saLimit = isKeyMode ? sa.limit : sa.limitwithoutapi;
 
+            return (
+              <button
+                type="button"
+                className="ms-presence-pill ms-presence-pill--clickable"
+                role="button"
+                title="ScreenshotAPI credits — click for API & keys"
+                aria-label="ScreenshotAPI credits — click to manage API and keys"
+                onClick={onOpenScreenshotSettings}
+              >
+                <span className="ms-presence-pill__dot" aria-hidden />
+                {saRemaining != null
+                  ? `${saRemaining}/${saLimit}(per month) `
+                  : `${saLimit}(per month) `}ScreenshotAPI
+              </button>
+            );
+          }
 
-        <div className="ms-download-cluster" ref={downloadMenuRef}>
+          // --- MICROLINK DYNAMIC DISPLAY ---
+          if (provider === 'microlink' && credits.microlink.remaining != null) {
+            const mlLimit = credits.microlink.limit ?? 25; // Dynamic fallback
+
+            return (
+              <button
+                type="button"
+                className={[
+                  'ms-presence-pill',
+                  'ms-presence-pill--clickable',
+                  mlExhausted ? 'ms-presence-pill--exhausted' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                role="button"
+                title={
+                  mlExhausted
+                    ? 'Shared Microlink key is used up for today — click for details'
+                    : 'Microlink shared key availability — click to manage'
+                }
+                aria-label="Microlink shared key usage — click to open API and keys"
+                onClick={onOpenScreenshotSettings}
+              >
+                <span className="ms-presence-pill__dot" aria-hidden />
+                {mlExhausted ? (
+                  <>Microlink used{ml.resetAt != null ? ` — ${formatResetTime(ml.resetAt)}` : ''}</>
+                ) : (
+                  <>
+                    {(`${ml.remaining}/${mlLimit}(per day) `)}Microlink
+                  </>
+                )}
+              </button>
+            );
+          }
+          return null;
+        })()}
+
+        <div className="ms-download-cluster">
           <button
             type="button"
             className="ms-btn ms-btn--accent ms-btn--download"
@@ -199,60 +201,6 @@ export default function TopCommandBar({
               {downloadLabel(downloading, softEmptyDownload)}
             </span>
           </button>
-          {hasDevices ? (
-            <button
-              type="button"
-              className="ms-icon-btn"
-              aria-label="Download options"
-              title="Download options"
-              aria-expanded={downloadMenuOpen}
-              aria-haspopup="menu"
-              onClick={() => onDownloadMenuOpenChange(!downloadMenuOpen)}
-            >
-              <Ellipsis size={18} strokeWidth={1.75} aria-hidden />
-            </button>
-          ) : null}
-          {hasDevices && downloadMenuOpen ? (
-            <div className="ms-menu ms-download-menu" role="menu">
-              <label className="ms-field">
-                <span className="ms-field__label">Format</span>
-                <select
-                  value={exportFormat}
-                  onChange={(e) => {
-                    const next = parseExportFormat(e.target.value);
-                    if (next) onExportFormat(next);
-                  }}
-                >
-                  <option value="png">PNG</option>
-                  <option value="jpg">JPG</option>
-                </select>
-              </label>
-              <label className="ms-field">
-                <span className="ms-field__label">Resolution</span>
-                <select
-                  value={exportResolution}
-                  onChange={(e) => {
-                    const next = parseExportResolution(e.target.value);
-                    if (next) onExportResolution(next);
-                  }}
-                >
-                  <option value="best">Best</option>
-                  <option value="1440p">1440p</option>
-                  <option value="1080p">1080p</option>
-                  <option value="720p">720p</option>
-                </select>
-              </label>
-              <label className="ms-check">
-                <input
-                  type="checkbox"
-                  checked={exportTransparentBg && exportFormat !== 'jpg'}
-                  disabled={exportFormat === 'jpg'}
-                  onChange={(e) => onExportTransparentBg(e.target.checked)}
-                /> {''}
-                Transparent background
-              </label>
-            </div>
-          ) : null}
         </div>
       </div>
     </header>

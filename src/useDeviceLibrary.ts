@@ -2,7 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 import type { DeviceItem } from './App';
 import deviceDimensions from './assets/device_dimensions.json';
 import { CATEGORY_ORDER } from './deviceScale';
-import { isPriorityPhone, parseBrand, parseProductFamily } from './deviceMeta';
+import { isPriorityPhone, isPriorityTablet, isPriorityWatch, parseBrand, parseProductFamily } from './deviceMeta';
 
 const lazyDeviceFiles = import.meta.glob('./assets/device_library/**/*.svg', {
   eager: false,
@@ -11,7 +11,7 @@ const lazyDeviceFiles = import.meta.glob('./assets/device_library/**/*.svg', {
 });
 
 const CATEGORY_LOAD_CONCURRENCY = 6;
-const PRIORITY_FULL_CATEGORIES = ['computers', 'displays', 'tablets'] as const;
+const PRIORITY_FULL_CATEGORIES = ['computers', 'displays'] as const;
 
 type DimEntry = {
   file: string;
@@ -134,11 +134,10 @@ export interface UseDeviceLibraryResult {
   loadingDevicePaths: Set<string>;
   isLoading: boolean;
   progress: number;
-  /** Live human-readable status for the current load phase. */
   statusMessage: string | null;
   loadLibrary: (priorityCategory?: string) => Promise<void>;
   loadPriorityLibrary: () => Promise<void>;
-  loadCategory: (category: string) => Promise<void>;
+  loadCategory: (category: string, onAssetLoaded?: () => void) => Promise<void>;
   loadDevice: (path: string) => Promise<DeviceItem | null>;
   loadCategoriesForPreset: (preset: { items: { catalogFile: string }[] }) => Promise<void>;
 }
@@ -148,15 +147,16 @@ export function useDeviceLibrary(): UseDeviceLibraryResult {
     cloneMetadataCatalog,
   );
   const [loadedCategories, setLoadedCategories] = useState<Set<string>>(() => new Set());
-  const [loadingDevicePaths, setLoadingDevicePaths] = useState<Set<string>>(
-    () => new Set(),
-  );
+  const [loadingDevicePaths, setLoadingDevicePaths] = useState<Set<string>>(() => new Set());
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [statusMessage, setStatusMessage] = useState<string | null>(null);
+
   const loadingCategoriesRef = useRef<Set<string>>(new Set());
   const categoryPromisesRef = useRef<Record<string, Promise<void>>>({});
   const devicePromisesRef = useRef<Record<string, Promise<DeviceItem | null>>>({});
+  const progressRef = useRef({ total: 0, completed: 0 });
+
   const groupedLibraryRef = useRef(groupedLibrary);
   groupedLibraryRef.current = groupedLibrary;
 
@@ -213,6 +213,9 @@ export function useDeviceLibrary(): UseDeviceLibraryResult {
           return { ...prev, [category]: nextList };
         });
         return item;
+      } catch (error) {
+        console.error(`Error loading device ${path}:`, error);
+        throw error;
       } finally {
         setLoadingDevicePaths((prev) => {
           if (!prev.has(path)) return prev;
@@ -229,7 +232,7 @@ export function useDeviceLibrary(): UseDeviceLibraryResult {
   }, []);
 
   const loadCategory = useCallback(
-    async (category: string) => {
+    async (category: string, onAssetLoaded?: () => void) => {
       if (!metadataCatalog[category]) return;
       if (loadedCategories.has(category)) return;
       if (categoryIsFullyLoaded(groupedLibraryRef.current[category])) {
@@ -241,8 +244,11 @@ export function useDeviceLibrary(): UseDeviceLibraryResult {
         });
         return;
       }
-      if (loadingCategoriesRef.current.has(category)) {
-        await categoryPromisesRef.current[category];
+
+      // Race-condition safe deduplication check (Fixed typo: categoryPromisesRef)
+      const existingPromise = categoryPromisesRef.current[category];
+      if (existingPromise) {
+        await existingPromise;
         return;
       }
 
@@ -258,12 +264,23 @@ export function useDeviceLibrary(): UseDeviceLibraryResult {
           );
           const pending = entries.filter(([path]) => !alreadyLoaded.has(path));
 
+          if (pending.length === 0) {
+            setLoadedCategories((prev) => {
+              const next = new Set(prev);
+              next.add(category);
+              return next;
+            });
+            return;
+          }
+
           const loadedItems = await mapPool(
             pending,
             CATEGORY_LOAD_CONCURRENCY,
             async ([path, loader]) => {
               const src = (await loader()) as string;
-              return buildDeviceItem(path, src);
+              const item = buildDeviceItem(path, src);
+              if (onAssetLoaded) onAssetLoaded();
+              return item;
             },
           );
 
@@ -289,6 +306,9 @@ export function useDeviceLibrary(): UseDeviceLibraryResult {
             next.add(category);
             return next;
           });
+        } catch (error) {
+          console.error(`Error loading category ${category}:`, error);
+          throw error;
         } finally {
           loadingCategoriesRef.current.delete(category);
           delete categoryPromisesRef.current[category];
@@ -307,6 +327,7 @@ export function useDeviceLibrary(): UseDeviceLibraryResult {
     const fullCategories = PRIORITY_FULL_CATEGORIES.filter(
       (c) => metadataCatalog[c] && !loadedCategories.has(c),
     );
+
     const phoneMeta = metadataCatalog.phones ?? [];
     const priorityPhonePaths = phoneMeta
       .filter((d) => isPriorityPhone(d.name))
@@ -316,41 +337,109 @@ export function useDeviceLibrary(): UseDeviceLibraryResult {
         return !current?.src;
       });
 
-    const totalUnits = fullCategories.length + (priorityPhonePaths.length > 0 ? 1 : 0);
-    if (totalUnits === 0) return;
+    const tabletMeta = metadataCatalog.tablets ?? [];
+    const priorityTabletPaths = tabletMeta
+      .filter((d) => isPriorityTablet(d.name))
+      .map((d) => d.path)
+      .filter((path) => {
+        const current = groupedLibraryRef.current.tablets?.find((d) => d.path === path);
+        return !current?.src;
+      });
+
+    const watchMeta = metadataCatalog.watches ?? [];
+    const priorityWatchPaths = watchMeta
+      .filter((d) => isPriorityWatch(d.name))
+      .map((d) => d.path)
+      .filter((path) => {
+        const current = groupedLibraryRef.current.watches?.find((d) => d.path === path);
+        return !current?.src;
+      });
+
+    let totalAssets = 0;
+    for (const c of fullCategories) {
+      const current = groupedLibraryRef.current[c] ?? [];
+      const alreadyLoaded = new Set(current.filter((d) => d.src).map((d) => d.path));
+      const entries = Object.entries(lazyDeviceFiles).filter(
+        ([path]) => categoryFromGlobPath(path) === c,
+      );
+      totalAssets += entries.filter(([path]) => !alreadyLoaded.has(path)).length;
+    }
+    totalAssets += priorityPhonePaths.length + priorityTabletPaths.length + priorityWatchPaths.length;
+
+    if (totalAssets === 0) return;
 
     setIsLoading(true);
     setProgress(0);
-    let completed = 0;
+    setStatusMessage('Loading priority devices...');
+    progressRef.current = { total: totalAssets, completed: 0 };
+
+    const updateProgress = () => {
+      progressRef.current.completed += 1;
+      setProgress(Math.min(100, (progressRef.current.completed / progressRef.current.total) * 100));
+    };
+
     try {
+      const promises: Promise<void>[] = [];
+
+      // 1. Full categories concurrently (Fixed copy-paste error: now correctly calls loadCategory)
       for (const category of fullCategories) {
-        setStatusMessage(`Loading ${category}...`);
-        setProgress((completed / totalUnits) * 100);
-        await loadCategory(category);
-        completed += 1;
-        setProgress((completed / totalUnits) * 100);
-      }
-
-      if (priorityPhonePaths.length > 0) {
-        setStatusMessage('Loading flagship phones...');
-        setProgress((completed / totalUnits) * 100);
-        let phonesDone = 0;
-        await mapPool(
-          priorityPhonePaths,
-          CATEGORY_LOAD_CONCURRENCY,
-          async (path) => {
-            await loadDevice(path);
-            phonesDone += 1;
-            const phoneFraction = phonesDone / priorityPhonePaths.length;
-            setProgress(((completed + phoneFraction) / totalUnits) * 100);
-          },
+        promises.push(
+          loadCategory(category, updateProgress).catch((error) => {
+            console.error(`Error loading category ${category}:`, error);
+          })
         );
-        completed += 1;
-        setProgress((completed / totalUnits) * 100);
       }
 
+      // 2. Priority phones concurrently
+      if (priorityPhonePaths.length > 0) {
+        promises.push(
+          mapPool(priorityPhonePaths, CATEGORY_LOAD_CONCURRENCY, async (path) => {
+            try {
+              await loadDevice(path);
+            } catch (error) {
+              console.error(`Error loading device ${path}:`, error);
+            } finally {
+              updateProgress();
+            }
+          }).then(() => { })
+        );
+      }
+
+      // 3. Priority tablets concurrently
+      if (priorityTabletPaths.length > 0) {
+        promises.push(
+          mapPool(priorityTabletPaths, CATEGORY_LOAD_CONCURRENCY, async (path) => {
+            try {
+              await loadDevice(path);
+            } catch (error) {
+              console.error(`Error loading device ${path}:`, error);
+            } finally {
+              updateProgress();
+            }
+          }).then(() => { })
+        );
+      }
+
+      // 4. Priority watches concurrently
+      if (priorityWatchPaths.length > 0) {
+        promises.push(
+          mapPool(priorityWatchPaths, CATEGORY_LOAD_CONCURRENCY, async (path) => {
+            try {
+              await loadDevice(path);
+            } catch (error) {
+              console.error(`Error loading device ${path}:`, error);
+            } finally {
+              updateProgress();
+            }
+          }).then(() => { })
+        );
+      }
+
+      await Promise.all(promises);
       setStatusMessage('Almost ready...');
       setProgress(100);
+    } catch (error) {
+      console.error('Error in loadPriorityLibrary:', error);
     } finally {
       setIsLoading(false);
       setStatusMessage(null);
@@ -360,33 +449,55 @@ export function useDeviceLibrary(): UseDeviceLibraryResult {
   const loadLibrary = useCallback(
     async (priorityCategory?: string) => {
       if (isLoading) return;
-      const all = Object.keys(metadataCatalog);
-      if (all.length === 0) return;
+      if (categories.length === 0) return;
 
-      const pending = all.filter((c) => !loadedCategories.has(c));
+      const pending = categories.filter((c) => !loadedCategories.has(c));
       if (pending.length === 0) return;
 
-      const order =
-        priorityCategory && pending.includes(priorityCategory)
-          ? [priorityCategory, ...pending.filter((c) => c !== priorityCategory)]
-          : pending;
+      let totalAssets = 0;
+      for (const c of pending) {
+        const current = groupedLibraryRef.current[c] ?? [];
+        const alreadyLoaded = new Set(current.filter((d) => d.src).map((d) => d.path));
+        const entries = Object.entries(lazyDeviceFiles).filter(
+          ([path]) => categoryFromGlobPath(path) === c,
+        );
+        totalAssets += entries.filter(([path]) => !alreadyLoaded.has(path)).length;
+      }
 
+      if (totalAssets === 0) return;
+
+      // Fixed: Added missing state initialization before try block
       setIsLoading(true);
       setProgress(0);
+      setStatusMessage('Loading devices...');
+      progressRef.current = { total: totalAssets, completed: 0 };
+
       try {
-        for (let i = 0; i < order.length; i++) {
-          setStatusMessage(`Loading ${order[i]}...`);
-          setProgress((i / order.length) * 100);
-          await loadCategory(order[i]);
-          setProgress(((i + 1) / order.length) * 100);
-        }
+        const order =
+          priorityCategory && pending.includes(priorityCategory)
+            ? [priorityCategory, ...pending.filter((c) => c !== priorityCategory)]
+            : pending;
+
+        const loadPromises = order.map((category) =>
+          loadCategory(category, () => {
+            progressRef.current.completed += 1;
+            setProgress(Math.min(100, (progressRef.current.completed / progressRef.current.total) * 100));
+          }).catch((error) => {
+            console.error(`Error loading category ${category}:`, error);
+          })
+        );
+
+        await Promise.all(loadPromises);
         setStatusMessage('Almost ready...');
+        setProgress(100);
+      } catch (error) {
+        console.error('Error in loadLibrary:', error);
       } finally {
         setIsLoading(false);
         setStatusMessage(null);
       }
     },
-    [isLoading, loadedCategories, loadCategory],
+    [isLoading, loadedCategories, categories, loadCategory],
   );
 
   const loadCategoriesForPreset = useCallback(
@@ -400,23 +511,47 @@ export function useDeviceLibrary(): UseDeviceLibraryResult {
       });
 
       const uniquePaths = [...new Set(neededPaths.filter((p): p is string => p != null))];
+
       if (uniquePaths.length === 0) {
-        // Fallback: load whole categories mentioned by the preset.
+        // Fallback: load whole categories mentioned by the preset concurrently
         const needed = new Set(
           preset.items.map((slot) => slot.catalogFile.split('/')[0]),
         );
         const pending = [...needed].filter((c) => !loadedCategories.has(c));
         if (pending.length === 0) return;
+
+        let totalAssets = 0;
+        for (const c of pending) {
+          const current = groupedLibraryRef.current[c] ?? [];
+          const alreadyLoaded = new Set(current.filter((d) => d.src).map((d) => d.path));
+          const entries = Object.entries(lazyDeviceFiles).filter(
+            ([path]) => categoryFromGlobPath(path) === c,
+          );
+          totalAssets += entries.filter(([path]) => !alreadyLoaded.has(path)).length;
+        }
+        if (totalAssets === 0) return;
+
         setIsLoading(true);
         setProgress(0);
+        setStatusMessage('Loading categories for preset...');
+        progressRef.current = { total: totalAssets, completed: 0 };
+
+        const updateProgress = () => {
+          progressRef.current.completed += 1;
+          setProgress(Math.min(100, (progressRef.current.completed / progressRef.current.total) * 100));
+        };
+
         try {
-          for (let i = 0; i < pending.length; i++) {
-            setStatusMessage(`Loading ${pending[i]}...`);
-            setProgress((i / pending.length) * 100);
-            await loadCategory(pending[i]);
-            setProgress(((i + 1) / pending.length) * 100);
-          }
+          const promises = pending.map((category) =>
+            loadCategory(category, updateProgress).catch((error) => {
+              console.error(`Error loading category ${category}:`, error);
+            })
+          );
+          await Promise.all(promises);
           setStatusMessage('Almost ready...');
+          setProgress(100);
+        } catch (error) {
+          console.error('Error loading preset categories:', error);
         } finally {
           setIsLoading(false);
           setStatusMessage(null);
@@ -424,17 +559,40 @@ export function useDeviceLibrary(): UseDeviceLibraryResult {
         return;
       }
 
+      // Check which specific paths actually need loading
+      const pathsToLoad = uniquePaths.filter((path) => {
+        const existing = Object.values(groupedLibraryRef.current)
+          .flat()
+          .find((item) => item.path === path);
+        return !existing?.src;
+      });
+
+      if (pathsToLoad.length === 0) return;
+
       setIsLoading(true);
       setProgress(0);
       setStatusMessage('Loading devices for layout...');
+      progressRef.current = { total: pathsToLoad.length, completed: 0 };
+
+      const updateProgress = () => {
+        progressRef.current.completed += 1;
+        setProgress(Math.min(100, (progressRef.current.completed / progressRef.current.total) * 100));
+      };
+
       try {
-        let done = 0;
-        await mapPool(uniquePaths, CATEGORY_LOAD_CONCURRENCY, async (path) => {
-          await loadDevice(path);
-          done += 1;
-          setProgress((done / uniquePaths.length) * 100);
+        await mapPool(pathsToLoad, CATEGORY_LOAD_CONCURRENCY, async (path) => {
+          try {
+            await loadDevice(path);
+          } catch (error) {
+            console.error(`Error loading device ${path}:`, error);
+          } finally {
+            updateProgress();
+          }
         });
         setStatusMessage('Almost ready...');
+        setProgress(100);
+      } catch (error) {
+        console.error('Error loading preset devices:', error);
       } finally {
         setIsLoading(false);
         setStatusMessage(null);

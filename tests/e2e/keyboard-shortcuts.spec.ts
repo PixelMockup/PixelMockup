@@ -10,7 +10,8 @@ async function placePhone(page: Page) {
   await expect(page.locator('.ms-progress-loader-overlay')).toHaveCount(0, {
     timeout: 60_000,
   });
-  await page.getByRole('button', { name: /^Start layout only$/i }).first().click();
+  await page.getByRole('textbox', { name: /Website URL/i }).fill('google.com');
+  await page.getByRole('button', { name: /Show on devices/i }).click();
   await expect(page.locator('.ms-canvas-item').first()).toBeVisible({
     timeout: 45_000,
   });
@@ -23,6 +24,12 @@ async function placePhoneAndCount(page: Page) {
 
 /** Click the first device to select it (placement must already have happened). */
 async function selectFirstDevice(page: Page) {
+  // Dismiss any open modal/dialog before interacting with the canvas
+  await page.keyboard.press('Escape');
+
+  // Optional: add a small wait to ensure the modal animation finishes
+  await page.waitForTimeout(300);
+
   await page.locator('.ms-canvas-item').first().click();
   await expect(page.locator('.ms-canvas-item--selected').first()).toBeVisible();
 }
