@@ -18,24 +18,60 @@ function key(provider: string, hasKey?: boolean): string {
 export function getCounter(provider?: string, hasKey?: boolean): State {
   const k = provider ? key(provider, hasKey) : 'default';
   if (!stateMap.has(k)) {
-    stateMap.set(k, { limit: 25, remaining: 25, resetAt: null, firstRequestTime: null, initialized: false });
+    let defaultLimit = 0;
+    if (provider === 'screenshotapi') {
+      defaultLimit = (hasKey ? 200 : 8)
+    } else if (provider === 'microlink') {
+      defaultLimit = 25
+    } else defaultLimit = 0;
+    // const defaultLimit = provider === 'screenshotapi' ? (hasKey ? 200 : 8) : 25;
+    stateMap.set(
+      k,
+      {
+        limit: defaultLimit,
+        remaining: defaultLimit,
+        resetAt: null,
+        firstRequestTime: null,
+        initialized: false
+      });
   }
   const s = stateMap.get(k)!;
-  // Auto-reset when reset window passed and balance exhausted
-  if (s.resetAt != null && s.remaining <= 0 && Date.now() >= s.resetAt * 1000) {
+  // Auto-reset when reset window passed (always refresh at reset time, not just at 0)
+  if (s.resetAt != null && Date.now() >= s.resetAt * 1000) {
     s.remaining = s.limit;
     s.resetAt = null;
     s.initialized = false;
+    s.firstRequestTime = null;
   }
   return s;
 }
 
+export function updateCounter(
+  provider: string,
+  hasKey: boolean,
+  data: {
+    limit?: number;
+    remaining?: number;
+    resetAt?: number
+  }) {
+  const k = key(provider, hasKey);
+  if (stateMap.has(k)) {
+    const s = stateMap.get(k)!;
+    if (data.limit != null) s.limit = data.limit;
+    if (data.remaining != null) s.remaining = data.remaining;
+    if (data.resetAt !== undefined) s.resetAt = data.resetAt;
+    s.initialized = true;
+    s.firstRequestTime = Date.now();
+  }
+}
+
 export function initCounter(provider: string, hasKey: boolean, data: { limit?: number; remaining?: number; resetAt?: number }) {
   const k = key(provider, hasKey);
+  const correctLimit = provider === 'screenshotapi' ? (hasKey ? 200 : 8) : 25;
   if (!stateMap.has(k) || !stateMap.get(k)!.initialized) {
     stateMap.set(k, {
-      limit: data.limit ?? 25,
-      remaining: data.remaining ?? 25,
+      limit: data.limit ?? correctLimit,
+      remaining: data.remaining ?? correctLimit,
       resetAt: data.resetAt ?? null,
       firstRequestTime: Date.now(),
       initialized: true,
@@ -85,17 +121,11 @@ export function enqueueCapture(provider?: string, hasKey?: boolean) {
 }
 
 export function processCaptureQueue() {
-  const remaining: typeof captureQueue = [];
-  for (const item of captureQueue) {
-    const s = getCounter(item.provider, item.hasKey);
-    if (s.remaining > 0) {
-      s.remaining--;
-    } else {
-      remaining.push(item);
-    }
+  const s = getCounter('screenshotapi', false);
+  if (captureQueue.length > 0 && s.remaining > 0) {
+    s.remaining--;
+    captureQueue.shift();
   }
-  captureQueue.length = 0;
-  captureQueue.push(...remaining);
   return captureQueue.length === 0;
 }
 
@@ -108,5 +138,5 @@ export function getQueueLength() {
 export function startQueueTimer() {
   setInterval(() => {
     processCaptureQueue();
-  }, 30_000);
+  }, 8500);
 }

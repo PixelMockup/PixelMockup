@@ -170,6 +170,8 @@ export async function handler(req: VercelRequest, res: VercelResponse): Promise<
     clearTimeout(saTimer);
     const rem = saPublicRes.headers.get('x-ratelimit-remaining');
     const lim = saPublicRes.headers.get('x-ratelimit-limit');
+    const saResetHeader = saPublicRes.headers.get('x-ratelimit-reset') || saPublicRes.headers.get('x-rate-limit-reset');
+    const saResetAt = saResetHeader ? parseInt(saResetHeader, 10) : null;
     if (rem != null) saPublicRemaining = parseInt(rem, 10);
     if (lim != null) saPublicLimit = parseInt(lim, 10);
   } catch {

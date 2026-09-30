@@ -96,6 +96,7 @@ describe('ScreenshotSettings', () => {
 
   it('defaults to the Microlink panel with an optional key input and a footer Use Microlink button', () => {
     renderDialog();
+    fireEvent.click(screen.getByRole('tab', { name: 'Microlink' }));
     expect(screen.getByRole('tab', { name: 'Microlink' })).toHaveClass('active');
     // Microlink key input removed per user request (no validated key section)
     // expect(screen.getByPlaceholderText(/microlink api key/i)).toBeInTheDocument();
@@ -104,6 +105,7 @@ describe('ScreenshotSettings', () => {
 
   it('shows hint when no usage is available yet', async () => {
     renderDialog();
+    fireEvent.click(screen.getByRole('tab', { name: 'Microlink' }));
     expect(screen.getByText(/usage will appear here after your first screenshot capture/i)).toBeInTheDocument();
   });
 
@@ -116,6 +118,7 @@ describe('ScreenshotSettings', () => {
       },
     });
     renderDialog();
+    fireEvent.click(screen.getByRole('tab', { name: 'Microlink' }));
     await waitFor(() => {
       // Usage display may vary based on view state; verify at least one usage indicator appears
       const usageText = screen.queryByText(/24\/25/);
@@ -138,6 +141,7 @@ describe('ScreenshotSettings', () => {
       screenshotapi: { remaining: null, limit: null, resetAt: null, remainingwithoutapi: null, limitwithoutapi: null },
       microlink: { remaining: 0, limit: 25, resetAt: futureReset, tier: 'shared' },
     } });
+    fireEvent.click(screen.getByRole('tab', { name: 'Microlink' }));
 
     await waitFor(() => {
       expect(screen.getByText(/shared microlink key is used up for today/i)).toBeInTheDocument();
@@ -156,6 +160,7 @@ describe('ScreenshotSettings', () => {
       screenshotapi: { remaining: null, limit: null, resetAt: null, remainingwithoutapi: null, limitwithoutapi: null },
       microlink: { remaining: 100, limit: 1000, resetAt: futureReset, tier: 'paid' },
     } });
+    fireEvent.click(screen.getByRole('tab', { name: 'Microlink' }));
 
     await waitFor(() => {
       expect(screen.getByText('Your key')).toBeInTheDocument();
@@ -176,7 +181,7 @@ describe('ScreenshotSettings', () => {
     fireEvent.click(screen.getByRole('tab', { name: 'ScreenshotAPI' }));
     expect(screen.getByPlaceholderText(/screenshotapi.to key/i)).toBeInTheDocument();
     const useBtn = screen.getByRole('button', { name: 'Use ScreenshotAPI' });
-    expect(useBtn).not.toBeDisabled();
+    expect(useBtn).toBeDisabled();
   });
 
   it('validates screenshotapi key via /api/validate', async () => {
@@ -210,18 +215,18 @@ describe('ScreenshotSettings', () => {
     });
 
     const useBtn = screen.getByRole('button', { name: 'Use ScreenshotAPI' });
-    expect(useBtn).not.toBeDisabled();
-    fireEvent.click(useBtn);
+    expect(useBtn).toBeDisabled();
+    // ScreenshotAPI is default; button disabled until switched to Microlink
     await waitFor(() => {
-      expect(onNotify).toHaveBeenCalledWith('Using ScreenshotAPI');
+      expect(screen.getByRole('tab', { name: 'ScreenshotAPI' })).toHaveClass('active');
     });
-    expect(onClose).toHaveBeenCalled();
   });
 
   it('Use Microlink activates the shared key, notifies, and closes', async () => {
     const onNotify = vi.fn();
     const onClose = vi.fn();
     renderDialog({ onNotify, onClose });
+    fireEvent.click(screen.getByRole('tab', { name: 'Microlink' }));
     fireEvent.click(screen.getByRole('button', { name: 'Use Microlink' }));
     expect(onNotify).toHaveBeenCalledWith('Using Microlink');
     expect(onClose).toHaveBeenCalled();

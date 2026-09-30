@@ -13,7 +13,7 @@ export interface CreditStoreState {
 const store: Record<string, CreditStoreState | undefined> = {};
 
 export function getCreditState(provider: 'microlink' | 'screenshotapi', key?: string): CreditStoreState | null {
-  const id = provider === 'screenshotapi' && key ? `sa:${key}` : 'ml:shared';
+  const id = provider === 'screenshotapi' ? (key ? `sa:${key}` : 'sa:public') : 'ml:shared';
   const state = store[id];
   if (!state) return null;
 
@@ -36,7 +36,7 @@ export function setCreditState(
   resetAt: number | null,
   key?: string,
 ): void {
-  const id = provider === 'screenshotapi' && key ? `sa:${key}` : 'ml:shared';
+  const id = provider === 'screenshotapi' ? (key ? `sa:${key}` : 'sa:public') : 'ml:shared';
   store[id] = {
     remaining: remaining ?? (provider === 'microlink' ? 25 : 200),
     limit: limit ?? (provider === 'microlink' ? 25 : 200),
@@ -47,6 +47,6 @@ export function setCreditState(
 }
 
 export function resetCreditState(provider: 'microlink' | 'screenshotapi', key?: string): void {
-  const id = provider === 'screenshotapi' && key ? `sa:${key}` : 'ml:shared';
+  const id = provider === 'screenshotapi' ? (key ? `sa:${key}` : 'sa:public') : 'ml:shared';
   delete store[id];
 }

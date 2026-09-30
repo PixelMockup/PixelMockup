@@ -24,6 +24,12 @@ async function placePhoneAndCount(page: Page) {
 
 /** Click the first device to select it (placement must already have happened). */
 async function selectFirstDevice(page: Page) {
+  // Dismiss any open modal/dialog before interacting with the canvas
+  await page.keyboard.press('Escape');
+
+  // Optional: add a small wait to ensure the modal animation finishes
+  await page.waitForTimeout(300);
+
   await page.locator('.ms-canvas-item').first().click();
   await expect(page.locator('.ms-canvas-item--selected').first()).toBeVisible();
 }

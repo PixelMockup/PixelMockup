@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 import { isBlocked, startQueueTimer } from './middleware';
 import * as m from './middleware';
 
@@ -71,6 +71,7 @@ export function useCredits() {
   });
   const [isLoadingCredits, setIsLoadingCredits] = useState(false);
   const [countdown, setCountdown] = useState(60);
+  const postInitDone = useRef(false);
 
   const fetchCredits = useCallback(async () => {
     setIsLoadingCredits(true);
@@ -115,6 +116,14 @@ export function useCredits() {
             remainingwithoutapi: saNoApiRemaining ?? prev.screenshotapi.remainingwithoutapi,
             limitwithoutapi: saNoApiLimit ?? prev.screenshotapi.limitwithoutapi,
           }));
+          // Sync middleware so decrement gets refreshed counts after server reset
+          const effLimit = (clearKeyFields ? saNoApiLimit : saLimit) ?? (clearKeyFields ? 8 : 200);
+          const effRemaining = (clearKeyFields ? saNoApiRemaining : saRemaining) ?? (clearKeyFields ? 8 : 200);
+          m.updateCounter('screenshotapi', false, {
+            limit: effLimit,
+            remaining: effRemaining,
+            resetAt: saResetAt ?? null,
+          });
         }
       }
     } catch (error) {
@@ -126,6 +135,8 @@ export function useCredits() {
 
   // Initialize ScreenshotAPI no-key rate limits via POST (one-time calibration with curl-style header probe)
   useEffect(() => {
+    if (postInitDone.current) return;
+    postInitDone.current = true;
     const initScreenshotApi = async () => {
       try {
         const res = await fetch(`/api/credits?provider=screenshotapi`, {
@@ -167,12 +178,30 @@ export function useCredits() {
   }, [credits.microlink?.remaining, credits.microlink?.limit, fetchCredits]);
 
   useEffect(() => {
-    // 60-second countdown for ScreenshotAPI free tier (8 req/min)
-    if (countdown > 0) {
+    // 60-second countdown for ScreenshotAPI free tier (8 req/min) — only when below full
+    const saRemaining = credits.screenshotapi?.remainingwithoutapi ?? credits.screenshotapi?.remaining;
+    const saLimit = credits.screenshotapi?.limitwithoutapi ?? credits.screenshotapi?.limit;
+    const isBelowFull = saRemaining != null && saLimit != null && saRemaining < saLimit;
+    if (isBelowFull && countdown > 0) {
       const t = setInterval(() => setCountdown((c) => c - 1), 1000);
       return () => clearInterval(t);
     }
-  }, [countdown]);
+  }, [countdown, credits.screenshotapi?.remaining, credits.screenshotapi?.remainingwithoutapi, credits.screenshotapi?.limit, credits.screenshotapi?.limitwithoutapi]);
+
+  // Auto-refresh at exact reset time without browser reload
+  useEffect(() => {
+    const resetAt = credits.screenshotapi?.resetAt;
+    if (resetAt == null || resetAt <= 0 || isLoadingCredits) return;
+    const delay = resetAt * 1000 - Date.now();
+    if (delay <= 0) {
+      fetchCredits();
+      return;
+    }
+    const timer = setTimeout(() => {
+      if (!isLoadingCredits) fetchCredits();
+    }, delay);
+    return () => clearTimeout(timer);
+  }, [credits.screenshotapi?.resetAt, fetchCredits, isLoadingCredits]);
 
   const updateUsageCallback = useCallback((provider: 'microlink' | 'screenshotapi', usage: Partial<MicrolinkUsage> | Partial<ScreenshotAPIUsage>) => {
     setCredits((prev) => updateUsage(prev, provider, usage));

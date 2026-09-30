@@ -127,6 +127,7 @@ import {
   type ScreenshotProvider,
 } from './screenshotProviders';
 import { onCreditsUpdate } from './captureWebsite';
+import { isBlocked, getQueueLength, enqueueCapture } from './middleware';
 import MobileDock from './MobileDock';
 import StatusShell from './StatusShell';
 import ArtboardCanvas from './ArtboardCanvas';
@@ -453,6 +454,24 @@ export default function MockupStudio({
   const [screenshotProvider, setScreenshotProviderState] = useState<ScreenshotProvider>(
     getScreenshotProvider,
   );
+
+  // Queue notice for unvalidated ScreenshotAPI (8/min without key)
+  const [queueNotice, setQueueNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    setStatusMessage(queueNotice);
+  }, [queueNotice]);
+
+  useEffect(() => {
+    if (screenshotProvider === 'screenshotapi' && isBlocked('screenshotapi', false)) {
+      enqueueCapture('screenshotapi', false);
+      const len = getQueueLength();
+      const pos = len > 0 ? len : 1;
+      setQueueNotice(`ScreenshotAPI queue — #${pos} (~${Math.ceil(pos * 6)}s wait)`);
+    } else {
+      setQueueNotice(null);
+    }
+  }, [screenshotProvider]);
   const [screenshotApiKeyState, setScreenshotApiKeyState] = useState(
     getScreenshotApiKey,
   );
