@@ -151,3 +151,10 @@ button {
     scroll-behavior: auto !important;
   }
 }
+
+/* Leader-Line overlay adjustments for mockup canvas */
+.leader-line {
+  z-index: 10 !important;
+  pointer-events: none;
+}
+

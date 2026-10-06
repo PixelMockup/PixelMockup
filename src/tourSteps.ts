@@ -1,6 +1,9 @@
 export type TourStepId =
   | 'welcome'
   | 'devices'
+  | 'layouts'
+  | 'canvas_settings'
+  | 'settings'
   | 'website'
   | 'arrange'
   | 'download';
@@ -36,10 +39,34 @@ export const TOUR_STEPS: readonly TourStep[] = [
     placement: 'bottom',
   },
   {
+    id: 'layouts',
+    title: 'Add a layouts',
+    body: 'Tap the Devices button to open the library, then tap any phone or laptop to place it on your canvas.',
+    target: '.ms-rail-layouts',
+    fallback: '.ms-mobile-dock__btn[aria-label="Layouts"]',
+    placement: 'bottom',
+  },
+  {
+    id: 'canvas_settings',
+    title: 'Canvas Settings',
+    body: 'Tap the Devices button to open the library, then tap any phone or laptop to place it on your canvas.',
+    target: '.ms-rail-canvas-settings',
+    fallback: '.ms-mobile-dock__btn[aria-label="Canvas_Settings"]',
+    placement: 'bottom',
+  },
+  {
+    id: 'settings',
+    title: 'Settings',
+    body: 'Tap the Devices button to open the library, then tap any phone or laptop to place it on your canvas.',
+    target: '.ms-rail-settings',
+    fallback: '.ms-mobile-dock__btn[aria-label="Settings"]',
+    placement: 'top',
+  },
+  {
     id: 'website',
     title: 'Show a website',
     body: 'Paste a web address like google.com and tap Apply. The website will appear on every device screen.',
-    target: '#ms-url-command-input',
+    target: '.ms-sr-only',
     fallback: '.ms-mobile-dock__btn[aria-label="Website URL"]',
     placement: 'bottom',
   },
@@ -62,6 +89,12 @@ export const TOUR_STEPS: readonly TourStep[] = [
 
 export function findTarget(step: TourStep): HTMLElement | null {
   let el = document.querySelector(step.target) as HTMLElement | null;
+  if (el && step.target === '.ms-sr-only') {
+    const label = el as HTMLLabelElement;
+    if (label.htmlFor) {
+      el = document.getElementById(label.htmlFor) as HTMLElement | null;
+    }
+  }
   if (!el && step.fallback) {
     el = document.querySelector(step.fallback) as HTMLElement | null;
   }

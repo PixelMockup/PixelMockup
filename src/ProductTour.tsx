@@ -92,8 +92,10 @@ function useTargetRect(stepIndex: number): DOMRect | null {
       return;
     }
     const update = () => {
-      const el = findTarget(TOUR_STEPS[stepIndex]);
-      setRect(el ? el.getBoundingClientRect() : null);
+      requestAnimationFrame(() => {
+        const el = findTarget(TOUR_STEPS[stepIndex]);
+        setRect(el ? el.getBoundingClientRect() : null);
+      });
     };
     update();
     window.addEventListener('resize', update);
