@@ -87,23 +87,35 @@ function useTargetRect(stepIndex: number): DOMRect | null {
   const [rect, setRect] = useState<DOMRect | null>(null);
 
   useEffect(() => {
-    if (!TOUR_STEPS[stepIndex]) {
+    const step = TOUR_STEPS[stepIndex];
+    if (!step) {
       setRect(null);
       return;
     }
+
+    let rafId: number | null = null;
+    let cancelled = false;
+
     const update = () => {
-      requestAnimationFrame(() => {
+      if (rafId !== null) cancelAnimationFrame(rafId); // avoiding method overriding content
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        if (cancelled) return;
         const el = findTarget(TOUR_STEPS[stepIndex]);
         setRect(el ? el.getBoundingClientRect() : null);
       });
     };
+
     update();
     window.addEventListener('resize', update);
     if (screen.orientation) {
       screen.orientation.addEventListener?.('change', update);
     }
     const id = window.setTimeout(update, 50);
+
     return () => {
+      cancelled = true; // avoid call back that slips the uodate()
+      if (rafId !== null) cancelAnimationFrame(rafId); // avoiding method overriding content
       window.removeEventListener('resize', update);
       if (screen.orientation) {
         screen.orientation.removeEventListener?.('change', update);

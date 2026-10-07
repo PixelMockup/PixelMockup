@@ -27,7 +27,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
     id: 'welcome',
     title: 'Welcome to Pixel Mockup',
     body: 'This is your canvas. You will arrange phone and laptop mockups here to create a beautiful screenshot.',
-    target: '.ms-stage',
+    target: '.ms-stage-start',
     placement: 'center',
   },
   {
