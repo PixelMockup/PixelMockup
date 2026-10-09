@@ -37,7 +37,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
     title: 'Welcome to Pixel Mockup',
     body: 'This is your canvas. You will arrange phone and laptop mockups here to create a beautiful screenshot.',
     target: '.ms-stage-start',
-    targetMobile: '.ms-mobile-devices',
+    targetMobile: '.ms-mobile-start',
     placement: 'center',
     placementMobile: 'center',
   },
@@ -93,8 +93,8 @@ export const TOUR_STEPS: readonly TourStep[] = [
     id: 'website',
     title: 'Show a website',
     body: 'Paste a web address like google.com and tap Apply. The website will appear on every device screen.',
-    target: '.ms-sr-only',
-    targetMobile: 'ms-mobile-devices',
+    target: '#ms-url-command-input',
+    targetMobile: '.ms-mobile-start',
     fallback: '.ms-mobile-dock__btn[aria-label="Website URL"]',
     placement: 'bottom',
     placementMobile: 'top',
@@ -104,7 +104,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
     title: 'Arrange your scene',
     body: 'Drag a device to move it. Use the toolbar to line devices up, change their order, or resize the canvas.',
     target: '.ms-artboard',
-    targetMobile: 'ms-mobile-devices',
+    targetMobile: '.ms-mobile-devices',
     placement: 'center',
     placementMobile: 'center',
   },
@@ -113,7 +113,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
     title: 'Save your mockup',
     body: 'Happy with how it looks? Tap the Download button to save your scene as an image.',
     target: '.ms-btn--download',
-    targetMobile: 'ms-mobile-devices',
+    targetMobile: '.ms-mobile-devices',
     fallback: '.ms-mobile-dock__btn--accent',
     placement: 'bottom',
     placementMobile: 'bottom',
@@ -121,7 +121,9 @@ export const TOUR_STEPS: readonly TourStep[] = [
 ];
 
 export function findTarget(step: TourStep): HTMLElement | null {
-  let el = step.target ? document.querySelector(step.target) as HTMLElement | null : null;
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+  const selector = (isMobile && step.targetMobile) ? step.targetMobile : step.target;
+  let el = selector ? document.querySelector(selector) as HTMLElement | null : null;
 
   // Check if the element is missing or hidden from view
   let isHidden = el && (el as HTMLElement).offsetParent === null;
@@ -131,7 +133,7 @@ export function findTarget(step: TourStep): HTMLElement | null {
     el = document.querySelector(step.fallback) as HTMLElement | null;
   }
 
-  if (el && step.target === '.ms-sr-only') {
+  if (el && selector === '.ms-sr-only') {
     const label = el as HTMLLabelElement;
     if (label.htmlFor) {
       el = document.getElementById(label.htmlFor) as HTMLElement | null;

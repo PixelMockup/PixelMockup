@@ -387,11 +387,14 @@ export default function ProductTour({
 
   const bounds = getViewportBounds(insets);
   const availableHeight = Math.max(0, bounds.bottom - bounds.top);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   const tooltipResult = rect && cardSize
     ? computeTooltipStyle(
-      rect,
-      step.placementMobile || step.placement || 'bottom',
+        rect,
+        isMobile
+          ? (step.placementMobile || step.placement || 'bottom')
+          : (step.placement || step.placementMobile || 'bottom'),
       cardSize.width,
       cardSize.height,
       bounds,

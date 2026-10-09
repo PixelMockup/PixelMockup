@@ -439,7 +439,7 @@ export default function MobileDock({
                 </section>
 
                 <section className="ms-mobile-dock__section">
-                  <div className="ms-mobile-dock__section-body">
+                  <div className="ms-mobile-dock__section-body ms-mobile-start">
                     {onTakeTour ? (
                       <button
                         type="button"
