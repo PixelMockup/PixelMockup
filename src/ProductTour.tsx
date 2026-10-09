@@ -1,5 +1,6 @@
 import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
-import { TOUR_STEPS, findTarget, type Placement } from './tourSteps';
+import { MockupConnector } from './components/MockupConnector';
+import { findTarget, type Placement, getVisibleTourSteps } from './tourSteps';
 
 type ProductTourProps = {
   open: boolean;
@@ -87,21 +88,35 @@ function useTargetRect(stepIndex: number): DOMRect | null {
   const [rect, setRect] = useState<DOMRect | null>(null);
 
   useEffect(() => {
-    if (!TOUR_STEPS[stepIndex]) {
+    const step = getVisibleTourSteps()[stepIndex];
+    if (!step) {
       setRect(null);
       return;
     }
+
+    let rafId: number | null = null;
+    let cancelled = false;
+
     const update = () => {
-      const el = findTarget(TOUR_STEPS[stepIndex]);
-      setRect(el ? el.getBoundingClientRect() : null);
+      if (rafId !== null) cancelAnimationFrame(rafId); // avoiding method overriding content
+      rafId = requestAnimationFrame(() => {
+        rafId = null;
+        if (cancelled) return;
+        const el = findTarget(getVisibleTourSteps()[stepIndex]);
+        setRect(el ? el.getBoundingClientRect() : null);
+      });
     };
+
     update();
     window.addEventListener('resize', update);
     if (screen.orientation) {
       screen.orientation.addEventListener?.('change', update);
     }
     const id = window.setTimeout(update, 50);
+
     return () => {
+      cancelled = true; // avoid call back that slips the uodate()
+      if (rafId !== null) cancelAnimationFrame(rafId); // avoiding method overriding content
       window.removeEventListener('resize', update);
       if (screen.orientation) {
         screen.orientation.removeEventListener?.('change', update);
@@ -155,7 +170,7 @@ function idealTopLeft(
 ): { x: number; y: number } {
   const cx = target.left + target.width / 2;
   const cy = target.top + target.height / 2;
-  const spacing = 12;
+  const spacing = 15;
   switch (placement) {
     case 'top':
       return { x: cx - cardW / 2, y: target.top - spacing - cardH };
@@ -263,8 +278,13 @@ export default function ProductTour({
   const cardSize = useCardSize(cardRef, stepIndex, open);
   const insets = useSafeAreaInsets();
 
-  const step = TOUR_STEPS[stepIndex];
-  const isLast = stepIndex >= TOUR_STEPS.length - 1;
+  const visibleSteps = getVisibleTourSteps();
+  const step = visibleSteps[stepIndex];
+  const isLast = stepIndex >= visibleSteps.length - 1;
+
+  const [isTargetLinked, setIsTargetLinked] = useState(false);
+  const targetElRef = useRef<HTMLElement | null>(null);
+  const originalIdRef = useRef<string>('');
 
   useEffect(() => {
     if (!open) {
@@ -275,6 +295,48 @@ export default function ProductTour({
       cardRef.current?.focus();
     }, 80);
     return () => window.clearTimeout(id);
+  }, [open, stepIndex]);
+
+  // Manages assigning the tempory ID to the target element
+  useEffect(() => {
+    if (!open) {
+      setIsTargetLinked(false);
+      // Cleanup on close
+      if (targetElRef.current && targetElRef.current.id === 'ms-tour-target') {
+        targetElRef.current.id = originalIdRef.current;
+      }
+      targetElRef.current = null;
+      return;
+    }
+
+    // Wait for the DOM to settle before grabbing the new target
+    const raf = requestAnimationFrame(() => {
+      const el = findTarget(visibleSteps[stepIndex]);
+      if (!el) {
+        setIsTargetLinked(false);
+        return;
+      }
+
+      // Clean up previous target if it exists
+      if (targetElRef.current && targetElRef.current.id === 'ms-tour-target') {
+        targetElRef.current.id = originalIdRef.current;
+      }
+
+      // Assign temporary ID to the new target
+      originalIdRef.current = el.id;
+      el.id = 'ms-tour-target';
+      targetElRef.current = el;
+      setIsTargetLinked(true); // Triggers render to mount MockupConnector
+    });
+
+    return () => {
+      cancelAnimationFrame(raf);
+      setIsTargetLinked(false);
+      if (targetElRef.current && targetElRef.current.id === 'ms-tour-target') {
+        targetElRef.current.id = originalIdRef.current;
+      }
+      targetElRef.current = null;
+    };
   }, [open, stepIndex]);
 
   useEffect(() => {
@@ -290,7 +352,7 @@ export default function ProductTour({
 
   useEffect(() => {
     if (!open) return;
-    const el = findTarget(TOUR_STEPS[stepIndex]);
+    const el = findTarget(visibleSteps[stepIndex]);
     if (el) {
       el.scrollIntoView({ block: 'center', inline: 'center', behavior: 'smooth' });
     }
@@ -325,11 +387,14 @@ export default function ProductTour({
 
   const bounds = getViewportBounds(insets);
   const availableHeight = Math.max(0, bounds.bottom - bounds.top);
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
 
   const tooltipResult = rect && cardSize
     ? computeTooltipStyle(
-      rect,
-      step.placement,
+        rect,
+        isMobile
+          ? (step.placementMobile || step.placement || 'bottom')
+          : (step.placement || step.placementMobile || 'bottom'),
       cardSize.width,
       cardSize.height,
       bounds,
@@ -354,6 +419,15 @@ export default function ProductTour({
       aria-modal="true"
       aria-label="Product tour"
     >
+      {/* --- 2. RENDER THE CONNECTOR --- */}
+      {open && isTargetLinked && (
+        <MockupConnector
+          key={stepIndex} // Forces remount on step change to grab the new DOM element
+          startId="ms-tour-tooltip-card"
+          endId="ms-tour-target"
+        />
+      )}
+
       <div className="ms-tour__overlay" />
       <div
         className="ms-tour__spotlight"
@@ -366,6 +440,7 @@ export default function ProductTour({
       />
       <div
         ref={cardRef}
+        id="ms-tour-tooltip-card"
         className={`ms-tour__card ms-tour__card--${tooltipPlacement}`}
         style={cardStyle}
         tabIndex={-1}
@@ -373,17 +448,17 @@ export default function ProductTour({
         aria-live="polite"
         aria-atomic="true"
       >
-        <span className={`ms-tour__arrow ms-tour__arrow--${tooltipPlacement}`} aria-hidden="true" />
+        {/* <span className={`ms-tour__arrow ms-tour__arrow--${tooltipPlacement}`} aria-hidden="true" /> */}
         <div className="ms-tour__content" style={{ overflowY: 'auto' }}>
           <p id={liveId} className="ms-sr-only" aria-live="polite">
-            Step {stepIndex + 1} of {TOUR_STEPS.length}: {step.title}. {step.body}
+            Step {stepIndex + 1} of {visibleSteps.length}: {step.title}. {step.body}
           </p>
           <h2 id={titleId} className="ms-tour__title">
             {step.title}
           </h2>
           <p className="ms-tour__body">{step.body}</p>
           <div className="ms-tour__progress" aria-hidden="true">
-            {TOUR_STEPS.map((_, i) => (
+            {visibleSteps.map((_, i) => (
               <span
                 key={i}
                 className={`ms-tour__dot${i === stepIndex ? ' is-active' : ''}`}
