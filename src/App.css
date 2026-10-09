@@ -33,6 +33,11 @@
   border: 0;
 }
 
+/* —— Leader Line —— */
+.leader-line {
+  z-index: 22000 !important;
+  pointer-events: none;
+}
 /* —— Top command bar —— */
 .ms-top-command {
   display: flex;

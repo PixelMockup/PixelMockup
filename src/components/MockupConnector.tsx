@@ -21,8 +21,8 @@ export const MockupConnector: React.FC<MockupConnectorProps> = ({
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const startElem = document.getElementById(startId);
-    const endElem = document.getElementById(endId);
+    const startElem = document.querySelector(startId) as HTMLElement | null;
+    const endElem = document.querySelector(endId) as HTMLElement | null;
     if (!startElem || !endElem) return;
 
     lineRef.current = new LeaderLine(startElem, endElem, {
