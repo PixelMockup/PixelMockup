@@ -7,6 +7,7 @@ export type TourStepId =
   | 'settings'
   | 'website'
   | 'arrange'
+  | 'remaining'
   | 'download';
 
 export type Placement = 'top' | 'bottom' | 'left' | 'right' | 'center';
@@ -107,6 +108,16 @@ export const TOUR_STEPS: readonly TourStep[] = [
     targetMobile: '.ms-artboard',
     placement: 'center',
     placementMobile: 'center',
+  },
+  {
+    id: 'remaining',
+    title: 'Remaining balance',
+    body: 'View the remaining balance from here.',
+    target: '.ms-presence-pill',
+    targetMobile: '.ms-presence-pill',
+    fallback: '.ms-mobile-dock__btn--accent',
+    placement: 'bottom',
+    placementMobile: 'bottom',
   },
   {
     id: 'download',
