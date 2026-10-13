@@ -196,7 +196,7 @@ export default function TopCommandBar({
             }
             onClick={onDownload}
           >
-            <Download size={16} strokeWidth={1.75} aria-hidden />
+            <Download size={16} strokeWidth={1.75} aria-hidden className="ms-download-icon" />
             <span className="ms-btn__label">
               {downloadLabel(downloading, softEmptyDownload)}
             </span>

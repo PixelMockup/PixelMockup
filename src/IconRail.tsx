@@ -147,7 +147,7 @@ export default function IconRail({
       <div className="ms-rail-menu-wrap" ref={layoutsRef}>
         <button
           type="button"
-          className={`ms-rail-btn${layoutsOpen ? ' is-active' : ''}`}
+          className={`ms-rail-btn${layoutsOpen ? ' is-active' : ''} ms-rail-layouts`}
           aria-expanded={layoutsOpen}
           aria-haspopup="menu"
           aria-label="Layouts"
@@ -187,7 +187,7 @@ export default function IconRail({
       <div className="ms-rail-menu-wrap" ref={moreRef}>
         <button
           type="button"
-          className={`ms-rail-btn${moreOpen ? ' is-active' : ''}`}
+          className={`ms-rail-btn${moreOpen ? ' is-active' : ''} ms-rail-canvas-settings`}
           aria-expanded={moreOpen}
           aria-haspopup="menu"
           aria-label="Canvas Settings"
@@ -337,7 +337,7 @@ export default function IconRail({
       <div className="ms-rail-menu-wrap" ref={settingsRef}>
         <button
           type="button"
-          className={`ms-rail-btn${settingsOpen ? ' is-active' : ''}`}
+          className={`ms-rail-btn${settingsOpen ? ' is-active' : ''} ms-rail-settings`}
           aria-label="Settings"
           aria-expanded={settingsOpen}
           aria-haspopup="menu"

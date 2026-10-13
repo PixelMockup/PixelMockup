@@ -139,7 +139,7 @@ export default function MobileDock({
       <nav ref={navRef} className="ms-mobile-dock" aria-label="Quick actions">
         <button
           type="button"
-          className="ms-mobile-dock__btn"
+          className="ms-mobile-dock__btn ms-mobile-devices"
           aria-label="Devices"
           title="Devices"
           onClick={() => {
@@ -153,7 +153,7 @@ export default function MobileDock({
 
         <button
           type="button"
-          className="ms-mobile-dock__btn"
+          className="ms-mobile-dock__btn ms-mobile-more"
           aria-label="More"
           title="More"
           onClick={() => {
@@ -167,7 +167,7 @@ export default function MobileDock({
 
         <button
           type="button"
-          className="ms-mobile-dock__btn"
+          className="ms-mobile-dock__btn ms-mobile-settings"
           aria-label="Settings"
           title="Settings"
           onClick={() => {
@@ -203,7 +203,7 @@ export default function MobileDock({
             </div>
 
             {openSheet === 'more' ? (
-              <div className="ms-mobile-dock__sections">
+              <div className="ms-mobile-dock__sections ms-mobile-more">
                 <section className="ms-mobile-dock__section">
                   <h3 className="ms-mobile-dock__section-title">
                     <LayoutTemplate size={16} strokeWidth={1.75} aria-hidden /> Layouts
@@ -406,7 +406,7 @@ export default function MobileDock({
                           );
                         }}
                       >
-                        <option value="playwright">Local (Playwright)</option>
+                        {/* <option value="playwright">Local (Playwright)</option> */}
                         <option value="screenshotapi">ScreenshotAPI</option>
                         <option value="microlink">Microlink</option>
                       </select>
@@ -439,7 +439,7 @@ export default function MobileDock({
                 </section>
 
                 <section className="ms-mobile-dock__section">
-                  <div className="ms-mobile-dock__section-body">
+                  <div className="ms-mobile-dock__section-body ms-mobile-start">
                     {onTakeTour ? (
                       <button
                         type="button"

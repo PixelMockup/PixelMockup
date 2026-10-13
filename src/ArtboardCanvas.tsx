@@ -6,7 +6,9 @@ import { clientToLogical } from './clientToLogical';
 import { artboardWidthCss, type SnapGuides, type ViewZoom } from './artboardSnap';
 import CanvasItemView from './CanvasItemView';
 import SnapGuidesOverlay from './SnapGuidesOverlay';
+import { useEffect } from 'react';
 import type { CaptureNotice } from './captureWebsite';
+import { updateMockupConnectors } from './components/MockupConnector';
 
 type ArtboardCanvasProps = {
   canvasRef: React.RefObject<HTMLDivElement | null>;
@@ -88,6 +90,14 @@ export default function ArtboardCanvas({
     if (t.closest('.ms-canvas-item')) return;
     openContextMenu(e, 'artboard');
   };
+
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el) return;
+    const handleMove = () => updateMockupConnectors();
+    el.addEventListener('pointermove', handleMove);
+    return () => el.removeEventListener('pointermove', handleMove);
+  }, [canvasRef]);
 
   const onDragOver = (e: React.DragEvent) => {
     if (
