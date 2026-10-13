@@ -63,8 +63,8 @@ export const TOUR_STEPS: readonly TourStep[] = [
   },
   {
     id: 'layouts',
-    title: 'Add a layouts',
-    body: 'Tap the Devices button to open the library, then tap any phone or laptop to place it on your canvas.',
+    title: 'Add a layout',
+    body: 'Tap the Layouts button to apply a pre-arranged scene to your canvas instantly..',
     target: '.ms-rail-layouts',
     fallback: '.ms-mobile-dock__btn[aria-label="Layouts"]',
     placement: 'right',
@@ -73,7 +73,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
   {
     id: 'canvas_settings',
     title: 'Canvas Settings',
-    body: 'Tap the Devices button to open the library, then tap any phone or laptop to place it on your canvas.',
+    body: 'Adjust the canvas size, aspect ratio, and scale to perfectly fit your mockup needs.',
     target: '.ms-rail-canvas-settings',
     fallback: '.ms-mobile-dock__btn[aria-label="Canvas_Settings"]',
     placement: 'right',
@@ -83,7 +83,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
   {
     id: 'settings',
     title: 'Settings',
-    body: 'Tap the Devices button to open the library, then tap any phone or laptop to place it on your canvas.',
+    body: 'Configure screenshot providers, manage API keys, and adjust app preferences.',
     target: '.ms-rail-settings',
     targetMobile: '.ms-mobile-settings',
     fallback: '.ms-mobile-dock__btn[aria-label="Settings"]',
