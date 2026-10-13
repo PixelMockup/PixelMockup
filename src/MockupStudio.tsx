@@ -101,6 +101,9 @@ import LibraryPanel, {
 } from './LibraryPanel';
 import {
   formatDeviceDisplayName,
+  isPriorityPhone,
+  isPriorityTablet,
+  isPriorityWatch,
   matchesSearchQuery,
   sortBySearchRelevance,
 } from './deviceMeta';
@@ -124,12 +127,12 @@ import {
   type ScreenshotProvider,
 } from './screenshotProviders';
 import { onCreditsUpdate } from './captureWebsite';
+import { isBlocked, getQueueLength, enqueueCapture } from './middleware';
 import MobileDock from './MobileDock';
 import StatusShell from './StatusShell';
 import ArtboardCanvas from './ArtboardCanvas';
 import AppDialog from './AppDialog';
 import { clientToLogical } from './clientToLogical';
-
 const LIBRARY_W_KEY = 'pixelMockup.libraryWidth';
 const LIBRARY_W_LEGACY_KEY = 'mockupStudio.libraryWidth';
 const LIBRARY_W_DEFAULT = 320;
@@ -351,6 +354,13 @@ function persistLibraryWidth(w: number) {
   }
 }
 
+function isPriorityDevice(item: DeviceItem): boolean {
+  if (item.category === 'phones') return isPriorityPhone(item.name);
+  if (item.category === 'tablets') return isPriorityTablet(item.name);
+  if (item.category === 'watches') return isPriorityWatch(item.name);
+  return true; // computers, displays — all priority
+}
+
 function buildFilteredLibrary(
   brandFilteredDevices: DeviceItem[],
   selectedProductValid: string | null,
@@ -368,6 +378,12 @@ function buildFilteredLibrary(
     return matchesSearchQuery(item, searchQuery);
   });
   items = sortBySearchRelevance(items, searchQuery);
+  // Sort so priority devices come first within each category
+  items = [...items].sort((a, b) => {
+    const aPri = isPriorityDevice(a) ? 0 : 1;
+    const bPri = isPriorityDevice(b) ? 0 : 1;
+    return aPri - bPri;
+  });
   if (items.length === 0) return [];
 
   if (searchIsGlobal) {
@@ -418,7 +434,6 @@ export default function MockupStudio({
   const [snapGuides, setSnapGuides] = useState<SnapGuides>(NO_GUIDES);
   const [snapEnabled, setSnapEnabled] = useState(readSnapEnabled);
   const [snapMargin] = useState(readSnapMargin);
-  const [exportMenuOpen, setExportMenuOpen] = useState(false);
   const [layoutsMenuOpen, setLayoutsMenuOpen] = useState(false);
   const [moreToolsOpen, setMoreToolsOpen] = useState(false);
   const [libraryCollapsed, setLibraryCollapsed] = useState(readLibraryCollapsed);
@@ -439,13 +454,31 @@ export default function MockupStudio({
   const [screenshotProvider, setScreenshotProviderState] = useState<ScreenshotProvider>(
     getScreenshotProvider,
   );
+
+  // Queue notice for unvalidated ScreenshotAPI (8/min without key)
+  const [queueNotice, setQueueNotice] = useState<string | null>(null);
+
+  useEffect(() => {
+    setStatusMessage(queueNotice);
+  }, [queueNotice]);
+
+  useEffect(() => {
+    if (screenshotProvider === 'screenshotapi' && isBlocked('screenshotapi', false)) {
+      enqueueCapture('screenshotapi', false);
+      const len = getQueueLength();
+      const pos = len > 0 ? len : 1;
+      setQueueNotice(`ScreenshotAPI queue — #${pos} (~${Math.ceil(pos * 6)}s wait)`);
+    } else {
+      setQueueNotice(null);
+    }
+  }, [screenshotProvider]);
   const [screenshotApiKeyState, setScreenshotApiKeyState] = useState(
     getScreenshotApiKey,
   );
   const [microlinkApiKeyState, setMicrolinkApiKeyState] = useState(
     getMicrolinkApiKey,
   );
-  const { credits, updateCredits } = useCredits();
+  const { credits, updateCredits, updateUsage, refreshCredits } = useCredits();
 
   useEffect(() => {
     onCreditsUpdate(updateCredits);
@@ -521,7 +554,6 @@ export default function MockupStudio({
 
   const canvasRef = useRef<HTMLDivElement>(null);
   const screenFileInputRef = useRef<HTMLInputElement>(null);
-  const downloadMenuRef = useRef<HTMLDivElement>(null);
   const layoutsMenuRef = useRef<HTMLDivElement>(null);
   const moreMenuRef = useRef<HTMLDivElement>(null);
   const resizeDragRef = useRef<{ startX: number; startW: number } | null>(
@@ -562,10 +594,37 @@ export default function MockupStudio({
       tone === 'error' ? 3200 : 1600,
     );
   };
+  // Global error handler that triggers bug report on errors
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      console.error('Global error caught:', event.error || event.message);
+      announce(
+        'Something went wrong. You can report this bug to help us fix it.',
+        'error',
+      );
+      (window as any).__lastErrorInfo = {
+        message: event.message || event.error?.message || 'Unknown error',
+        url: window.location.href,
+        time: new Date().toISOString(),
+      };
+    };
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', (e) => {
+      console.error('Unhandled rejection:', e.reason);
+      announce('Something went wrong. You can report this bug to help us fix it.', 'error');
+    });
+    return () => {
+      window.removeEventListener('error', handleError);
+    };
+  }, []);
 
   const handleScreenshotProviderChange = useCallback((provider: ScreenshotProvider) => {
     setScreenshotProviderState(provider);
     setScreenshotProvider(provider);
+
+    // Refresh credits when the provider changes
+    refreshCredits();
+
     const label =
       provider === 'playwright'
         ? 'Local Playwright'
@@ -573,7 +632,7 @@ export default function MockupStudio({
           ? 'ScreenshotAPI'
           : 'Microlink';
     announce(`${label} selected`);
-  }, []);
+  }, [refreshCredits]);
 
   const openCaptureNotice = useCallback((notice: CaptureNotice, urlKey?: string) => {
     if (urlKey != null) {
@@ -1607,7 +1666,6 @@ export default function MockupStudio({
     setSoftEmptyDownload(false);
     setIsExporting(true);
     setSelectedIds([]);
-    setExportMenuOpen(false);
     try {
       const websiteJobs = websiteUrl
         ? canvasItems
@@ -1864,7 +1922,6 @@ export default function MockupStudio({
       : (canvasItems.find((i) => i.instanceId === primaryId)?.screenZoom ?? 1);
 
   const closeChromeMenus = () => {
-    setExportMenuOpen(false);
     setLayoutsMenuOpen(false);
     setMoreToolsOpen(false);
   };
@@ -1887,19 +1944,9 @@ export default function MockupStudio({
         captureCount={canvasItems.length}
         downloading={isExporting}
         softEmptyDownload={softEmptyDownload}
-        exportFormat={exportFormat}
-        exportResolution={exportResolution}
-        exportTransparentBg={exportBgMode === 'transparent'}
-        onExportFormat={setExportFormat}
-        onExportResolution={setExportResolution}
-        onExportTransparentBg={(v) =>
-          setExportBgMode(v ? 'transparent' : 'color')
-        }
         onDownload={() => void downloadCanvas()}
-        downloadMenuOpen={exportMenuOpen}
-        onDownloadMenuOpenChange={setExportMenuOpen}
-        downloadMenuRef={downloadMenuRef}
         credits={credits}
+        screenshotProvider={getScreenshotProvider()}
         onOpenScreenshotSettings={() => setScreenshotSettingsOpen(true)}
       />
 
@@ -1932,6 +1979,14 @@ export default function MockupStudio({
           onOpenScreenshotSettings={() => setScreenshotSettingsOpen(true)}
           onOpenShortcuts={() => setShortcutsOpen(true)}
           onTakeTour={onTakeTour}
+          exportFormat={exportFormat}
+          exportResolution={exportResolution}
+          exportTransparentBg={exportBgMode === 'transparent'}
+          onExportFormat={setExportFormat}
+          onExportResolution={setExportResolution}
+          onExportTransparentBg={(v) =>
+            setExportBgMode(v ? 'transparent' : 'color')
+          }
           layoutsRef={layoutsMenuRef}
           moreRef={moreMenuRef}
         />
@@ -1955,10 +2010,6 @@ export default function MockupStudio({
           libraryProgress={libraryProgress}
           loadedCategories={loadedCategories}
           loadingDevicePaths={loadingDevicePaths}
-          onClose={() => {
-            setLibraryCollapsed(true);
-            persistLibraryCollapsed(true);
-          }}
           onCategoryChange={(c) => {
             setCategoryFilter(c);
             setSelectedProduct(null);
@@ -2010,8 +2061,6 @@ export default function MockupStudio({
               <EmptyHero
                 busy={placingPath != null}
                 onShowOnDevices={(url) => void showOnDevices(url)}
-                onStartLayoutOnly={() => void applyLayoutPreset('apple-lineup')}
-                onBrowseDevices={openDevicesPicker}
               />
             ) : null}
 
@@ -2148,22 +2197,17 @@ export default function MockupStudio({
       />
 
       <MobileDock
-        hasDevices={canvasItems.length > 0}
-        isExporting={isExporting}
-        websiteUrlDraft={websiteUrlDraft}
-        onWebsiteUrlDraftChange={setWebsiteUrlDraft}
-        onApplyUrl={tryApplyWebsiteUrl}
-        onClearUrl={clearWebsiteUrl}
-        websiteUrlActive={websiteUrl != null}
-        captureBusy={capturingHint != null}
         exportFormat={exportFormat}
         exportResolution={exportResolution}
         exportTransparentBg={exportBgMode === 'transparent'}
         onExportFormat={setExportFormat}
         onExportResolution={setExportResolution}
         onExportTransparentBg={(v) => setExportBgMode(v ? 'transparent' : 'color')}
-        onDownload={() => void downloadCanvas()}
         onDevices={openDevicesPicker}
+        closeDevices={() => {
+          setLibraryCollapsed(true);
+          persistLibraryCollapsed(true);
+        }}
         onApplyPreset={(id) => void applyLayoutPreset(id)}
         artboardFormatId={artboardFormatId}
         onArtboardFormat={changeArtboardFormat}
@@ -2188,7 +2232,6 @@ export default function MockupStudio({
         onScreenshotApiKeyChange={handleScreenshotApiKeyChange}
         microlinkApiKey={microlinkApiKeyState}
         onMicrolinkApiKeyChange={handleMicrolinkApiKeyChange}
-        onOpenShortcuts={() => setShortcutsOpen(true)}
         onTakeTour={onTakeTour}
       />
 
@@ -2204,6 +2247,10 @@ export default function MockupStudio({
         isOpen={screenshotSettingsOpen}
         onClose={() => setScreenshotSettingsOpen(false)}
         onNotify={(msg, tone) => announce(msg, tone)}
+        onProviderChange={handleScreenshotProviderChange}
+        credits={credits}
+        updateUsage={updateUsage}
+        refreshCredits={refreshCredits}
       />
 
       {contextMenu ? (

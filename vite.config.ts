@@ -13,6 +13,7 @@ export default defineConfig({
   server: {
     host,
     ...(Number.isFinite(port) && port > 0 ? { port } : {}),
+    // /api routes handled by vercel dev / Vercel serverless; local testing use `npx vercel dev`
   },
   preview: { host, port: previewPort },
   plugins: [react(), websiteCapturePlugin(), apiPlugin()],

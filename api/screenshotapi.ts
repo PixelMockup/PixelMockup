@@ -1,4 +1,5 @@
 import { lookup } from 'node:dns/promises';
+import { setCreditState } from './creditsStore.js';
 import { isBlockedAddress, normalizeWebsiteUrl } from '../src/websiteUrl.js';
 
 type VercelRequest = {
@@ -98,12 +99,10 @@ export async function handler(req: VercelRequest, res: VercelResponse): Promise<
   }
 
   const apiKey = headerValue(req.headers, 'x-api-key') || process.env.SCREENSHOTAPI_KEY || '';
-  if (!apiKey) {
-    respondJson(res, 400, {
-      error: 'ScreenshotAPI requires an API key. Enter one in the API Keys section.',
-    });
-    return;
-  }
+  const isPublic = !apiKey;
+  const endpoint = isPublic
+    ? 'https://screenshotapi.to/api/v1/public/screenshot'
+    : SCREENSHOTAPI_ENDPOINT;
 
   const params = new URLSearchParams({
     url: normalised,
@@ -118,8 +117,8 @@ export async function handler(req: VercelRequest, res: VercelResponse): Promise<
 
     let upstream: Response;
     try {
-      upstream = await fetch(`${SCREENSHOTAPI_ENDPOINT}?${params}`, {
-        headers: { 'x-api-key': apiKey },
+      upstream = await fetch(`${endpoint}?${params}`, {
+        headers: isPublic ? {} : { 'x-api-key': apiKey },
         signal: controller.signal,
       });
     } finally {
@@ -134,15 +133,31 @@ export async function handler(req: VercelRequest, res: VercelResponse): Promise<
       return;
     }
 
+    // Only true HTTP/2 200 reduces balance; errors or 4xx/5xx do not trigger decrement
+    const { decrement } = await import('../src/middleware.js');
+    if (upstream.ok) {
+      try {
+        decrement('screenshotapi', Boolean(apiKey));
+      } catch {}
+    }
+
     const buffer = Buffer.from(await upstream.arrayBuffer());
     const contentType = upstream.headers.get('content-type') || 'image/png';
     const creditsRemaining = headerNum(upstream.headers, 'x-credits-remaining');
+    const resetHeader = upstream.headers.get('x-ratelimit-reset') || upstream.headers.get('x-rate-limit-reset');
+    const resetAt = resetHeader ? parseInt(resetHeader, 10) : null;
+    // Update server-side credit storage with real-time header value and reset time
+    if (creditsRemaining != null) {
+      setCreditState('screenshotapi', creditsRemaining, 200, resetAt, apiKey);
+    }
 
-    res.writeHead(200, {
+    const respHeaders: Record<string, string> = {
       'Content-Type': contentType,
       'Cache-Control': 'public, max-age=3600',
-      ...(creditsRemaining != null ? { 'x-credits-remaining': String(creditsRemaining) } : {}),
-    });
+    };
+    if (creditsRemaining != null) respHeaders['x-credits-remaining'] = String(creditsRemaining);
+    if (resetAt != null) respHeaders['x-rate-limit-reset'] = String(resetAt);
+    res.writeHead(200, respHeaders);
     res.write(buffer);
     res.end();
   } catch (err) {

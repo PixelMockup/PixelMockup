@@ -1,9 +1,21 @@
+import { Funnel } from 'lucide-react';
 import { useState, type RefObject } from 'react';
 import type { DeviceItem } from './App';
-import { formatDeviceDisplayName } from './deviceMeta';
+import {
+  formatDeviceDisplayName,
+  isPriorityPhone,
+  isPriorityTablet,
+  isPriorityWatch,
+} from './deviceMeta';
+
+function isPriorityDevice(item: DeviceItem): boolean {
+  if (item.category === 'phones') return isPriorityPhone(item.name);
+  if (item.category === 'tablets') return isPriorityTablet(item.name);
+  if (item.category === 'watches') return isPriorityWatch(item.name);
+  return true; // computers, displays — all priority
+}
 
 const PRODUCT_CHIP_PREVIEW = 8;
-const INITIAL_VISIBLE_ITEMS = 50;
 const LIBRARY_DRAG_MIME = 'application/x-mockup-device';
 
 export const LIBRARY_W_MIN = 280;
@@ -30,7 +42,6 @@ interface LibraryPanelProps {
   libraryProgress: number;
   loadedCategories: Set<string>;
   loadingDevicePaths: Set<string>;
-  onClose: () => void;
   onCategoryChange: (category: string) => void;
   onBrandAll: () => void;
   onSelectBrand: (brand: string) => void;
@@ -91,7 +102,6 @@ export default function LibraryPanel({
   libraryProgress,
   loadedCategories,
   loadingDevicePaths,
-  onClose,
   onCategoryChange,
   onBrandAll,
   onSelectBrand,
@@ -122,14 +132,6 @@ export default function LibraryPanel({
     >
       <div className="ms-library-header">
         <h2 className="ms-library-title">Devices</h2>
-        <button
-          type="button"
-          className="ms-btn ms-btn--ghost ms-library-close"
-          onClick={onClose}
-          aria-label="Close devices"
-        >
-          Close
-        </button>
       </div>
 
       {libraryLoading && (
@@ -148,15 +150,26 @@ export default function LibraryPanel({
       )}
 
       <div className="ms-filter-block ms-filter-block--search">
-        <input
-          ref={searchInputRef}
-          className="ms-search"
-          type="search"
-          placeholder="Search devices (e.g. iphone)…"
-          value={searchQuery}
-          onChange={(e) => onSearchChange(e.target.value)}
-          aria-label="Search devices"
-        />
+        <div className="ms-search-wrap">
+          <input
+            ref={searchInputRef}
+            className="ms-search"
+            type="search"
+            placeholder="Search devices (e.g. iphone)…"
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            aria-label="Search devices"
+          />
+          <button
+            type="button"
+            className="ms-search-funnel"
+            aria-expanded={filtersOpen}
+            aria-label="Toggle filters"
+            onClick={() => setFiltersOpen((v) => !v)}
+          >
+            <Funnel size={16} strokeWidth={1.5} />
+          </button>
+        </div>
       </div>
 
       {categories.length > 0 && (
@@ -190,27 +203,6 @@ export default function LibraryPanel({
           )}
         </div>
       )}
-
-      <div className="ms-filter-block">
-        <button
-          type="button"
-          className="ms-btn ms-btn--ghost ms-filters-toggle"
-          aria-expanded={filtersOpen}
-          onClick={() => setFiltersOpen((v) => !v)}
-        >
-          {filtersOpen ? 'Hide filters' : 'Filters'}
-          {hasActiveFilters && !filtersOpen ? ' · on' : ''}
-        </button>
-        {hasActiveFilters && (
-          <button
-            type="button"
-            className="ms-btn ms-btn--ghost"
-            onClick={onClearFilters}
-          >
-            Clear
-          </button>
-        )}
-      </div>
 
       {filtersOpen && (
         <>
@@ -283,7 +275,13 @@ export default function LibraryPanel({
           </div>
         ) : filteredLibrary.length === 0 ? (
           <div className="ms-empty-block">
-            <p className="ms-empty">No devices match.</p>
+            <p className="ms-empty">
+              {searchQuery.trim()
+                ? `No devices match "${searchQuery.trim()}"`
+                : selectedBrand
+                  ? `${selectedBrand} is not available`
+                  : 'No devices match.'}
+            </p>
             {hasActiveFilters && (
               <button
                 type="button"
@@ -296,19 +294,56 @@ export default function LibraryPanel({
           </div>
         ) : (
           filteredLibrary.map(({ category, items }) => {
+            const priorityItems = items.filter(isPriorityDevice);
+            const tapToLoadItems = items.filter((item) => !isPriorityDevice(item));
             const expanded =
-              searchIsGlobal ||
-              expandedSections.has(category) ||
-              items.length <= INITIAL_VISIBLE_ITEMS;
-            const visibleItems = expanded
-              ? items
-              : items.slice(0, INITIAL_VISIBLE_ITEMS);
-            const hiddenCount = items.length - visibleItems.length;
+              searchIsGlobal || expandedSections.has(category);
+            const visibleTapToLoad = expanded ? tapToLoadItems : [];
+            const hiddenCount = tapToLoadItems.length;
             return (
               <div key={category} className="ms-device-section">
                 <h3 className="ms-device-section-title">{category}</h3>
                 <div className="ms-device-grid">
-                  {visibleItems.map((item) => {
+                  {priorityItems.map((item) => {
+                    const placing = placingPath === item.path;
+                    const loadingAsset = loadingDevicePaths.has(item.path);
+                    const label = formatDeviceDisplayName(item.name);
+                    return (
+                      <button
+                        key={item.path}
+                        type="button"
+                        className={`ms-device-tile${loadingAsset ? ' ms-device-tile--loading' : ''}`}
+                        disabled={placingPath != null || loadingAsset}
+                        aria-busy={placing || loadingAsset}
+                        aria-label={label}
+                        title={`${label} — click or drag onto the canvas`}
+                        draggable={placingPath == null}
+                        onDragStart={(e) => {
+                          e.dataTransfer.setData(LIBRARY_DRAG_MIME, item.path);
+                          e.dataTransfer.setData('text/plain', item.path);
+                          e.dataTransfer.effectAllowed = 'copy';
+                        }}
+                        onClick={() => {
+                          onAddDevice(item);
+                        }}
+                      >
+                        <img
+                          src={item.src}
+                          alt=""
+                          draggable={false}
+                          loading="lazy"
+                          decoding="async"
+                        />
+                        {loadingAsset ? (
+                          <span className="ms-device-tile__spinner" aria-hidden />
+                        ) : null}
+                        <span>
+                          {placing ? 'Placing…' : loadingAsset ? 'Loading…' : label}
+                        </span>
+                      </button>
+                    );
+                  })}
+                  {visibleTapToLoad.map((item) => {
                     const placing = placingPath === item.path;
                     const unloaded = !item.src;
                     const loadingAsset = loadingDevicePaths.has(item.path);
@@ -349,8 +384,8 @@ export default function LibraryPanel({
                         }}
                       >
                         {unloaded ? (
-                          <span className="ms-device-tile__placeholder" aria-hidden>
-                            <span className="ms-device-tile__placeholder-icon" />
+                          <span className="ms-device-tile__placeholder">
+                            <span className="ms-device-tile__placeholder-text">Tap to load</span>
                           </span>
                         ) : (
                           <img
@@ -369,9 +404,7 @@ export default function LibraryPanel({
                             ? 'Placing…'
                             : loadingAsset
                               ? 'Loading…'
-                              : unloaded
-                                ? 'Tap to load'
-                                : label}
+                              : label}
                         </span>
                       </button>
                     );

@@ -185,7 +185,7 @@ describe('api/microlink-capture', () => {
 
     expect(res.statusCode).toBe(200);
     const [firstUrl, firstInit] = fetchMock.mock.calls[0] as [string, RequestInit];
-    expect(firstUrl).toMatch(/^https:\/\/pro\.microlink\.io\?/);
+    expect(firstUrl).toMatch(/^https:\/\/api\.microlink\.io\?/);
     expect(firstInit?.headers).toEqual({ 'x-api-key': 'ml-key-123' });
   });
 

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import ProductTour from '../../src/ProductTour';
+import { getVisibleTourSteps } from '../../src/tourSteps';
 
 const MARGIN = 12;
 
@@ -39,10 +40,11 @@ describe('ProductTour', () => {
   });
 
   it('renders the first step when open', () => {
+    const visibleSteps = getVisibleTourSteps();
     render(<ProductTour open onClose={vi.fn()} onComplete={vi.fn()} />);
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     expect(screen.getByText('Welcome to Pixel Mockup')).toBeInTheDocument();
-    expect(getStepText('Step 1 of 5')).toBeInTheDocument();
+    expect(getStepText(`Step 1 of ${visibleSteps.length}`)).toBeInTheDocument();
   });
 
   it('does not render when closed', () => {
@@ -53,10 +55,11 @@ describe('ProductTour', () => {
   });
 
   it('advances to the next step', () => {
+    const visibleSteps = getVisibleTourSteps();
     render(<ProductTour open onClose={vi.fn()} onComplete={vi.fn()} />);
     fireEvent.click(screen.getByRole('button', { name: /Next/i }));
     expect(screen.getByText('Add a device')).toBeInTheDocument();
-    expect(getStepText('Step 2 of 5')).toBeInTheDocument();
+    expect(getStepText(`Step 2 of ${visibleSteps.length}`)).toBeInTheDocument();
   });
 
   it('goes back to the previous step', () => {
@@ -68,12 +71,13 @@ describe('ProductTour', () => {
 
   it('completes the tour on Finish', () => {
     const onComplete = vi.fn();
+    const visibleSteps = getVisibleTourSteps();
     render(<ProductTour open onClose={onComplete} onComplete={onComplete} />);
-    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Next/i }));
-    expect(screen.getByText('Save your mockup')).toBeInTheDocument();
+
+    for (let i = 1; i < visibleSteps.length; i++) {
+      fireEvent.click(screen.getByRole('button', { name: /Next/i }));
+    }
+    expect(screen.getByText(visibleSteps[visibleSteps.length - 1].title)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Finish/i }));
     expect(onComplete).toHaveBeenCalledTimes(1);
   });

@@ -3,11 +3,10 @@ export function formatResetTime(resetAt: number): string {
   const diff = resetAt - now;
   const resetDate = new Date(resetAt * 1000);
 
-  // Explicitly format in UTC
+  // Explicitly format to user's Local browser timezone
   const timeStr = resetDate.toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
-    timeZone: "UTC",
     hour12: false
   });
 
@@ -19,4 +18,10 @@ export function formatResetTime(resetAt: number): string {
 
   if (hours > 0) return `Resets in ${hours}h ${minutes}m (UTC: ${timeStr})`;
   return `Resets in ${minutes}m (${timeStr})`;
+}
+
+// If reset time has passed
+export function hasResetTimePassed(resetAt: number): boolean {
+  const now = Math.floor(Date.now() / 1000);
+  return resetAt - now <= 0;
 }
