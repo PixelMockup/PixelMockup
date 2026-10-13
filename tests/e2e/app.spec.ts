@@ -242,10 +242,22 @@ test.describe('First-time tour', () => {
     await expect(tour.getByRole('heading', { name: /Add a device/i })).toBeVisible();
 
     await tour.getByRole('button', { name: /Next/i }).click();
+    await expect(tour.getByRole('heading', { name: /Add a layout/i })).toBeVisible();
+
+    await tour.getByRole('button', { name: /Next/i }).click();
+    await expect(tour.getByRole('heading', { name: /Canvas Settings/i })).toBeVisible();
+
+    await tour.getByRole('button', { name: /Next/i }).click();
+    await expect(tour.getByRole('heading', { name: /Settings/i })).toBeVisible();
+
+    await tour.getByRole('button', { name: /Next/i }).click();
     await expect(tour.getByRole('heading', { name: /Show a website/i })).toBeVisible();
 
     await tour.getByRole('button', { name: /Next/i }).click();
     await expect(tour.getByRole('heading', { name: /Arrange your scene/i })).toBeVisible();
+
+    await tour.getByRole('button', { name: /Next/i }).click();
+    await expect(tour.getByRole('heading', { name: /Remaining balance/i })).toBeVisible();
 
     await tour.getByRole('button', { name: /Next/i }).click();
     await expect(tour.getByRole('heading', { name: /Save your mockup/i })).toBeVisible();

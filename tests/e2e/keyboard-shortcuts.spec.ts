@@ -24,14 +24,20 @@ async function placePhoneAndCount(page: Page) {
 
 /** Click the first device to select it (placement must already have happened). */
 async function selectFirstDevice(page: Page) {
+  await page.getByRole('button', { name: /Close/i }).click({ timeout: 2000, force: true }).catch(() => { }); // Dismiss any open tour step
   // Dismiss any open modal/dialog before interacting with the canvas
-  await page.keyboard.press('Escape');
+
+  try {
+    await page.locator('.ms-modal-backdrop').filter({ has: page.locator('.ms-dialog-label') }).first().locator('button:has-text("Close")').click().catch(() => { });
+  } catch { /* Ignore if no modal is present*/ }
+
+  await page.keyboard.press('Escape'); // Deselect any selected device first
 
   // Optional: add a small wait to ensure the modal animation finishes
   await page.waitForTimeout(300);
 
-  await page.locator('.ms-canvas-item').first().click();
-  await expect(page.locator('.ms-canvas-item--selected').first()).toBeVisible();
+  await page.locator('.ms-canvas-item').first().click({ timeout: 5000 });
+  await expect(page.locator('.ms-canvas-item--selected').first()).toBeVisible({ timeout: 5000 });
 }
 
 test.describe('keyboard shortcuts', () => {
