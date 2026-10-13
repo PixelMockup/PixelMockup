@@ -28,10 +28,10 @@ async function selectFirstDevice(page: Page) {
   // Dismiss any open modal/dialog before interacting with the canvas
 
   try {
-    await page.locator('.ms-modal-backdrop').filter({ has: page.locator('.ms-dialog-label') }).first().locator('button:has-text("Close")').click().catch(() => { });
+    await page.locator('.ms-modal-backdrop button').click({ timeout: 2000, force: true }).catch(() => { });
   } catch { /* Ignore if no modal is present*/ }
 
-  await page.keyboard.press('Escape'); // Deselect any selected device first
+  await page.keyboard.press('Escape', { timeout: 2000 }); // Deselect any selected device first
 
   // Optional: add a small wait to ensure the modal animation finishes
   await page.waitForTimeout(300);
