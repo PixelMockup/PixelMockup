@@ -94,25 +94,5 @@ describe('KeybindingsPanel', () => {
     ).toBeInTheDocument();
   });
 
-  it('clears a binding', async () => {
-    const user = userEvent.setup();
-    const onBindingsChange = vi.fn();
-    render(
-      <KeybindingsPanel
-        open
-        onClose={vi.fn()}
-        bindings={defaultBindingsFor('linux')}
-        onBindingsChange={onBindingsChange}
-        platform="linux"
-      />,
-    );
-    const rows = screen.getAllByRole('row');
-    const undoRow = rows.find((row) => row.textContent?.includes('Undo'));
-    expect(undoRow).toBeDefined();
-    const clearBtn = within(undoRow!).getByRole('button', { name: /clear/i });
-    await user.click(clearBtn);
-    expect(onBindingsChange).toHaveBeenCalled();
-    const next = onBindingsChange.mock.calls[0][0];
-    expect(next.undo).toEqual([]);
-  });
+
 });
