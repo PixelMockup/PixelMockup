@@ -3,7 +3,6 @@ import {
   ACTION_LABELS,
   ACTION_ORDER,
   assignChord,
-  clearChords,
   detectPlatform,
   eventToChord,
   formatBindingsForDisplay,
@@ -34,10 +33,14 @@ export default function KeybindingsPanel({
   const [listeningAction, setListeningAction] = useState<KeyActionId | null>(
     null,
   );
+  const [conflictWarning, setConflictWarning] = useState<string | null>(null);
   const dialogRef = useRef<HTMLDialogElement>(null);
 
   useEffect(() => {
-    if (!open) setListeningAction(null);
+    if (!open) {
+      setListeningAction(null);
+      setConflictWarning(null);
+    }
   }, [open]);
 
   useEffect(() => {
@@ -66,9 +69,19 @@ export default function KeybindingsPanel({
         return;
       }
 
+      const conflictId = ACTION_ORDER.find(
+        (id) => id !== listeningAction && (bindings[id] ?? []).includes(chord),
+      );
+      if (conflictId) {
+        setConflictWarning(ACTION_LABELS[conflictId]);
+        setListeningAction(null);
+        return;
+      }
+
       const next = assignChord(bindings, listeningAction, chord);
       onBindingsChange(next);
       saveBindingsForPlatform(platform, next);
+      setConflictWarning(null);
       setListeningAction(null);
     };
 
@@ -94,24 +107,18 @@ export default function KeybindingsPanel({
     setListeningAction(null);
   };
 
-  const handleClear = (id: KeyActionId) => {
-    const next = clearChords(bindings, id);
-    onBindingsChange(next);
-    saveBindingsForPlatform(platform, next);
-  };
-
   return (
     <dialog
       ref={dialogRef}
       className="ms-modal-backdrop"
       aria-modal="true"
-      aria-label="Keyboard shortcuts"
+      aria-label="Keyboard Shortcuts"
       onClose={onClose} // fires for escape
     >
       <div className="ms-modal">
         <div className="ms-modal-header">
           <div style={{ flex: 1 }}>
-            <h2>Keyboard shortcuts</h2>
+            <h2>Keyboard Shortcuts</h2>
             <p className="ms-modal-sub">
               Shortcuts for {platformDisplayName(platform)}. Remaps apply only
               on this OS.
@@ -120,18 +127,16 @@ export default function KeybindingsPanel({
           <button type="button" className="ms-btn" onClick={handleReset}>
             Reset
           </button>
-          <button type="button" className="ms-btn ms-btn--ghost" onClick={onClose}>
-            Close
-          </button>
+          <button type="button" className="ms-btn ms-btn--ghost" onClick={onClose}>X</button>
         </div>
 
         <div className="ms-modal-body">
-          {listeningAction && (
-            <p className="ms-listen-hint">
-              Press a new key combination for{' '}
-              <strong>{ACTION_LABELS[listeningAction]}</strong>… (Esc to cancel)
+          {conflictWarning ? (
+            <p className="ms-listen-hint" style={{ color: '#c00', fontWeight: 600 }}>
+              Already bound to <strong>{conflictWarning}</strong> — choose a different shortcut.
             </p>
-          )}
+          ) : null}
+
 
           <table className="ms-keys-table">
             <thead>
@@ -157,20 +162,20 @@ export default function KeybindingsPanel({
                     <button
                       type="button"
                       className="ms-btn"
-                      onClick={() => setListeningAction(id)}
+                      onClick={() => {
+                        if (listeningAction === id) {
+                          setListeningAction(null);
+                          setConflictWarning(null);
+                        } else {
+                          setConflictWarning(null);
+                          setListeningAction(id);
+                        }
+                      }}
                       disabled={
                         listeningAction !== null && listeningAction !== id
                       }
                     >
-                      Rebind
-                    </button>{' '}
-                    <button
-                      type="button"
-                      className="ms-btn ms-btn--ghost"
-                      onClick={() => handleClear(id)}
-                      disabled={(bindings[id] ?? []).length === 0}
-                    >
-                      Clear
+                      {listeningAction === id ? 'X' : 'Edit'}
                     </button>
                   </td>
                 </tr>
