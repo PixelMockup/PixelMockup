@@ -102,7 +102,7 @@ const SHARED_DEFAULTS: BindingMap = {
   duplicate: ['mod+d'],
   undo: ['mod+z'],
   download: ['mod+shift+s'],
-  openShortcuts: ['mod+/', 'shift+/', '?'],
+  openShortcuts: ['mod+/'],
   selectAll: ['mod+a'],
   copy: ['mod+c'],
   paste: ['mod+v'],
@@ -341,9 +341,7 @@ export function assignChord(
   for (const id of ACTION_ORDER) {
     next[id] = (next[id] ?? []).filter((c) => c !== chord);
   }
-  if (!next[actionId].includes(chord)) {
-    next[actionId] = [...next[actionId], chord];
-  }
+  next[actionId] = [chord];
   return next;
 }
 

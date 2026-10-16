@@ -984,6 +984,16 @@
   flex-shrink: 0;
 }
 
+.ms-library-header .ms-library-close {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .ms-library-header .ms-library-close {
+    display: inline-flex;
+  }
+}
+
 .ms-library-title {
   font-size: 1rem;
   font-weight: 600;

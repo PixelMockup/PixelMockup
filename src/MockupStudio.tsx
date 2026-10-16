@@ -1880,6 +1880,11 @@ export default function MockupStudio({
     queueMicrotask(() => searchInputRef.current?.focus());
   };
 
+  const closeDevicesPicker = () => {
+    setLibraryCollapsed(true);
+    persistLibraryCollapsed(true);
+  };
+
   const openContextMenu = (
     e: React.MouseEvent | React.PointerEvent,
     target: ContextMenuState['target'],
@@ -2039,6 +2044,7 @@ export default function MockupStudio({
           onResizePointerDown={onResizePointerDown}
           onResizePointerMove={onResizePointerMove}
           onResizePointerUp={onResizePointerUp}
+          onClose={closeDevicesPicker}
         />
 
         <div className="ms-workspace">
@@ -2204,10 +2210,7 @@ export default function MockupStudio({
         onExportResolution={setExportResolution}
         onExportTransparentBg={(v) => setExportBgMode(v ? 'transparent' : 'color')}
         onDevices={openDevicesPicker}
-        closeDevices={() => {
-          setLibraryCollapsed(true);
-          persistLibraryCollapsed(true);
-        }}
+        closeDevices={closeDevicesPicker}
         onApplyPreset={(id) => void applyLayoutPreset(id)}
         artboardFormatId={artboardFormatId}
         onArtboardFormat={changeArtboardFormat}

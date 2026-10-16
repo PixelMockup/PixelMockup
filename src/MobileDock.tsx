@@ -22,6 +22,7 @@ import {
   type SizeScaleId,
 } from './deviceScale';
 import type { ScreenshotProvider } from './screenshotProviders';
+import { X } from 'lucide-react';
 
 const EXPORT_FORMATS = new Set<ExportFormat>(['png', 'jpg']);
 const EXPORT_RESOLUTIONS = new Set<ExportResolution>([
@@ -198,7 +199,7 @@ export default function MobileDock({
                 onClick={close}
                 aria-label="Close"
               >
-                Close
+                <X size={20} strokeWidth={1.5} />
               </button>
             </div>
 
