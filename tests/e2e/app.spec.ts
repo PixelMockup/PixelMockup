@@ -86,7 +86,7 @@ test.describe('Pixel Mockup app shell', () => {
       .click();
     await page.getByRole('menuitem', { name: /^Keyboard shortcuts$/i }).click();
     await expect(page.getByRole('dialog', { name: /Keyboard shortcuts/i })).toBeVisible();
-    await page.getByRole('button', { name: /^Close$/i }).click();
+    await page.getByRole('button', { name: /^X$/i }).click();
     await expect(page.getByRole('dialog', { name: /Keyboard shortcuts/i })).toHaveCount(0);
   });
 
@@ -109,7 +109,7 @@ test.describe('Pixel Mockup app shell', () => {
       .getByRole('button', { name: /^Settings$/i })
       .click();
     await page.getByRole('menuitem', { name: /^Keyboard shortcuts$/i }).click();
-    const closeBtn = page.getByRole('button', { name: /^Close$/i });
+    const closeBtn = page.getByRole('button', { name: /^X$/i });
     await expect(closeBtn).toBeVisible();
     const box = await closeBtn.boundingBox();
     expect(box).not.toBeNull();
@@ -132,7 +132,7 @@ test.describe('Pixel Mockup app shell', () => {
 
     // Resize to mobile while the dialog is open.
     await page.setViewportSize({ width: 390, height: 844 });
-    const closeBtn = page.getByRole('button', { name: /^Close$/i });
+    const closeBtn = page.getByRole('button', { name: /^X$/i });
     await expect(closeBtn).toBeVisible();
     const box = await closeBtn.boundingBox();
     expect(box).not.toBeNull();

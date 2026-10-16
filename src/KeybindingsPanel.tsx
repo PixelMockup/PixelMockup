@@ -14,6 +14,7 @@ import {
   type KeyActionId,
   type PlatformId,
 } from './keybindings';
+import { RotateCcw, SquarePen, X } from 'lucide-react';
 
 interface KeybindingsPanelProps {
   open: boolean;
@@ -124,10 +125,12 @@ export default function KeybindingsPanel({
               on this OS.
             </p>
           </div>
-          <button type="button" className="ms-btn" onClick={handleReset}>
-            Reset
+          <button type="button" className="ms-icon-btn" onClick={handleReset}>
+            <RotateCcw size={20} strokeWidth={1.5} />
           </button>
-          <button type="button" className="ms-btn ms-btn--ghost" onClick={onClose}>X</button>
+          <button type="button" className="ms-btn ms-btn--ghost" onClick={onClose}>
+            <X size={20} strokeWidth={1.5} />
+          </button>
         </div>
 
         <div className="ms-modal-body">
@@ -161,7 +164,7 @@ export default function KeybindingsPanel({
                   <td style={{ whiteSpace: 'nowrap' }}>
                     <button
                       type="button"
-                      className="ms-btn"
+                      className="ms-icon-btn"
                       onClick={() => {
                         if (listeningAction === id) {
                           setListeningAction(null);
@@ -175,7 +178,7 @@ export default function KeybindingsPanel({
                         listeningAction !== null && listeningAction !== id
                       }
                     >
-                      {listeningAction === id ? 'X' : 'Edit'}
+                      {listeningAction === id ? <X size={20} strokeWidth={1.5} /> : <SquarePen size={20} strokeWidth={1.5} />}
                     </button>
                   </td>
                 </tr>

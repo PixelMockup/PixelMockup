@@ -53,7 +53,7 @@ describe('KeybindingsPanel', () => {
         platform="linux"
       />,
     );
-    const closeButtons = screen.getAllByRole('button', { name: /close/i });
+    const closeButtons = screen.getAllByRole('button', { name: /^X$/i });
     await user.click(closeButtons[0]);
     expect(onClose).toHaveBeenCalled();
   });
@@ -90,7 +90,7 @@ describe('KeybindingsPanel', () => {
       />,
     );
     expect(
-      screen.getByRole('button', { name: /^Close$/i }),
+      screen.getByRole('button', { name: /^X$/i }),
     ).toBeInTheDocument();
   });
 

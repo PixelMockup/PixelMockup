@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { X } from 'lucide-react';
 import type { Provider, SaStatus } from '../types/screenshot';
 import { formatResetTime, hasResetTimePassed } from '../utils/formatResetTime';
 import {
@@ -210,11 +211,11 @@ export default function ScreenshotSettings({
           </div>
           <button
             type="button"
-            className="ms-icon-btn"
+            className="ms-btn ms-btn--ghost"
             aria-label="Close"
             onClick={onClose}
           >
-            &times;
+            <X size={20} strokeWidth={1.5} />
           </button>
         </div>
 
