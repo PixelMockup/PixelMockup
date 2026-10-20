@@ -7,6 +7,7 @@ import {
   isPriorityTablet,
   isPriorityWatch,
 } from './deviceMeta';
+import { X } from 'lucide-react';
 
 function isPriorityDevice(item: DeviceItem): boolean {
   if (item.category === 'phones') return isPriorityPhone(item.name);
@@ -54,6 +55,7 @@ interface LibraryPanelProps {
   onResizePointerDown: (e: React.PointerEvent) => void;
   onResizePointerMove: (e: React.PointerEvent) => void;
   onResizePointerUp: () => void;
+  onClose?: () => void;
 }
 
 function FilterChip({
@@ -114,6 +116,7 @@ export default function LibraryPanel({
   onResizePointerDown,
   onResizePointerMove,
   onResizePointerUp,
+  onClose,
 }: Readonly<LibraryPanelProps>) {
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set());
@@ -132,6 +135,15 @@ export default function LibraryPanel({
     >
       <div className="ms-library-header">
         <h2 className="ms-library-title">Devices</h2>
+        <button
+          type="button"
+          className="ms-btn ms-btn--ghost ms-library-close"
+          style={{ marginLeft: 'auto' }}
+          onClick={() => onClose?.()}
+          aria-label="Close"
+        >
+          <X size={20} strokeWidth={1.5} />
+        </button>
       </div>
 
       {libraryLoading && (
@@ -268,8 +280,8 @@ export default function LibraryPanel({
 
       <div className="ms-library-results">
         {filteredLibrary.length === 0 &&
-        effectiveCategory != null &&
-        !loadedCategories.has(effectiveCategory) ? (
+          effectiveCategory != null &&
+          !loadedCategories.has(effectiveCategory) ? (
           <div className="ms-empty-block">
             <p className="ms-empty">Loading {effectiveCategory}…</p>
           </div>
