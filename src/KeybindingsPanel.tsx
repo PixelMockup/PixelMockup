@@ -125,10 +125,10 @@ export default function KeybindingsPanel({
               on this OS.
             </p>
           </div>
-          <button type="button" className="ms-icon-btn" onClick={handleReset}>
+          <button type="button" aria-label="Reset" className="ms-icon-btn" onClick={handleReset}>
             <RotateCcw size={20} strokeWidth={1.5} />
           </button>
-          <button type="button" className="ms-btn ms-btn--ghost" onClick={onClose}>
+          <button type="button" className="ms-btn ms-btn--ghost" aria-label="X" onClick={onClose}>
             <X size={20} strokeWidth={1.5} />
           </button>
         </div>
