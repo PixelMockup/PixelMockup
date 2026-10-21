@@ -6,6 +6,7 @@ import { clientToLogical } from './clientToLogical';
 import { artboardWidthCss, type SnapGuides, type ViewZoom } from './artboardSnap';
 import CanvasItemView from './CanvasItemView';
 import SnapGuidesOverlay from './SnapGuidesOverlay';
+import panzoom from 'panzoom';
 import { useEffect } from 'react';
 import type { CaptureNotice } from './captureWebsite';
 import { updateMockupConnectors } from './components/MockupConnector';
@@ -39,6 +40,7 @@ type ArtboardCanvasProps = {
   onWebsiteCaptureFailed?: (notice: CaptureNotice) => void;
   onWebsiteCaptureDetails?: (notice: CaptureNotice) => void;
   onSwitchToIframePreview?: () => void;
+  onViewZoom?: (v: ViewZoom) => void;
 };
 
 export default function ArtboardCanvas({
@@ -62,6 +64,7 @@ export default function ArtboardCanvas({
   findDeviceByPath,
   onWebsiteCaptureFailed,
   onWebsiteCaptureDetails,
+  onViewZoom,
 }: ArtboardCanvasProps) {
   const onClickBackground = (e: React.MouseEvent) => {
     if (e.target === canvasRef.current) {
@@ -98,6 +101,38 @@ export default function ArtboardCanvas({
     el.addEventListener('pointermove', handleMove);
     return () => el.removeEventListener('pointermove', handleMove);
   }, [canvasRef]);
+
+  useEffect(() => {
+    const el = canvasRef.current;
+    if (!el || !onViewZoom) return;
+    const instance = panzoom(el, {
+      maxScale: 1.75,
+      minScale: 0.5,
+      step: 0.25,
+      disablePan: false,
+      disableZoom: false,
+      cursor: 'grab',
+      contain: 'outside',
+      // Capture pointer events on child elements by setting on wrapper via CSS
+    });
+    const originalStyle = el.getAttribute('style') || '';
+    el.style.touchAction = 'none';
+    const onWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const delta = e.deltaY > 0 ? -0.25 : 0.25;
+        const next = Math.max(0.5, Math.min(1.75, (Number(viewZoom) || 1) + delta));
+        const nearest = [0.5, 1, 1.25, 1.5, 1.75].reduce((a, b) => (Math.abs(a - next) < Math.abs(b - next) ? a : b));
+        onViewZoom(nearest as ViewZoom);
+      }
+    };
+    el.addEventListener('wheel', onWheel, { passive: false, capture: true });
+    return () => {
+      instance.dispose();
+      el.removeEventListener('wheel', onWheel);
+      el.setAttribute('style', originalStyle);
+    };
+  }, [canvasRef, viewZoom, onViewZoom]);
 
   const onDragOver = (e: React.DragEvent) => {
     if (

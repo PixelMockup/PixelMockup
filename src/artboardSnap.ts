@@ -224,9 +224,9 @@ export function persistSnapEnabled(enabled: boolean) {
   }
 }
 
-export type ViewZoom = 'fit' | 0.5 | 1 | 1.5;
+export type ViewZoom = 'fit' | 'fill' | 0.5 | 1 | 1.5;
 
-export const VIEW_ZOOM_STEPS: ViewZoom[] = ['fit', 0.5, 1, 1.5];
+export const VIEW_ZOOM_STEPS: ViewZoom[] = ['fit', 'fill', 0.5, 1, 1.5];
 
 export function artboardWidthCss(
   zoom: ViewZoom,

@@ -83,7 +83,6 @@ import IconRail from './IconRail';
 import ProgressLoader from './ProgressLoader';
 import SelectionInspector from './SelectionInspector';
 import TopCommandBar from './TopCommandBar';
-import ViewZoomBar from './ViewZoom';
 import MobileToolbar from './MobileToolbar';
 import {
   getLayoutPreset,
@@ -1957,6 +1956,8 @@ export default function MockupStudio({
 
       <div className="ms-body">
         <IconRail
+          viewZoom={viewZoom}
+          onViewZoom={setViewZoom}
           devicesOpen={devicesDrawerOpen}
           onToggleDevices={toggleLibraryCollapsed}
           layoutsOpen={layoutsMenuOpen}
@@ -2070,7 +2071,7 @@ export default function MockupStudio({
               />
             ) : null}
 
-            <ViewZoomBar viewZoom={viewZoom} onViewZoom={setViewZoom} />
+            {/* <ViewZoomBar viewZoom={viewZoom} onViewZoom={setViewZoom} /> */}
 
             <div className="ms-stage__canvas">
               <ArtboardCanvas

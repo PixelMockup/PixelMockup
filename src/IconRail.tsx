@@ -14,6 +14,8 @@ import {
   Sun,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import ZoomSlider from './ZoomSlider';
+import type { ViewZoom } from './artboardSnap';
 import { LAYOUT_PRESETS } from './layoutPresets';
 import {
   ARTBOARD_FORMATS,
@@ -49,6 +51,8 @@ type Props = {
   onOpenScreenshotSettings: () => void;
   onOpenShortcuts: () => void;
   onTakeTour?: () => void;
+  viewZoom: ViewZoom;
+  onViewZoom: (v: ViewZoom) => void;
   exportFormat: ExportFormat;
   exportResolution: ExportResolution;
   exportTransparentBg: boolean;
@@ -84,6 +88,8 @@ export default function IconRail({
   onOpenScreenshotSettings,
   onOpenShortcuts,
   onTakeTour,
+  viewZoom,
+  onViewZoom,
   exportFormat,
   exportResolution,
   exportTransparentBg,
@@ -125,6 +131,7 @@ export default function IconRail({
   };
 
   return (
+    // Devices Icon
     <nav className="ms-icon-rail" aria-label="Studio tools">
       <button
         type="button"
@@ -144,6 +151,7 @@ export default function IconRail({
         <Smartphone size={20} strokeWidth={1.5} aria-hidden />
       </button>
 
+      {/* Layouts Icon */}
       <div className="ms-rail-menu-wrap" ref={layoutsRef}>
         <button
           type="button"
@@ -184,6 +192,7 @@ export default function IconRail({
         ) : null}
       </div>
 
+      {/* Canvas Settings Icon */}
       <div className="ms-rail-menu-wrap" ref={moreRef}>
         <button
           type="button"
@@ -333,7 +342,14 @@ export default function IconRail({
       </div>
 
       <div className="ms-icon-rail__spacer" />
+      {/* Zoom bar */}
 
+      <ZoomSlider viewZoom={viewZoom} onViewZoom={onViewZoom} />
+      {/* zoom bar code starts here and it should stay here 
+      for the mobile and desktop view/UI..... this commet can be removed since this is 
+      ment to guide the LLM where i want the code to be written */}
+
+      {/* Settings icon */}
       <div className="ms-rail-menu-wrap" ref={settingsRef}>
         <button
           type="button"
