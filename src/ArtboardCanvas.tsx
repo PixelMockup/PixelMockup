@@ -7,7 +7,7 @@ import { artboardWidthCss, type SnapGuides, type ViewZoom } from './artboardSnap
 import CanvasItemView from './CanvasItemView';
 import SnapGuidesOverlay from './SnapGuidesOverlay';
 import panzoom from 'panzoom';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import type { CaptureNotice } from './captureWebsite';
 import { updateMockupConnectors } from './components/MockupConnector';
 
@@ -66,6 +66,9 @@ export default function ArtboardCanvas({
   onWebsiteCaptureDetails,
   onViewZoom,
 }: ArtboardCanvasProps) {
+  const pzRef = useRef<any>(null);
+  const viewZoomRef = useRef(viewZoom);
+  viewZoomRef.current = viewZoom;
   const onClickBackground = (e: React.MouseEvent) => {
     if (e.target === canvasRef.current) {
       setSelectedIds([]);
@@ -105,6 +108,7 @@ export default function ArtboardCanvas({
   useEffect(() => {
     const el = canvasRef.current;
     if (!el || !onViewZoom) return;
+    el.style.touchAction = 'none';
     const instance = panzoom(el, {
       maxScale: 1.75,
       minScale: 0.5,
@@ -113,26 +117,27 @@ export default function ArtboardCanvas({
       disableZoom: false,
       cursor: 'grab',
       contain: 'outside',
+      touchAction: 'none',
       // Capture pointer events on child elements by setting on wrapper via CSS
     });
+    pzRef.current = instance;
     const originalStyle = el.getAttribute('style') || '';
     el.style.touchAction = 'none';
     const onWheel = (e: WheelEvent) => {
-      if (e.ctrlKey || e.metaKey) {
-        e.preventDefault();
-        const delta = e.deltaY > 0 ? -0.25 : 0.25;
-        const next = Math.max(0.5, Math.min(1.75, (Number(viewZoom) || 1) + delta));
-        const nearest = [0.5, 1, 1.25, 1.5, 1.75].reduce((a, b) => (Math.abs(a - next) < Math.abs(b - next) ? a : b));
-        onViewZoom(nearest as ViewZoom);
-      }
+      e.preventDefault();
+      const delta = e.deltaY > 0 ? -0.25 : 0.25;
+      const current = Number(viewZoomRef.current || 1);
+      const next = Math.max(0.25, Math.min(1.75, current + delta));
+      const nearest = [0.5, 1, 1.25, 1.5, 1.75].reduce((a, b) => (Math.abs(a - next) < Math.abs(b - next) ? a : b));
+      if (onViewZoom) onViewZoom(nearest as ViewZoom);
     };
     el.addEventListener('wheel', onWheel, { passive: false, capture: true });
     return () => {
       instance.dispose();
-      el.removeEventListener('wheel', onWheel);
+        el.removeEventListener('wheel', onWheel);
       el.setAttribute('style', originalStyle);
     };
-  }, [canvasRef, viewZoom, onViewZoom]);
+  }, [canvasRef, onViewZoom]);
 
   const onDragOver = (e: React.DragEvent) => {
     if (
@@ -162,7 +167,40 @@ export default function ArtboardCanvas({
     void handleAddAndSelect(device, { x: logical.x, y: logical.y });
   };
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
+      if (e.key === '+' || e.key === '=') {
+        e.preventDefault();
+        if (onViewZoom) onViewZoom(Math.min(4, (Number(viewZoom) || 1) + 0.25) as ViewZoom);
+      } else if (e.key === '-' || e.key === '_') {
+        e.preventDefault();
+        if (onViewZoom) onViewZoom(Math.max(0.25, (Number(viewZoom) || 1) - 0.25) as ViewZoom);
+      } else if (e.key === '0' && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        if (onViewZoom) onViewZoom('fit');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [viewZoom, onViewZoom]);
+
   return (
+    <div
+      className="ms-stage__canvas"
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        touchAction: 'none',
+        userSelect: 'none',
+        overscrollBehavior: 'none',
+      }}
+    >
     <>
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/no-noninteractive-tabindex */}
       {/* NOSONAR - custom interactive application canvas with explicit keyboard handling (Escape) */}
@@ -178,6 +216,8 @@ export default function ArtboardCanvas({
             height: artboardH,
           }),
           aspectRatio: `${artboardW} / ${artboardH}`,
+          transformOrigin: '0 0',
+          position: 'relative',
         }}
         onClick={onClickBackground}
         onKeyDown={onKeyDown}
@@ -221,5 +261,6 @@ export default function ArtboardCanvas({
       ))}
     </div>
   </>
+  </div>
   );
 }

@@ -7,17 +7,20 @@ type Props = {
 };
 
 export default function ZoomSlider({ viewZoom, onViewZoom }: Readonly<Props>) {
-  const pct = Math.round((Number(viewZoom) || 1) * 100);
+  const pct = Math.min(
+    175,
+    Math.max(50, Math.round((Number(viewZoom) || 1) * 100)),
+  );
   const [menuOpen, setMenuOpen] = useState(false);
 
   const presets: { label: string; value: ViewZoom | number }[] = [
+    { label: '175%', value: 1.75 },
+    { label: '150%', value: 1.5 },
+    { label: '125%', value: 1.25 },
+    { label: '100%', value: 1 },
+    { label: '50%', value: 0.5 },
     { label: 'Fit', value: 'fit' as ViewZoom },
     { label: 'Fill', value: 'fill' as ViewZoom },
-    { label: '50%', value: 0.5 },
-    { label: '100%', value: 1 },
-    { label: '125%', value: 1.25 },
-    { label: '150%', value: 1.5 },
-    { label: '175%', value: 1.75 },
   ];
 
   return (
@@ -26,30 +29,37 @@ export default function ZoomSlider({ viewZoom, onViewZoom }: Readonly<Props>) {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: 50,
-        padding: '50px 8px',
+        gap: 15,
+        padding: '30px 8px',
       }}
       aria-label="Zoom slider"
     >
       <input
-        type="range"
-        min={25}
-        max={175}
-        step={25}
-        value={pct}
-        onChange={(e) => {
-          const val = Number.parseInt(e.target.value, 10) / 100;
-          if (val <= 0) onViewZoom('fit' as ViewZoom);
-          else onViewZoom(val as ViewZoom);
-        }}
-        aria-label="Zoom percentage"
-        style={{
-          width: 100,
-          transform: 'rotate(-90deg)',
-          transformOrigin: 'center',
-        }}
-      />
-      <div style={{ position: 'relative', display: 'inline-block' }}>
+          type="range"
+          min={50}
+          max={175}
+          step={25}
+          value={pct}
+          onChange={(e) => {
+            const val = Number.parseInt(e.target.value, 10) / 100;
+            if (val <= 0 || Number.isNaN(val)) onViewZoom('fit' as ViewZoom);
+            else onViewZoom(val as ViewZoom);
+          }}
+          aria-label="Zoom percentage"
+          style={{
+            writingMode: 'vertical-lr',
+            direction: 'ltr',
+            appearance: 'slider-vertical',
+            WebkitAppearance: 'slider-vertical',
+            width: 8,
+            height: 100,
+            padding: 0,
+            margin: 0,
+            cursor: 'pointer',
+            accentColor: 'var(--ms-accent-color, #007bff)',
+          }}
+        />
+            <div style={{ position: 'relative', display: 'inline-block' }}>
         <button
           type="button"
           onClick={() => setMenuOpen((v) => !v)}
@@ -68,7 +78,7 @@ export default function ZoomSlider({ viewZoom, onViewZoom }: Readonly<Props>) {
             cursor: 'pointer',
           }}
         >
-          {pct}%
+          {viewZoom === 'fit' ? 'Fit' : viewZoom === 'fill' ? 'Fill' : `${pct}%`}
         </button>
         {menuOpen && (
           <div
