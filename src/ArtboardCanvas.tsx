@@ -4,6 +4,7 @@ import { useLongPress } from './useLongPress';
 import { LIBRARY_DRAG_MIME } from './LibraryPanel';
 import { clientToLogical } from './clientToLogical';
 import { artboardWidthCss, clampViewZoom, type SnapGuides, type ViewZoom } from './artboardSnap';
+import { calculateSmoothZoom, clampScale, type ZoomTransform } from './smoothZoomUtils';
 import CanvasItemView from './CanvasItemView';
 import SnapGuidesOverlay from './SnapGuidesOverlay';
 import { useEffect, useRef } from 'react';
@@ -135,10 +136,8 @@ export default function ArtboardCanvas({
       e.preventDefault();
       e.stopPropagation();
       const current = getNumericZoom();
-      const direction = e.deltaY < 0 ? 1 : -1;
-      const next = clampViewZoom(
-        Math.round((current * (1 + direction * ZOOM_STEP)) / ZOOM_STEP) * ZOOM_STEP
-      );
+      const factor = e.deltaY < 0 ? 1.1 : 0.9;
+      const next = clampViewZoom(current * factor);
       onViewZoomRef.current?.(next);
     };
 

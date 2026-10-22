@@ -2444,3 +2444,8 @@
   background: #b4b6ba;
 }
 .ms-artboard { touch-action: none !important; }
+.ms-stage__canvas > .ms-artboard {
+  will-change: transform;
+  transition: transform 0.15s ease-out, width 0.15s ease-out;
+  touch-action: none !important;
+}
