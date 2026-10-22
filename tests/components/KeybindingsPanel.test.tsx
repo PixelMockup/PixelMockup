@@ -53,7 +53,7 @@ describe('KeybindingsPanel', () => {
         platform="linux"
       />,
     );
-    const closeButtons = screen.getAllByRole('button', { name: /close/i });
+    const closeButtons = screen.getAllByRole('button', { name: /^X$/i });
     await user.click(closeButtons[0]);
     expect(onClose).toHaveBeenCalled();
   });
@@ -90,29 +90,9 @@ describe('KeybindingsPanel', () => {
       />,
     );
     expect(
-      screen.getByRole('button', { name: /^Close$/i }),
+      screen.getByRole('button', { name: /^X$/i }),
     ).toBeInTheDocument();
   });
 
-  it('clears a binding', async () => {
-    const user = userEvent.setup();
-    const onBindingsChange = vi.fn();
-    render(
-      <KeybindingsPanel
-        open
-        onClose={vi.fn()}
-        bindings={defaultBindingsFor('linux')}
-        onBindingsChange={onBindingsChange}
-        platform="linux"
-      />,
-    );
-    const rows = screen.getAllByRole('row');
-    const undoRow = rows.find((row) => row.textContent?.includes('Undo'));
-    expect(undoRow).toBeDefined();
-    const clearBtn = within(undoRow!).getByRole('button', { name: /clear/i });
-    await user.click(clearBtn);
-    expect(onBindingsChange).toHaveBeenCalled();
-    const next = onBindingsChange.mock.calls[0][0];
-    expect(next.undo).toEqual([]);
-  });
+
 });

@@ -66,6 +66,8 @@ describe('api/validate', () => {
   });
 
   it('screenshotapi: returns no_key when key is missing', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, headers: new Headers({ 'x-ratelimit-remaining': '7', 'x-ratelimit-limit': '8' }), json: async () => ({ valid: true, tier: 'free' }) });
+    vi.stubGlobal('fetch', fetchMock);
     const res = createRes();
     await handler(makeReq({ provider: 'screenshotapi' }), res as never);
     expect((res.body as { valid: boolean; reason: string }).valid).toBe(false);

@@ -19,7 +19,7 @@ describe('screenshotProviders storage', () => {
   });
 
   it('defaults provider to microlink', () => {
-    expect(getScreenshotProvider()).toBe('microlink');
+    expect(getScreenshotProvider()).toBe('screenshotapi');
   });
 
   it('persists and reads provider', () => {

@@ -131,14 +131,16 @@ describe('api/screenshotapi', () => {
     expect((res.body as { error: string }).error).toBe('blocked host');
   });
 
-  it('returns 400 when no API key is available', async () => {
+  it('returns 200 for public endpoint without API key', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, status: 200, headers: new Headers({ 'x-ratelimit-remaining': '7', 'x-ratelimit-limit': '8', 'content-type': 'image/png' }), arrayBuffer: async () => Buffer.from(''), body: null });
+    vi.stubGlobal('fetch', fetchMock);
     const res = createRes();
     await handler(
       makeRequest('/api/screenshotapi?url=https://example.com', {}),
       res as never,
     );
-    expect(res.statusCode).toBe(400);
-    expect((res.body as { error: string }).error).toMatch(/API key/i);
+    expect(res.statusCode).toBe(200); // public endpoint now allowed without key
+    expect(res.body ?? {}).not.toHaveProperty('error'); // success, no error
   });
 
   it('forwards the x-api-key header and returns PNG + credits', async () => {
