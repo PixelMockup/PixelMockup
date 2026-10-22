@@ -225,7 +225,7 @@ export function persistSnapEnabled(enabled: boolean) {
 }
 
 export type ViewZoom = 'fit' | 'fill' | number;
-export const MIN_VIEW_ZOOM = 0.25;
+export const MIN_VIEW_ZOOM = 0.5;
 export const MAX_VIEW_ZOOM = 4;
 
 // export const VIEW_ZOOM_STEPS: ViewZoom[] = ['fit', 'fill', MIN_VIEW_ZOOM, 1, MAX_VIEW_ZOOM];

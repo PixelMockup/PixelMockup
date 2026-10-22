@@ -38,7 +38,7 @@ export default function ZoomSlider({ viewZoom, onViewZoom }: Readonly<Props>) {
         type="range"
         min={50}
         max={175}
-        step={25}
+        step={1}
         value={pct}
         onChange={(e) => {
           const val = Number.parseInt(e.target.value, 10) / 100;

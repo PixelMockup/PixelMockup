@@ -41,6 +41,7 @@ type ArtboardCanvasProps = {
   onWebsiteCaptureDetails?: (notice: CaptureNotice) => void;
   onSwitchToIframePreview?: () => void;
   onViewZoom?: (v: ViewZoom) => void;
+  onLiveScale?: (s: number) => void;
 };
 
 export default function ArtboardCanvas({
@@ -65,6 +66,7 @@ export default function ArtboardCanvas({
   onWebsiteCaptureFailed,
   onWebsiteCaptureDetails,
   onViewZoom,
+  onLiveScale,
 }: ArtboardCanvasProps) {
   const viewZoomRef = useRef(viewZoom);
   const onViewZoomRef = useRef(onViewZoom);
@@ -130,7 +132,7 @@ export default function ArtboardCanvas({
     };
 
     // Desktop: Ctrl + wheel → zoom canvas
-    const ZOOM_STEP = 0.25;
+    const ZOOM_STEP = 0.;
     const onWheel = (e: WheelEvent) => {
       if (!e.ctrlKey && !e.metaKey) return;
       e.preventDefault();
@@ -139,6 +141,7 @@ export default function ArtboardCanvas({
       const factor = e.deltaY < 0 ? 1.1 : 0.9;
       const next = clampViewZoom(current * factor);
       onViewZoomRef.current?.(next);
+      if (onLiveScale) onLiveScale(next);
     };
 
     // Mobile: 2 finger pinch → zoom canvas
@@ -166,6 +169,7 @@ export default function ArtboardCanvas({
           Math.round((pinchRef.current.initialZoom * scale) / ZOOM_STEP) * ZOOM_STEP
         );
         onViewZoomRef.current?.(next);
+        if (onLiveScale) onLiveScale(next);
       }
     };
 

@@ -9,7 +9,7 @@ export interface ZoomTransform {
 }
 
 const DEFAULT_SENSITIVITY = 0.0015;
-const MIN_SCALE = 0.25;
+const MIN_SCALE = 0.5;
 const MAX_SCALE = 4.0;
 
 export function calculateSmoothZoom(
