@@ -2099,6 +2099,7 @@ export default function MockupStudio({
                 onWebsiteCaptureDetails={(notice) => {
                   setCaptureNotice(notice);
                 }}
+                onViewZoom={setViewZoom}
               />
             </div>
 

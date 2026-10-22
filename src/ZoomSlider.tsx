@@ -35,31 +35,32 @@ export default function ZoomSlider({ viewZoom, onViewZoom }: Readonly<Props>) {
       aria-label="Zoom slider"
     >
       <input
-          type="range"
-          min={50}
-          max={175}
-          step={25}
-          value={pct}
-          onChange={(e) => {
-            const val = Number.parseInt(e.target.value, 10) / 100;
-            if (val <= 0 || Number.isNaN(val)) onViewZoom('fit' as ViewZoom);
-            else onViewZoom(val as ViewZoom);
-          }}
-          aria-label="Zoom percentage"
-          style={{
-            writingMode: 'vertical-lr',
-            direction: 'ltr',
-            appearance: 'slider-vertical',
-            WebkitAppearance: 'slider-vertical',
-            width: 8,
-            height: 100,
-            padding: 0,
-            margin: 0,
-            cursor: 'pointer',
-            accentColor: 'var(--ms-accent-color, #007bff)',
-          }}
-        />
-            <div style={{ position: 'relative', display: 'inline-block' }}>
+        type="range"
+        min={50}
+        max={175}
+        step={25}
+        value={pct}
+        onChange={(e) => {
+          const val = Number.parseInt(e.target.value, 10) / 100;
+          if (val <= 0 || Number.isNaN(val)) onViewZoom('fit' as ViewZoom);
+          else onViewZoom(val as ViewZoom);
+        }}
+        aria-label="Zoom percentage"
+        style={{
+          writingMode: 'vertical-lr',
+          direction: 'ltr',
+          appearance: 'slider-vertical',
+          WebkitAppearance: 'slider-vertical',
+          transform: 'rotate(-180deg)',
+          width: 8,
+          height: 100,
+          padding: 0,
+          margin: 0,
+          cursor: 'pointer',
+          accentColor: 'var(--ms-accent-color, #007bff)',
+        }}
+      />
+      <div style={{ position: 'relative', display: 'inline-block' }}>
         <button
           type="button"
           onClick={() => setMenuOpen((v) => !v)}

@@ -2443,3 +2443,4 @@
   border-radius: 0 0 6px 6px;
   background: #b4b6ba;
 }
+.ms-artboard { touch-action: none !important; }
