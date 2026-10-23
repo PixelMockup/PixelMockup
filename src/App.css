@@ -2443,3 +2443,91 @@
   border-radius: 0 0 6px 6px;
   background: #b4b6ba;
 }
+.ms-artboard { touch-action: none !important; }
+.ms-stage__canvas > .ms-artboard {
+  will-change: transform;
+  transition: transform 0.15s ease-out, width 0.15s ease-out;
+  touch-action: none !important;
+}
+
+/* Mobile zoom pill (docked stage) */
+.ms-zoom-pill-wrapper {
+  position: absolute;
+  left: 50%;
+  bottom: calc(var(--ms-dock-h, 56px) + env(safe-area-inset-bottom, 0px) + 12px);
+  transform: translateX(-50%);
+  z-index: 30;
+  pointer-events: none;
+  display: none;
+}
+
+@media (max-width: 767px) {
+  .ms-zoom-pill-wrapper {
+    display: block;
+  }
+}
+
+.ms-zoom-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.12), 0 1px 3px rgba(0,0,0,0.08);
+  border: 1px solid rgba(0,0,0,0.06);
+  pointer-events: auto;
+}
+
+.ms-zoom-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  border: none;
+  background: rgba(0,0,0,0.04);
+  color: inherit;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s ease;
+}
+
+.ms-zoom-pill-btn:hover {
+  background: rgba(0,0,0,0.1);
+}
+
+.ms-zoom-pill-btn.is-active {
+  background: rgba(0, 140, 180, 0.12);
+  color: #008c80;
+}
+
+.ms-zoom-pill-btn--fit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  font-weight: 500;
+  min-height: 36px;
+}
+
+.ms-zoom-pill-divider {
+  width: 1px;
+  height: 18px;
+  background: rgba(0,0,0,0.15);
+  margin: 0 2px;
+}
+
+.ms-zoom-pill-label {
+  font-variant-numeric: tabular-nums;
+  font-size: 0.82rem;
+  font-weight: 600;
+  min-width: 48px;
+  text-align: center;
+  user-select: none;
+}
+.ms-mobile-toolbar:empty { display: none; }
