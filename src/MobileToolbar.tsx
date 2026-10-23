@@ -1,6 +1,4 @@
 import SelectionInspector from './SelectionInspector';
-import ViewZoom from './ViewZoom';
-import type { ViewZoom as ViewZoomType } from './artboardSnap';
 
 type MobileToolbarProps = {
   selectionOpen: boolean;
@@ -14,8 +12,6 @@ type MobileToolbarProps = {
   onBringForward: () => void;
   onSendBackward: () => void;
   canReorder: boolean;
-  viewZoom: ViewZoomType;
-  onViewZoom: (zoom: ViewZoomType) => void;
 };
 
 export default function MobileToolbar({
@@ -30,9 +26,9 @@ export default function MobileToolbar({
   onBringForward,
   onSendBackward,
   canReorder,
-  viewZoom,
-  onViewZoom,
 }: Readonly<MobileToolbarProps>) {
+  if (!selectionOpen) return null;
+
   return (
     <div className="ms-mobile-toolbar">
       <SelectionInspector
@@ -48,7 +44,6 @@ export default function MobileToolbar({
         onSendBackward={onSendBackward}
         canReorder={canReorder}
       />
-      <ViewZoom viewZoom={viewZoom} onViewZoom={onViewZoom} />
     </div>
   );
 }

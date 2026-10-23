@@ -224,9 +224,16 @@ export function persistSnapEnabled(enabled: boolean) {
   }
 }
 
-export type ViewZoom = 'fit' | 0.5 | 1 | 1.5;
+export type ViewZoom = 'fit' | 'fill' | number;
+export const MIN_VIEW_ZOOM = 0.5;
+export const MAX_VIEW_ZOOM = 4;
 
-export const VIEW_ZOOM_STEPS: ViewZoom[] = ['fit', 0.5, 1, 1.5];
+// export const VIEW_ZOOM_STEPS: ViewZoom[] = ['fit', 'fill', MIN_VIEW_ZOOM, 1, MAX_VIEW_ZOOM];
+
+export function clampViewZoom(z: number): number {
+  if (!Number.isFinite(z)) return 1;
+  return Math.min(MAX_VIEW_ZOOM, Math.max(MIN_VIEW_ZOOM, z));
+}
 
 export function artboardWidthCss(
   zoom: ViewZoom,
@@ -239,21 +246,20 @@ export function artboardWidthCss(
   // Explicit zoom levels represent true artboard pixels (a 1280px artboard at
   // 100% must be 1280px wide). No width or height cap, otherwise every zoom
   // step collapses to the viewport bounding box and becomes indistinguishable.
-  return `${board.width * zoom}px`;
+  return `${board.width * (zoom as number)}px`;
 }
 
 export function viewZoomLabel(zoom: ViewZoom): string {
   if (zoom === 'fit') return 'Fit';
-  if (zoom === 0.5) return '50%';
-  if (zoom === 1) return '100%';
-  return '150%';
+  if (zoom === 'fill') return 'Fill';
+  return `${Math.round(zoom * 100)}%`;
 }
 
 export function stepViewZoom(current: ViewZoom, dir: -1 | 1): ViewZoom {
-  const i = VIEW_ZOOM_STEPS.indexOf(current);
-  const next = Math.min(
-    VIEW_ZOOM_STEPS.length - 1,
-    Math.max(0, Math.max(0, i) + dir),
-  );
-  return VIEW_ZOOM_STEPS[next];
+  if (current === 'fit') return dir === 1 ? MIN_VIEW_ZOOM : 'fit';
+
+  if (typeof current !== 'number') return dir == 1 ? MAX_VIEW_ZOOM : MIN_VIEW_ZOOM;
+
+  const step = 0.25;
+  return clampViewZoom(Math.round((current + dir * step) / step) * step);
 }

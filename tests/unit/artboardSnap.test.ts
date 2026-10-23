@@ -152,7 +152,7 @@ describe('artboardSnap', () => {
 
     it('steps within bounds', () => {
       expect(stepViewZoom('fit', 1)).toBe(0.5);
-      expect(stepViewZoom(1.5, 1)).toBe(1.5);
+      expect(stepViewZoom(1.5, 1)).toBe(1.75);
       expect(stepViewZoom('fit', -1)).toBe('fit');
     });
 

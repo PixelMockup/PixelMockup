@@ -83,7 +83,6 @@ import IconRail from './IconRail';
 import ProgressLoader from './ProgressLoader';
 import SelectionInspector from './SelectionInspector';
 import TopCommandBar from './TopCommandBar';
-import ViewZoomBar from './ViewZoom';
 import MobileToolbar from './MobileToolbar';
 import {
   getLayoutPreset,
@@ -133,6 +132,7 @@ import StatusShell from './StatusShell';
 import ArtboardCanvas from './ArtboardCanvas';
 import AppDialog from './AppDialog';
 import { clientToLogical } from './clientToLogical';
+import ZoomPill from './ZoomPill';
 const LIBRARY_W_KEY = 'pixelMockup.libraryWidth';
 const LIBRARY_W_LEGACY_KEY = 'mockupStudio.libraryWidth';
 const LIBRARY_W_DEFAULT = 320;
@@ -431,6 +431,7 @@ export default function MockupStudio({
   const [screenshotSettingsOpen, setScreenshotSettingsOpen] = useState(false);
   const [libraryWidth, setLibraryWidth] = useState(readLibraryWidth);
   const [viewZoom, setViewZoom] = useState<ViewZoom>('fit');
+  const [liveScale, setLiveScale] = useState(1);
   const [snapGuides, setSnapGuides] = useState<SnapGuides>(NO_GUIDES);
   const [snapEnabled, setSnapEnabled] = useState(readSnapEnabled);
   const [snapMargin] = useState(readSnapMargin);
@@ -1957,6 +1958,8 @@ export default function MockupStudio({
 
       <div className="ms-body">
         <IconRail
+          viewZoom={viewZoom}
+          onViewZoom={setViewZoom}
           devicesOpen={devicesDrawerOpen}
           onToggleDevices={toggleLibraryCollapsed}
           layoutsOpen={layoutsMenuOpen}
@@ -2070,7 +2073,7 @@ export default function MockupStudio({
               />
             ) : null}
 
-            <ViewZoomBar viewZoom={viewZoom} onViewZoom={setViewZoom} />
+            {/* <ViewZoomBar viewZoom={viewZoom} onViewZoom={setViewZoom} /> */}
 
             <div className="ms-stage__canvas">
               <ArtboardCanvas
@@ -2098,8 +2101,15 @@ export default function MockupStudio({
                 onWebsiteCaptureDetails={(notice) => {
                   setCaptureNotice(notice);
                 }}
+                onViewZoom={setViewZoom}
+                onLiveScale={setLiveScale}
               />
             </div>
+            <ZoomPill
+              viewZoom={viewZoom}
+              liveScale={liveScale}
+              onViewZoom={setViewZoom}
+            />
 
             {placingPath != null ? (
               <div className="ms-progress-loader-stage">
@@ -2127,8 +2137,6 @@ export default function MockupStudio({
             onBringForward={bringForward}
             onSendBackward={pushBackward}
             canReorder={canBringForward || canPushBackward}
-            viewZoom={viewZoom}
-            onViewZoom={setViewZoom}
           />
         </div>
       </div>
