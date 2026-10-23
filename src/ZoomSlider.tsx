@@ -57,7 +57,7 @@ export default function ZoomSlider({ viewZoom, onViewZoom }: Readonly<Props>) {
           padding: 0,
           margin: 0,
           cursor: 'pointer',
-          accentColor: 'var(--ms-accent-color, #007bff)',
+          accentColor: 'var(--ms-accent)',
         }}
       />
       <div style={{ position: 'relative', display: 'inline-block' }}>
@@ -73,10 +73,12 @@ export default function ZoomSlider({ viewZoom, onViewZoom }: Readonly<Props>) {
             textAlign: 'center',
             fontVariantNumeric: 'tabular-nums',
             background: 'transparent',
-            border: '1px solid rgba(0,0,0,0.15)',
+            border: '1px solid var(--ms-border)',
             borderRadius: 6,
             padding: '2px 6px',
             cursor: 'pointer',
+            color: 'var(--ms-ink)',
+            fontFamily: 'inherit',
           }}
         >
           {viewZoom === 'fit' ? 'Fit' : viewZoom === 'fill' ? 'Fill' : `${pct}%`}
@@ -90,14 +92,15 @@ export default function ZoomSlider({ viewZoom, onViewZoom }: Readonly<Props>) {
               bottom: 'calc(100% + 4px)',
               left: '150%',
               transform: 'translateX(-30%)',
-              background: '#1a1a2e',
-              color: '#fff',
+              background: 'var(--ms-surface-raised)',
+              color: 'var(--ms-ink)',
               borderRadius: 8,
               padding: '4px 0',
               minWidth: 90,
               fontSize: '0.8rem',
               zIndex: 100,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+              boxShadow: 'var(--ms-shadow)',
+              border: '1px solid var(--ms-border)',
               display: 'flex',
               flexDirection: 'column',
               gap: 2,
@@ -105,6 +108,7 @@ export default function ZoomSlider({ viewZoom, onViewZoom }: Readonly<Props>) {
           >
             {presets.map((p) => (
               <button
+                className="ms-zoom-menu-btn"
                 key={p.label}
                 type="button"
                 role="menuitem"
@@ -115,11 +119,13 @@ export default function ZoomSlider({ viewZoom, onViewZoom }: Readonly<Props>) {
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: '#fff',
+                  color: 'var(--ms-ink)',
                   padding: '6px 12px',
                   textAlign: 'left',
                   cursor: 'pointer',
                   fontSize: '0.8rem',
+                  fontFamily: 'inherit',
+                  transition: 'background 0.15s ease',
                 }}
               >
                 {p.label}
