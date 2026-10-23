@@ -256,7 +256,10 @@ export function viewZoomLabel(zoom: ViewZoom): string {
 }
 
 export function stepViewZoom(current: ViewZoom, dir: -1 | 1): ViewZoom {
-  if (typeof current !== 'number') return dir == 1 ? 1 : 0.5;
+  if (current === 'fit') return dir === 1 ? MIN_VIEW_ZOOM : 'fit';
+
+  if (typeof current !== 'number') return dir == 1 ? MAX_VIEW_ZOOM : MIN_VIEW_ZOOM;
+
   const step = 0.25;
   return clampViewZoom(Math.round((current + dir * step) / step) * step);
 }

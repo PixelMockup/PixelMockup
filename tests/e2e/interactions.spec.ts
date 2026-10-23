@@ -62,6 +62,13 @@ test.describe('library and canvas interactions', () => {
   test('zoom controls respond', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
+
+    // Dismiss the mobile warning dialog before clicking zoom buttons
+    const continueBtn = page.getByRole('button', { name: 'Continue anyway' });
+    if (await continueBtn.isVisible()) {
+      await continueBtn.click();
+    }
+
     await page.getByRole('button', { name: 'Zoom in' }).click();
     await page.getByRole('button', { name: 'Zoom out' }).click();
     await expect(page.locator('#root')).toBeVisible();
