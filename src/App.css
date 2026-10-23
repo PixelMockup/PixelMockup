@@ -2530,3 +2530,4 @@
   text-align: center;
   user-select: none;
 }
+.ms-mobile-toolbar:empty { display: none; }

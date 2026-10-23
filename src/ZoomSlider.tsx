@@ -49,7 +49,7 @@ export default function ZoomSlider({ viewZoom, onViewZoom }: Readonly<Props>) {
         style={{
           writingMode: 'vertical-lr',
           direction: 'ltr',
-          appearance: 'slider-vertical',
+          appearance: 'slider-vertical' as any,
           WebkitAppearance: 'slider-vertical',
           transform: 'rotate(-180deg)',
           width: 8,

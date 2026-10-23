@@ -4,7 +4,6 @@ import { useLongPress } from './useLongPress';
 import { LIBRARY_DRAG_MIME } from './LibraryPanel';
 import { clientToLogical } from './clientToLogical';
 import { artboardWidthCss, clampViewZoom, type SnapGuides, type ViewZoom } from './artboardSnap';
-import { calculateSmoothZoom, clampScale, type ZoomTransform } from './smoothZoomUtils';
 import CanvasItemView from './CanvasItemView';
 import SnapGuidesOverlay from './SnapGuidesOverlay';
 import { useEffect, useRef } from 'react';

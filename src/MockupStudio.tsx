@@ -2137,8 +2137,6 @@ export default function MockupStudio({
             onBringForward={bringForward}
             onSendBackward={pushBackward}
             canReorder={canBringForward || canPushBackward}
-            viewZoom={viewZoom}
-            onViewZoom={setViewZoom}
           />
         </div>
       </div>

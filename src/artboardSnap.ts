@@ -246,7 +246,7 @@ export function artboardWidthCss(
   // Explicit zoom levels represent true artboard pixels (a 1280px artboard at
   // 100% must be 1280px wide). No width or height cap, otherwise every zoom
   // step collapses to the viewport bounding box and becomes indistinguishable.
-  return `${board.width * zoom}px`;
+  return `${board.width * (zoom as number)}px`;
 }
 
 export function viewZoomLabel(zoom: ViewZoom): string {

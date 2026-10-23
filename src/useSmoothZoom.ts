@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback } from 'react';
-import { calculateSmoothZoom, clampScale, type ZoomTransform } from './smoothZoomUtils';
+import type { ZoomTransform } from './smoothZoomUtils';
 
 const SMOOTHING = 0.2;
 

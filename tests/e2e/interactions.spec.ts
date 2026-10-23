@@ -60,6 +60,7 @@ test.describe('library and canvas interactions', () => {
   });
 
   test('zoom controls respond', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
     await page.getByRole('button', { name: 'Zoom in' }).click();
     await page.getByRole('button', { name: 'Zoom out' }).click();
