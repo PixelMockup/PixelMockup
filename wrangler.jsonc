@@ -10,6 +10,7 @@
     "binding": "ASSETS",
     "not_found_handling": "single-page-application"
   },
+  "previews": {},
   "build": {
     "command": "npm run build"
   }
