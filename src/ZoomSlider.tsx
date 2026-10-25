@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import type { ViewZoom } from './artboardSnap';
+import { useState } from "react";
+import type { ViewZoom } from "./artboardSnap";
 
 type Props = {
   viewZoom: ViewZoom;
@@ -14,23 +14,23 @@ export default function ZoomSlider({ viewZoom, onViewZoom }: Readonly<Props>) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const presets: { label: string; value: ViewZoom | number }[] = [
-    { label: '175%', value: 1.75 },
-    { label: '150%', value: 1.5 },
-    { label: '125%', value: 1.25 },
-    { label: '100%', value: 1 },
-    { label: '50%', value: 0.5 },
-    { label: 'Fit', value: 'fit' as ViewZoom },
-    { label: 'Fill', value: 'fill' as ViewZoom },
+    { label: "175%", value: 1.75 },
+    { label: "150%", value: 1.5 },
+    { label: "125%", value: 1.25 },
+    { label: "100%", value: 1 },
+    { label: "50%", value: 0.5 },
+    { label: "Fit", value: "fit" as ViewZoom },
+    { label: "Fill", value: "fill" as ViewZoom },
   ];
 
   return (
     <div
       style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
         gap: 15,
-        padding: '30px 8px',
+        padding: "30px 8px",
       }}
       aria-label="Zoom slider"
     >
@@ -42,25 +42,25 @@ export default function ZoomSlider({ viewZoom, onViewZoom }: Readonly<Props>) {
         value={pct}
         onChange={(e) => {
           const val = Number.parseInt(e.target.value, 10) / 100;
-          if (val <= 0 || Number.isNaN(val)) onViewZoom('fit' as ViewZoom);
+          if (val <= 0 || Number.isNaN(val)) onViewZoom("fit" as ViewZoom);
           else onViewZoom(val as ViewZoom);
         }}
         aria-label="Zoom percentage"
         style={{
-          writingMode: 'vertical-lr',
-          direction: 'ltr',
-          appearance: 'slider-vertical' as any,
-          WebkitAppearance: 'slider-vertical',
-          transform: 'rotate(-180deg)',
+          writingMode: "vertical-lr",
+          direction: "ltr",
+          appearance: "slider-vertical" as any,
+          WebkitAppearance: "slider-vertical",
+          transform: "rotate(-180deg)",
           width: 8,
           height: 100,
           padding: 0,
           margin: 0,
-          cursor: 'pointer',
-          accentColor: 'var(--ms-accent-color, #007bff)',
+          cursor: "pointer",
+          accentColor: "var(--ms-accent)",
         }}
       />
-      <div style={{ position: 'relative', display: 'inline-block' }}>
+      <div style={{ position: "relative", display: "inline-block" }}>
         <button
           type="button"
           onClick={() => setMenuOpen((v) => !v)}
@@ -68,38 +68,42 @@ export default function ZoomSlider({ viewZoom, onViewZoom }: Readonly<Props>) {
           aria-expanded={menuOpen}
           aria-haspopup="menu"
           style={{
-            fontSize: '0.85rem',
+            fontSize: "0.85rem",
             minWidth: 36,
-            textAlign: 'center',
-            fontVariantNumeric: 'tabular-nums',
-            background: 'transparent',
-            border: '1px solid rgba(0,0,0,0.15)',
+            textAlign: "center",
+            fontVariantNumeric: "tabular-nums",
+            background: "transparent",
+            border: "1px solid rgba(0,0,0,0.15)",
             borderRadius: 6,
-            padding: '2px 6px',
-            cursor: 'pointer',
+            padding: "2px 6px",
+            cursor: "pointer",
           }}
         >
-          {viewZoom === 'fit' ? 'Fit' : viewZoom === 'fill' ? 'Fill' : `${pct}%`}
+          {viewZoom === "fit"
+            ? "Fit"
+            : viewZoom === "fill"
+              ? "Fill"
+              : `${pct}%`}
         </button>
         {menuOpen && (
           <div
             role="menu"
             aria-label="Zoom presets"
             style={{
-              position: 'absolute',
-              bottom: 'calc(100% + 4px)',
-              left: '150%',
-              transform: 'translateX(-30%)',
-              background: '#1a1a2e',
-              color: '#fff',
+              position: "absolute",
+              bottom: "calc(100% + 4px)",
+              left: "150%",
+              transform: "translateX(-30%)",
+              background: "#1a1a2e",
+              color: "#fff",
               borderRadius: 8,
-              padding: '4px 0',
+              padding: "4px 0",
               minWidth: 90,
-              fontSize: '0.8rem',
+              fontSize: "0.8rem",
               zIndex: 100,
-              boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
-              display: 'flex',
-              flexDirection: 'column',
+              boxShadow: "0 4px 12px rgba(0,0,0,0.25)",
+              display: "flex",
+              flexDirection: "column",
               gap: 2,
             }}
           >
@@ -113,13 +117,13 @@ export default function ZoomSlider({ viewZoom, onViewZoom }: Readonly<Props>) {
                   setMenuOpen(false);
                 }}
                 style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#fff',
-                  padding: '6px 12px',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  fontSize: '0.8rem',
+                  background: "transparent",
+                  border: "none",
+                  color: "#fff",
+                  padding: "6px 12px",
+                  textAlign: "left",
+                  cursor: "pointer",
+                  fontSize: "0.8rem",
                 }}
               >
                 {p.label}

@@ -217,12 +217,20 @@
     display: inline-flex;
     align-items: center;
     gap: 6px;
+    background: var(--ms-accent);
+    color: var(--ms-accent-fg);
+    border: 1px solid transparent;
+    font-weight: 600;
 }
 
 .ms-btn--accent {
     background: var(--ms-accent);
     color: var(--ms-accent-fg);
     border: 1px solid transparent;
+}
+
+.ms-btn--download:hover:not(:disabled) {
+    background: var(--ms-accent-hover);
 }
 
 .ms-btn--accent:hover:not(:disabled) {
@@ -468,6 +476,79 @@
 
 .ms-menu__input:focus-visible {
     border-color: var(--ms-accent);
+}
+
+/* —— Zoom pill —— */
+.ms-zoom-pill-wrapper {
+  position: relative;
+  z-index: 10;
+}
+
+.ms-zoom-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ms-space-1);
+  padding: 4px 6px;
+  border: 1px solid color-mix(in srgb, var(--ms-border) 50%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--ms-border) 50%, transparent);
+  border-radius: var(--ms-radius-sm);
+  background: color-mix(in srgb, var(--ms-surface-raised) 92%, transparent);
+  backdrop-filter: blur(20px) saturate(180%);
+  border-top: 1px solid rgba(255,255,255,0.25);
+  box-shadow: 0 1px 3px rgba(27,36,48,0.08);
+}
+
+.ms-zoom-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--ms-radius-sm);
+  background: transparent;
+  color: var(--ms-ink);
+  cursor: pointer;
+  transition: background 120ms ease, transform 100ms ease;
+}
+
+.ms-zoom-pill-btn:hover:not(:disabled) {
+  background: var(--ms-accent-soft);
+}
+
+.ms-zoom-pill-btn:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.ms-zoom-pill-btn--fit {
+  padding: 0 10px;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.ms-zoom-pill-btn--fit.is-active {
+  background: var(--ms-accent-soft);
+  color: var(--ms-ink);
+}
+
+.ms-zoom-pill-label {
+  font-family: var(--ms-mono);
+  font-size: 0.8rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--ms-muted);
+  min-width: 3.5rem;
+  text-align: center;
+  line-height: 1;
+}
+
+.ms-zoom-pill-divider {
+  display: inline-block;
+  width: 1px;
+  height: 16px;
+  background: color-mix(in srgb, var(--ms-border) 60%, transparent);
+  margin: 0 2px;
 }
 
 /* —— Selection inspector —— */
@@ -2529,55 +2610,6 @@
     pointer-events: auto;
 }
 
-.ms-zoom-pill-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 36px;
-    height: 36px;
-    border-radius: 999px;
-    border: none;
-    background: rgba(0, 0, 0, 0.04);
-    color: inherit;
-    cursor: pointer;
-    padding: 0;
-    transition: background 0.15s ease;
-}
-
-.ms-zoom-pill-btn:hover {
-    background: rgba(0, 0, 0, 0.1);
-}
-
-.ms-zoom-pill-btn.is-active {
-    background: rgba(0, 140, 180, 0.12);
-    color: #008c80;
-}
-
-.ms-zoom-pill-btn--fit {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 4px 10px;
-    font-size: 0.78rem;
-    font-weight: 500;
-    min-height: 36px;
-}
-
-.ms-zoom-pill-divider {
-    width: 1px;
-    height: 18px;
-    background: rgba(0, 0, 0, 0.15);
-    margin: 0 2px;
-}
-
-.ms-zoom-pill-label {
-    font-variant-numeric: tabular-nums;
-    font-size: 0.82rem;
-    font-weight: 600;
-    min-width: 48px;
-    text-align: center;
-    user-select: none;
-}
 .ms-mobile-toolbar:empty {
     display: none;
 }
