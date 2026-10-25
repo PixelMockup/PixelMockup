@@ -8,7 +8,7 @@
 
 :root {
   --ms-ink: #1b2430;
-  --ms-muted: #5b6675;
+  --ms-muted: #6b7280;
   --ms-bg: #e8eef4;
   --ms-bg-wash: radial-gradient(
     120% 80% at 10% -10%,
@@ -21,10 +21,10 @@
   --ms-surface-raised: #ffffff;
   --ms-border: #d5dce6;
   --ms-border-strong: #b8c2d0;
-  --ms-accent: #0f766e;
-  --ms-accent-hover: #0d9488;
+  --ms-accent: #2d4a7c;
+  --ms-accent-hover: #1e3a66;
   --ms-accent-fg: #ffffff;
-  --ms-accent-soft: rgba(15, 118, 110, 0.12);
+  --ms-accent-soft: rgba(45, 74, 124, 0.12);
   --ms-snap-page: #e20074;
   --ms-danger: #b91c1c;
   --ms-danger-soft: rgba(185, 28, 28, 0.1);
@@ -32,8 +32,8 @@
   --ms-presence-soft: rgba(21, 128, 61, 0.12);
   --ms-stage: #c4ccd8;
   --ms-stage-inner: #d2dae6;
-  --ms-checker-a: #e8ecf1;
-  --ms-checker-b: #f4f6f9;
+  --ms-checker-a: #eaeef3;
+  --ms-checker-b: #f0f3f8;
   --ms-shadow: 0 1px 2px rgba(27, 36, 48, 0.06),
     0 8px 24px rgba(27, 36, 48, 0.08);
   --ms-overlay: rgba(27, 36, 48, 0.4);
@@ -74,7 +74,7 @@
 
 [data-theme='dark'] {
   --ms-ink: #e8edf4;
-  --ms-muted: #9aa6b5;
+  --ms-muted: #8b95a8;
   --ms-bg: #12151a;
   --ms-bg-wash: radial-gradient(
     100% 70% at 0% 0%,
@@ -87,10 +87,10 @@
   --ms-surface-raised: #222833;
   --ms-border: #2a3340;
   --ms-border-strong: #3d4a5c;
-  --ms-accent: #2dd4bf;
-  --ms-accent-hover: #5eead4;
-  --ms-accent-fg: #042f2e;
-  --ms-accent-soft: rgba(45, 212, 191, 0.14);
+  --ms-accent: #6b9eff;
+  --ms-accent-hover: #94b8ff;
+  --ms-accent-fg: #0a1828;
+  --ms-accent-soft: rgba(107, 158, 255, 0.14);
   --ms-snap-page: #ff2d95;
   --ms-danger: #f87171;
   --ms-danger-soft: rgba(248, 113, 113, 0.12);
@@ -98,12 +98,25 @@
   --ms-presence-soft: rgba(74, 222, 128, 0.14);
   --ms-stage: #0e1218;
   --ms-stage-inner: #161b24;
-  --ms-checker-a: #1c222c;
-  --ms-checker-b: #242b36;
+  --ms-checker-a: #181f27;
+  --ms-checker-b: #20283a;
   --ms-shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 12px 32px rgba(0, 0, 0, 0.35);
   --ms-overlay: rgba(0, 0, 0, 0.55);
   --ms-focus: 0 0 0 2px var(--ms-surface-raised), 0 0 0 4px var(--ms-accent);
   color-scheme: dark;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .ms-brand {
+    transition: none !important;
+  }
 }
 
 *,
