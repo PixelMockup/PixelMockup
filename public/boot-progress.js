@@ -45,9 +45,19 @@
     lastCompletionAt = performance.now();
   }
 
+  // Plan A — single progress bar: hide boot splash immediately so only React loader shows.
+  if (BAR) BAR.style.display = 'none';
+  if (STATUS) STATUS.style.display = 'none';
+  if (PCT) PCT.style.display = 'none';
+  if (ETA) ETA.style.display = 'none';
+  var splash = document.getElementById('ms-boot-splash');
+  if (splash) splash.style.display = 'none';
+
   function tick() {
-    var stallSec = (performance.now() - lastCompletionAt) / 1000;
-    var mbps = downlinkMBps();
+    return;
+  }
+
+  if (typeof PerformanceObserver !== 'undefined') {
     var bytesPerSec = (mbps * 1000000) / 8;
     var remaining = Math.max(EXPECTED_BYTES - completedBytes, 200 * 1024);
     // While a large file is in-flight, Resource Timing won't update until done.

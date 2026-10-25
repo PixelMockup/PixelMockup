@@ -335,7 +335,8 @@ export function useDeviceLibrary(): UseDeviceLibraryResult {
       .filter((path) => {
         const current = groupedLibraryRef.current.phones?.find((d) => d.path === path);
         return !current?.src;
-      });
+      })
+      .sort((a, b) => a.length - b.length);
 
     const tabletMeta = metadataCatalog.tablets ?? [];
     const priorityTabletPaths = tabletMeta
@@ -344,7 +345,8 @@ export function useDeviceLibrary(): UseDeviceLibraryResult {
       .filter((path) => {
         const current = groupedLibraryRef.current.tablets?.find((d) => d.path === path);
         return !current?.src;
-      });
+      })
+      .sort((a, b) => a.length - b.length);
 
     const watchMeta = metadataCatalog.watches ?? [];
     const priorityWatchPaths = watchMeta
@@ -353,15 +355,16 @@ export function useDeviceLibrary(): UseDeviceLibraryResult {
       .filter((path) => {
         const current = groupedLibraryRef.current.watches?.find((d) => d.path === path);
         return !current?.src;
-      });
+      })
+      .sort((a, b) => a.length - b.length);
 
     let totalAssets = 0;
     for (const c of fullCategories) {
       const current = groupedLibraryRef.current[c] ?? [];
       const alreadyLoaded = new Set(current.filter((d) => d.src).map((d) => d.path));
-      const entries = Object.entries(lazyDeviceFiles).filter(
-        ([path]) => categoryFromGlobPath(path) === c,
-      );
+      const entries = Object.entries(lazyDeviceFiles)
+        .filter(([path]) => categoryFromGlobPath(path) === c)
+        .sort(([a], [b]) => a.length - b.length);
       totalAssets += entries.filter(([path]) => !alreadyLoaded.has(path)).length;
     }
     totalAssets += priorityPhonePaths.length + priorityTabletPaths.length + priorityWatchPaths.length;
