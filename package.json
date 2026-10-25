@@ -6,8 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "deploy": "npm run build && wrangler deploy",
-    "preview": "npm run build && wrangler dev",
+    "deploy": "npm run build && wrangler pages publish dist/",
+    "preview": "npm run build && wrangler pages dev dist/",
     "lint": "oxlint",
     "start": "vite preview",
     "test": "vitest run",
