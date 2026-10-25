@@ -9,7 +9,6 @@
     "deploy": "npm run build && wrangler deploy",
     "preview": "npm run build && wrangler dev",
     "lint": "oxlint",
-    "preview": "vite preview",
     "start": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
