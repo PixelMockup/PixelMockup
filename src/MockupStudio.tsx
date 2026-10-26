@@ -431,6 +431,7 @@ export default function MockupStudio({
   const [screenshotSettingsOpen, setScreenshotSettingsOpen] = useState(false);
   const [libraryWidth, setLibraryWidth] = useState(readLibraryWidth);
   const [viewZoom, setViewZoom] = useState<ViewZoom>('fit');
+  const [pan, setPan] = useState({ panX: 0, panY: 0 });
   const [liveScale, setLiveScale] = useState(1);
   const [snapGuides, setSnapGuides] = useState<SnapGuides>(NO_GUIDES);
   const [snapEnabled, setSnapEnabled] = useState(readSnapEnabled);
@@ -2103,6 +2104,8 @@ export default function MockupStudio({
                 }}
                 onViewZoom={setViewZoom}
                 onLiveScale={setLiveScale}
+                pan={pan}
+                onPan={setPan}
               />
             </div>
             <ZoomPill

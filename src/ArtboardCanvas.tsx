@@ -41,6 +41,8 @@ type ArtboardCanvasProps = {
   onSwitchToIframePreview?: () => void;
   onViewZoom?: (v: ViewZoom) => void;
   onLiveScale?: (s: number) => void;
+  pan?: { panX: number; panY: number };
+  onPan?: (p: { panX: number; panY: number }) => void;
 };
 
 export default function ArtboardCanvas({
@@ -66,6 +68,8 @@ export default function ArtboardCanvas({
   onWebsiteCaptureDetails,
   onViewZoom,
   onLiveScale,
+  pan,
+  onPan,
 }: ArtboardCanvasProps) {
   const viewZoomRef = useRef(viewZoom);
   const onViewZoomRef = useRef(onViewZoom);
@@ -74,6 +78,15 @@ export default function ArtboardCanvas({
     initialDistance: 0,
     initialZoom: 1,
   });
+  const panMoveRef = useRef({
+    pointerId: -1,
+    startX: 0,
+    startY: 0,
+    prevX: 0,
+    prevY: 0,
+    active: false,
+  });
+  const prevCentroidRef = useRef({ x: 0, y: 0, id: -1 });
   viewZoomRef.current = viewZoom;
   onViewZoomRef.current = onViewZoom;
   const onClickBackground = (e: React.MouseEvent) => {
@@ -133,14 +146,32 @@ export default function ArtboardCanvas({
     // Desktop: Ctrl + wheel → zoom canvas
     const ZOOM_STEP = 0.;
     const onWheel = (e: WheelEvent) => {
-      if (!e.ctrlKey && !e.metaKey) return;
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        e.stopPropagation();
+        const current = getNumericZoom();
+        const factor = e.deltaY < 0 ? 1.1 : 0.9;
+        const next = clampViewZoom(current * factor);
+        onViewZoomRef.current?.(next);
+        if (onLiveScale) onLiveScale(next);
+        if (viewZoomRef.current === 'fit' && onPan) {
+          onPan({ panX: 0, panY: 0 });
+        }
+        return;
+      }
+      // Desktop pan (Figma-style) — natural direction
       e.preventDefault();
-      e.stopPropagation();
-      const current = getNumericZoom();
-      const factor = e.deltaY < 0 ? 1.1 : 0.9;
-      const next = clampViewZoom(current * factor);
-      onViewZoomRef.current?.(next);
-      if (onLiveScale) onLiveScale(next);
+      const scale = getNumericZoom();
+      const dx = (e.deltaMode === 1 ? e.deltaX * 16 : e.deltaX) / scale;
+      const dy = (e.deltaMode === 1 ? e.deltaY * 16 : e.deltaY) / scale;
+      if (onPan) {
+        onPan({ panX: (pan?.panX ?? 0) - dx, panY: (pan?.panY ?? 0) - dy });
+      }
+      if (viewZoomRef.current === 'fit' && onViewZoomRef.current) {
+        const numeric = getNumericZoom();
+        onViewZoomRef.current(numeric as ViewZoom);
+        if (onLiveScale) onLiveScale(numeric);
+      }
     };
 
     // Mobile: 2 finger pinch → zoom canvas
@@ -148,9 +179,19 @@ export default function ArtboardCanvas({
       if (e.pointerType !== 'touch') return;
       pinchRef.current.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       if (pinchRef.current.pointers.size === 2) {
+        prevCentroidRef.current = { x: 0, y: 0, id: -1 };
         const [p1, p2] = [...pinchRef.current.pointers.values()];
         pinchRef.current.initialDistance = Math.hypot(p1.x - p2.x, p1.y - p2.y);
         pinchRef.current.initialZoom = getNumericZoom();
+      } else if (pinchRef.current.pointers.size === 1 && e.target === el) {
+        panMoveRef.current = {
+          pointerId: e.pointerId,
+          startX: e.clientX,
+          startY: e.clientY,
+          prevX: e.clientX,
+          prevY: e.clientY,
+          active: false,
+        };
       }
     };
 
@@ -158,10 +199,29 @@ export default function ArtboardCanvas({
       if (e.pointerType !== 'touch') return;
       if (!pinchRef.current.pointers.has(e.pointerId)) return;
       pinchRef.current.pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
       if (pinchRef.current.pointers.size === 2) {
+        prevCentroidRef.current = { x: 0, y: 0, id: -1 };
         e.preventDefault(); // block browser pinch-zoom
         const [p1, p2] = [...pinchRef.current.pointers.values()];
         const dist = Math.hypot(p1.x - p2.x, p1.y - p2.y);
+        // Centroid pan
+        const cx = (p1.x + p2.x) / 2;
+        const cy = (p1.y + p2.y) / 2;
+        if (prevCentroidRef.current.id !== -1) {
+          const dx = cx - prevCentroidRef.current.x;
+          const dy = cy - prevCentroidRef.current.y;
+          if (onPan) {
+            const scale = getNumericZoom();
+            onPan({ panX: (pan?.panX ?? 0) - dx / scale, panY: (pan?.panY ?? 0) - dy / scale });
+          }
+        }
+        prevCentroidRef.current = { x: cx, y: cy, id: 1 };
+        if (viewZoomRef.current === 'fit' && onViewZoomRef.current) {
+          const numeric = getNumericZoom();
+          onViewZoomRef.current(numeric as ViewZoom);
+          if (onLiveScale) onLiveScale(numeric);
+        }
         if (pinchRef.current.initialDistance < 10) return;
         const scale = dist / pinchRef.current.initialDistance;
         const next = clampViewZoom(
@@ -169,14 +229,60 @@ export default function ArtboardCanvas({
         );
         onViewZoomRef.current?.(next);
         if (onLiveScale) onLiveScale(next);
+      } else if (pinchRef.current.pointers.size === 1) {
+        const panLocal = panMoveRef.current;
+        if (panLocal.pointerId === e.pointerId) {
+          const dx = e.clientX - panLocal.prevX;
+          const dy = e.clientY - panLocal.prevY;
+          const dist = Math.hypot(dx, dy);
+          if (!panLocal.active && dist > 8) {
+            panLocal.active = true;
+            // long-press abort handled by useLongPress at >8px automatically
+          }
+          if (panLocal.active) {
+            e.preventDefault(); // only when pan active
+            const scale = getNumericZoom();
+            if (onPan) {
+              onPan({ panX: (pan?.panX ?? 0) - dx / scale, panY: (pan?.panY ?? 0) - dy / scale });
+            }
+            if (viewZoomRef.current === 'fit' && onViewZoomRef.current) {
+              const numeric = getNumericZoom();
+              onViewZoomRef.current(numeric as ViewZoom);
+              if (onLiveScale) onLiveScale(numeric);
+            }
+          }
+          panLocal.prevX = e.clientX;
+          panLocal.prevY = e.clientY;
+        }
       }
     };
 
     const endPointer = (e: PointerEvent) => {
       if (e.pointerType !== 'touch') return;
+      const wasTwo = pinchRef.current.pointers.size === 2;
       pinchRef.current.pointers.delete(e.pointerId);
       if (pinchRef.current.pointers.size < 2) {
         pinchRef.current.initialDistance = 0;
+      }
+      // Continue single-finger pan with remaining pointer
+      if (wasTwo && pinchRef.current.pointers.size === 1 && onPan) {
+        prevCentroidRef.current = { x: 0, y: 0, id: -1 };
+        const [rem] = [...pinchRef.current.pointers.values()];
+        // We don't have pointerId from value; find by remaining key
+        const remId = [...pinchRef.current.pointers.keys()][0];
+        panMoveRef.current = {
+          pointerId: remId,
+          startX: rem.x,
+          startY: rem.y,
+          prevX: rem.x,
+          prevY: rem.y,
+          active: true,
+        };
+        prevCentroidRef.current = { x: rem.x, y: rem.y, id: -1 };
+      }
+      if (pinchRef.current.pointers.size === 0) {
+        panMoveRef.current = { pointerId: -1, startX: 0, startY: 0, prevX: 0, prevY: 0, active: false };
+        prevCentroidRef.current = { x: 0, y: 0, id: -1 };
       }
     };
 
@@ -276,6 +382,7 @@ export default function ArtboardCanvas({
               height: artboardH,
             }),
             aspectRatio: `${artboardW} / ${artboardH}`,
+            transform: `translate3d(${pan?.panX ?? 0}px, ${pan?.panY ?? 0}px, 0)`,
             transformOrigin: '0 0',
             position: 'relative',
           }}

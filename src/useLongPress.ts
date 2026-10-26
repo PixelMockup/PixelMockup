@@ -21,7 +21,7 @@ export function useLongPress(
   onLongPress: (e: React.PointerEvent) => void,
   options: LongPressOptions = {},
 ): LongPressResult {
-  const { delay = 500, moveTolerance = 10 } = options;
+  const { delay = 500, moveTolerance = 8 } = options;
   const timerRef = useRef<number | null>(null);
   const startRef = useRef<{ x: number; y: number; pointerId: number } | null>(null);
   const triggeredRef = useRef(false);
