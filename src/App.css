@@ -671,17 +671,29 @@
 
 /* —— Mobile warning —— */
 .ms-mobile-warning {
-    position: fixed;
-    inset: 0;
-    z-index: 20000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    padding: var(--ms-space-4);
-    padding-top: calc(var(--ms-space-4) + var(--ms-safe-t));
-    padding-bottom: calc(var(--ms-space-4) + var(--ms-safe-b));
-    background: var(--ms-overlay);
-    backdrop-filter: blur(4px);
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ms-overlay);
+  backdrop-filter: blur(24px) saturate(160%);
+  color: var(--ms-ink);
+}
+
+@media (prefers-color-scheme: light) {
+  .ms-mobile-warning {
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(24px) saturate(160%);
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  .ms-mobile-warning {
+    background: rgba(14, 18, 24, 0.92);
+    backdrop-filter: blur(24px) saturate(160%);
+  }
 }
 
 .ms-mobile-warning__card {
