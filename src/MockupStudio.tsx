@@ -133,6 +133,7 @@ import ArtboardCanvas from './ArtboardCanvas';
 import AppDialog from './AppDialog';
 import { clientToLogical } from './clientToLogical';
 import ZoomPill from './ZoomPill';
+import ScrollPanControls from './ScrollPanControls';
 const LIBRARY_W_KEY = 'pixelMockup.libraryWidth';
 const LIBRARY_W_LEGACY_KEY = 'mockupStudio.libraryWidth';
 const LIBRARY_W_DEFAULT = 320;
@@ -2112,6 +2113,14 @@ export default function MockupStudio({
               viewZoom={viewZoom}
               liveScale={liveScale}
               onViewZoom={setViewZoom}
+            />
+            <ScrollPanControls
+              pan={pan}
+              onPan={setPan}
+              viewZoom={viewZoom}
+              artboardW={artboardW}
+              artboardH={artboardH}
+              canvasRef={canvasRef}
             />
 
             {placingPath != null ? (
