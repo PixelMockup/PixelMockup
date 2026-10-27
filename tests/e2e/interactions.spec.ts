@@ -60,7 +60,7 @@ test.describe('library and canvas interactions', () => {
   });
 
   test('zoom controls respond', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
+    await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto('/');
 
     // Dismiss the mobile warning dialog before clicking zoom buttons

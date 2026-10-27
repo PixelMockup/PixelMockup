@@ -178,10 +178,10 @@ test.describe('Pixel Mockup app shell', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/');
     const warning = page.getByRole('dialog', {
-      name: /Rotate for the best experience/i,
+      name: /Laptop only/i,
     });
     await expect(warning).toBeVisible();
-    await page.getByRole('button', { name: /Continue anyway/i }).click();
+    await page.setViewportSize({ width: 1280, height: 720 });
     await expect(warning).toHaveCount(0);
   });
 
@@ -195,27 +195,11 @@ test.describe('Pixel Mockup app shell', () => {
     await expect(dock.getByRole('button', { name: /Settings/i })).toBeVisible();
   });
 
-  test('opens mobile dock more tools on tablet', async ({ page }) => {
-    await page.setViewportSize({ width: 768, height: 1024 });
-    await page.goto('/');
-    const dock = page.getByRole('navigation', { name: /Quick actions/i });
-    await dock.getByRole('button', { name: /More/i }).click();
-    const sheet = page.getByRole('dialog', { name: /^More$/i });
-    await expect(sheet).toBeVisible();
-    await expect(sheet.getByRole('heading', { name: /Layouts/i })).toBeVisible();
-    await expect(sheet.getByRole('heading', { name: /Export/i })).toBeVisible();
-  });
+  // SKIPPED: mobile dock tablet — laptop-only redesign
 
-  test('opens mobile dock settings sheet on tablet', async ({ page }) => {
-    await page.setViewportSize({ width: 768, height: 1024 });
-    await page.goto('/');
-    const dock = page.getByRole('navigation', { name: /Quick actions/i });
-    await dock.getByRole('button', { name: /^Settings$/i }).click();
-    const sheet = page.getByRole('dialog', { name: /^Settings$/i });
-    await expect(sheet).toBeVisible();
-    await expect(sheet.getByRole('button', { name: /Dark mode|Light mode/i })).toBeVisible();
-    await expect(sheet.getByRole('heading', { name: /Screenshot provider/i })).toBeVisible();
-  });
+
+  // SKIPPED: mobile dock settings tablet — laptop-only redesign
+
 });
 
 test.describe('First-time tour', () => {

@@ -39,16 +39,15 @@ async function dismissMobileWarning(page: Page) {
 test.describe('zoom controls', () => {
   test.beforeEach(async ({ page }) => {
     // All zoom pill tests run on mobile viewport
-    await page.setViewportSize({ width: 390, height: 844 });
+    await page.setViewportSize({ width: 1280, height: 720 });
     await page.goto('/');
-    await dismissMobileWarning(page);
-    await expect(page.locator('.ms-progress-loader-overlay')).toHaveCount(0, {
+        await expect(page.locator('.ms-progress-loader-overlay')).toHaveCount(0, {
       timeout: 60_000,
     });
   });
 
   test('exposes continuous zoom steps', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
+    await page.setViewportSize({ width: 1280, height: 720 });
     // Default label is Fit (shows computed scale like 45% or 100%)
     await expect(zoomLabel(page)).toBeVisible();
     const initialText = await zoomLabel(page).textContent();
@@ -65,7 +64,7 @@ test.describe('zoom controls', () => {
   });
 
   test('explicit zoom steps scale the artboard', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
+    await page.setViewportSize({ width: 1280, height: 720 });
     // Place a device so we have something to measure
     await page.getByRole('textbox', { name: /Website URL/i }).fill('google.com');
     await page.getByRole('button', { name: /Show on devices/i }).click();
