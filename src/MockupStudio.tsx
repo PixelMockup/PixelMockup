@@ -133,6 +133,7 @@ import ArtboardCanvas from './ArtboardCanvas';
 import AppDialog from './AppDialog';
 import { clientToLogical } from './clientToLogical';
 import ZoomPill from './ZoomPill';
+import ScrollPanControls from './ScrollPanControls';
 const LIBRARY_W_KEY = 'pixelMockup.libraryWidth';
 const LIBRARY_W_LEGACY_KEY = 'mockupStudio.libraryWidth';
 const LIBRARY_W_DEFAULT = 320;
@@ -431,6 +432,7 @@ export default function MockupStudio({
   const [screenshotSettingsOpen, setScreenshotSettingsOpen] = useState(false);
   const [libraryWidth, setLibraryWidth] = useState(readLibraryWidth);
   const [viewZoom, setViewZoom] = useState<ViewZoom>('fit');
+  const [pan, setPan] = useState({ panX: 0, panY: 0 });
   const [liveScale, setLiveScale] = useState(1);
   const [snapGuides, setSnapGuides] = useState<SnapGuides>(NO_GUIDES);
   const [snapEnabled, setSnapEnabled] = useState(readSnapEnabled);
@@ -2103,12 +2105,22 @@ export default function MockupStudio({
                 }}
                 onViewZoom={setViewZoom}
                 onLiveScale={setLiveScale}
+                pan={pan}
+                onPan={setPan}
               />
             </div>
             <ZoomPill
               viewZoom={viewZoom}
               liveScale={liveScale}
               onViewZoom={setViewZoom}
+            />
+            <ScrollPanControls
+              pan={pan}
+              onPan={setPan}
+              viewZoom={viewZoom}
+              artboardW={artboardW}
+              artboardH={artboardH}
+              canvasRef={canvasRef}
             />
 
             {placingPath != null ? (

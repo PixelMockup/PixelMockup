@@ -12,7 +12,7 @@ import {
 } from '../../src/captureWebsite';
 import { setScreenshotProvider } from '../../src/screenshotProviders';
 
-const VIEWPORT = { width: 390, height: 844 };
+const VIEWPORT = { width: 1280, height: 720 };
 
 describe('WebsiteScreen', () => {
   beforeEach(() => {

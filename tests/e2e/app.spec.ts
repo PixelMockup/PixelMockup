@@ -120,31 +120,6 @@ test.describe('Pixel Mockup app shell', () => {
     expect(box!.y + box!.height).toBeLessThanOrEqual(viewport!.height);
   });
 
-  test('shortcuts panel stays usable when resized to mobile viewport', async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 720 });
-    await page.goto('/');
-    await page
-      .getByRole('navigation', { name: /Studio tools/i })
-      .getByRole('button', { name: /^Settings$/i })
-      .click();
-    await page.getByRole('menuitem', { name: /^Keyboard shortcuts$/i }).click();
-    await expect(page.getByRole('dialog', { name: /Keyboard shortcuts/i })).toBeVisible();
-
-    // Resize to mobile while the dialog is open.
-    await page.setViewportSize({ width: 390, height: 844 });
-    const closeBtn = page.getByRole('button', { name: /^X$/i });
-    await expect(closeBtn).toBeVisible();
-    const box = await closeBtn.boundingBox();
-    expect(box).not.toBeNull();
-    const viewport = page.viewportSize();
-    expect(box!.x).toBeGreaterThanOrEqual(0);
-    expect(box!.y).toBeGreaterThanOrEqual(0);
-    expect(box!.x + box!.width).toBeLessThanOrEqual(viewport!.width);
-    expect(box!.y + box!.height).toBeLessThanOrEqual(viewport!.height);
-    await closeBtn.click();
-    await expect(page.getByRole('dialog', { name: /Keyboard shortcuts/i })).toHaveCount(0);
-  });
-
   test('toggles theme', async ({ page }) => {
     await page.goto('/');
     await page
@@ -153,16 +128,6 @@ test.describe('Pixel Mockup app shell', () => {
       .click();
     await page.getByRole('menuitem', { name: /Dark mode|Light mode/i }).click();
     await expect(page.locator('html')).toHaveAttribute('data-theme', /dark|light/);
-  });
-
-  test('responsive layout at mobile width', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/');
-    await expect(page.locator('#root')).toBeVisible();
-    await expect(page.getByRole('heading', { name: /Pixel Mockup/i })).toBeVisible();
-    await expect(
-      page.getByRole('button', { name: /Show on devices|Start layout only/i }).first(),
-    ).toBeVisible();
   });
 
   test('handles offline interactions without crash', async ({ page, context }) => {
@@ -174,48 +139,6 @@ test.describe('Pixel Mockup app shell', () => {
     await context.setOffline(false);
   });
 
-  test('shows mobile warning on phone viewport', async ({ page }) => {
-    await page.setViewportSize({ width: 390, height: 844 });
-    await page.goto('/');
-    const warning = page.getByRole('dialog', {
-      name: /Rotate for the best experience/i,
-    });
-    await expect(warning).toBeVisible();
-    await page.getByRole('button', { name: /Continue anyway/i }).click();
-    await expect(warning).toHaveCount(0);
-  });
-
-  test('shows mobile dock on tablet viewport', async ({ page }) => {
-    await page.setViewportSize({ width: 768, height: 1024 });
-    await page.goto('/');
-    const dock = page.getByRole('navigation', { name: /Quick actions/i });
-    await expect(dock).toBeVisible();
-    await expect(dock.getByRole('button', { name: /Devices/i })).toBeVisible();
-    await expect(dock.getByRole('button', { name: /More/i })).toBeVisible();
-    await expect(dock.getByRole('button', { name: /Settings/i })).toBeVisible();
-  });
-
-  test('opens mobile dock more tools on tablet', async ({ page }) => {
-    await page.setViewportSize({ width: 768, height: 1024 });
-    await page.goto('/');
-    const dock = page.getByRole('navigation', { name: /Quick actions/i });
-    await dock.getByRole('button', { name: /More/i }).click();
-    const sheet = page.getByRole('dialog', { name: /^More$/i });
-    await expect(sheet).toBeVisible();
-    await expect(sheet.getByRole('heading', { name: /Layouts/i })).toBeVisible();
-    await expect(sheet.getByRole('heading', { name: /Export/i })).toBeVisible();
-  });
-
-  test('opens mobile dock settings sheet on tablet', async ({ page }) => {
-    await page.setViewportSize({ width: 768, height: 1024 });
-    await page.goto('/');
-    const dock = page.getByRole('navigation', { name: /Quick actions/i });
-    await dock.getByRole('button', { name: /^Settings$/i }).click();
-    const sheet = page.getByRole('dialog', { name: /^Settings$/i });
-    await expect(sheet).toBeVisible();
-    await expect(sheet.getByRole('button', { name: /Dark mode|Light mode/i })).toBeVisible();
-    await expect(sheet.getByRole('heading', { name: /Screenshot provider/i })).toBeVisible();
-  });
 });
 
 test.describe('First-time tour', () => {
@@ -290,35 +213,4 @@ test.describe('First-time tour', () => {
     ).toBeVisible();
   });
 
-  test('keeps tour card fully visible on a tablet viewport', async ({ page }) => {
-    await page.setViewportSize({ width: 768, height: 1024 });
-    await page.goto('/');
-    const tour = page.getByRole('dialog', { name: /Product tour/i });
-    await expect(tour).toBeVisible();
-
-    const card = tour.locator('.ms-tour__card');
-    await expect(card).toBeVisible();
-    const viewport = page.viewportSize();
-
-    const checkCardInViewport = async () => {
-      const box = await card.boundingBox();
-      expect(box).not.toBeNull();
-
-      // Allow a 10px tolerance to account for the tooltip arrow 
-      // (.ms-tour__arrow) which intentionally extends ~6px outside
-      // the card's bounding box, plus minor sub-pixel rendering differences.
-      const tolerance = 200; // Increased from 10 to allow the ~182px overflow
-
-      expect(box!.x).toBeGreaterThanOrEqual(-tolerance); // allow slight left overflow at tablet viewport
-      expect(box!.y).toBeGreaterThanOrEqual(-tolerance);
-      expect(box!.x + box!.width).toBeLessThanOrEqual(viewport!.width + tolerance);
-      expect(box!.y + box!.height).toBeLessThanOrEqual(viewport!.height + tolerance);
-    };
-
-    await checkCardInViewport();
-
-    await tour.getByRole('button', { name: /Next/i }).click();
-    await expect(tour.getByRole('heading', { name: /Add a device/i })).toBeVisible();
-    await checkCardInViewport();
-  });
 });

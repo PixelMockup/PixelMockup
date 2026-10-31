@@ -480,75 +480,78 @@
 
 /* —— Zoom pill —— */
 .ms-zoom-pill-wrapper {
-  position: relative;
-  z-index: 10;
+    position: relative;
+    z-index: 10;
 }
 
 .ms-zoom-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--ms-space-1);
-  padding: 4px 6px;
-  border: 1px solid color-mix(in srgb, var(--ms-border) 50%, transparent);
-  border-bottom: 1px solid color-mix(in srgb, var(--ms-border) 50%, transparent);
-  border-radius: var(--ms-radius-sm);
-  background: color-mix(in srgb, var(--ms-surface-raised) 92%, transparent);
-  backdrop-filter: blur(20px) saturate(180%);
-  border-top: 1px solid rgba(255,255,255,0.25);
-  box-shadow: 0 1px 3px rgba(27,36,48,0.08);
+    display: inline-flex;
+    align-items: center;
+    gap: var(--ms-space-1);
+    padding: 4px 6px;
+    border: 1px solid color-mix(in srgb, var(--ms-border) 50%, transparent);
+    border-bottom: 1px solid
+        color-mix(in srgb, var(--ms-border) 50%, transparent);
+    border-radius: var(--ms-radius-sm);
+    background: color-mix(in srgb, var(--ms-surface-raised) 92%, transparent);
+    backdrop-filter: blur(20px) saturate(180%);
+    border-top: 1px solid rgba(255, 255, 255, 0.25);
+    box-shadow: 0 1px 3px rgba(27, 36, 48, 0.08);
 }
 
 .ms-zoom-pill-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: var(--ms-radius-sm);
-  background: transparent;
-  color: var(--ms-ink);
-  cursor: pointer;
-  transition: background 120ms ease, transform 100ms ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid transparent;
+    border-radius: var(--ms-radius-sm);
+    background: transparent;
+    color: var(--ms-ink);
+    cursor: pointer;
+    transition:
+        background 120ms ease,
+        transform 100ms ease;
 }
 
 .ms-zoom-pill-btn:hover:not(:disabled) {
-  background: var(--ms-accent-soft);
+    background: var(--ms-accent-soft);
 }
 
 .ms-zoom-pill-btn:active:not(:disabled) {
-  transform: scale(0.94);
+    transform: scale(0.94);
 }
 
 .ms-zoom-pill-btn--fit {
-  padding: 0 10px;
-  gap: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
+    padding: 0 10px;
+    gap: 4px;
+    font-size: 0.75rem;
+    font-weight: 600;
 }
 
 .ms-zoom-pill-btn--fit.is-active {
-  background: var(--ms-accent-soft);
-  color: var(--ms-ink);
+    background: var(--ms-accent-soft);
+    color: var(--ms-ink);
 }
 
 .ms-zoom-pill-label {
-  font-family: var(--ms-mono);
-  font-size: 0.8rem;
-  font-variant-numeric: tabular-nums;
-  color: var(--ms-muted);
-  min-width: 3.5rem;
-  text-align: center;
-  line-height: 1;
+    font-family: var(--ms-mono);
+    font-size: 0.8rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--ms-muted);
+    min-width: 3.5rem;
+    text-align: center;
+    line-height: 1;
 }
 
 .ms-zoom-pill-divider {
-  display: inline-block;
-  width: 1px;
-  height: 16px;
-  background: color-mix(in srgb, var(--ms-border) 60%, transparent);
-  margin: 0 2px;
+    display: inline-block;
+    width: 1px;
+    height: 16px;
+    background: color-mix(in srgb, var(--ms-border) 60%, transparent);
+    margin: 0 2px;
 }
 
 /* —— Selection inspector —— */
@@ -673,15 +676,27 @@
 .ms-mobile-warning {
     position: fixed;
     inset: 0;
-    z-index: 20000;
+    z-index: 9999;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: var(--ms-space-4);
-    padding-top: calc(var(--ms-space-4) + var(--ms-safe-t));
-    padding-bottom: calc(var(--ms-space-4) + var(--ms-safe-b));
     background: var(--ms-overlay);
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(24px) saturate(160%);
+    color: var(--ms-ink);
+}
+
+@media (prefers-color-scheme: light) {
+    .ms-mobile-warning {
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(24px) saturate(160%);
+    }
+}
+
+@media (prefers-color-scheme: dark) {
+    .ms-mobile-warning {
+        background: rgba(14, 18, 24, 0.92);
+        backdrop-filter: blur(24px) saturate(160%);
+    }
 }
 
 .ms-mobile-warning__card {
@@ -1951,6 +1966,9 @@
 
 /* —— Responsive —— */
 @media (max-width: 1024px) {
+    .ms-zoom-pill {
+        display: none;
+    }
     .ms-library {
         max-width: min(92vw, calc(100% - var(--ms-rail-w) - 16px));
         z-index: 50;

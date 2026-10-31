@@ -57,28 +57,6 @@
     return;
   }
 
-  if (typeof PerformanceObserver !== 'undefined') {
-    var bytesPerSec = (mbps * 1000000) / 8;
-    var remaining = Math.max(EXPECTED_BYTES - completedBytes, 200 * 1024);
-    // While a large file is in-flight, Resource Timing won't update until done.
-    // Estimate bytes received during the stall from link speed.
-    var inFlightGuess = 0;
-    if (stallSec > 0.5 && completedBytes < EXPECTED_BYTES * 0.9) {
-      inFlightGuess = Math.min(remaining * 0.92, bytesPerSec * stallSec);
-    }
-    var effectiveDone = Math.min(EXPECTED_BYTES * 0.95, completedBytes + inFlightGuess);
-    var pct = (effectiveDone / EXPECTED_BYTES) * 100;
-    var etaSec = Math.max(0, (EXPECTED_BYTES - effectiveDone) / bytesPerSec);
-
-    var msg = 'Downloading app…';
-    if (completedBytes > EXPECTED_BYTES * 0.55 || pct > 55) {
-      msg = 'Preparing workspace…';
-    } else if (stallSec > 8) {
-      msg = 'Still downloading…';
-    }
-
-    setUI(pct, msg, etaSec);
-  }
 
   if (typeof PerformanceObserver !== 'undefined') {
     try {
