@@ -36,7 +36,6 @@ describe('ProductTour', () => {
   afterEach(() => {
     document.querySelector('.ms-stage')?.remove();
     document.querySelector('.ms-rail-devices')?.remove();
-    document.querySelector('.ms-mobile-dock__btn[aria-label="Devices"]')?.remove();
   });
 
   it('renders the first step when open', () => {
