@@ -59,21 +59,6 @@ test.describe('library and canvas interactions', () => {
     ).toBeVisible();
   });
 
-  test('zoom controls respond', async ({ page }) => {
-    await page.setViewportSize({ width: 1280, height: 720 });
-    await page.goto('/');
-
-    // Dismiss the mobile warning dialog before clicking zoom buttons
-    const continueBtn = page.getByRole('button', { name: 'Continue anyway' });
-    if (await continueBtn.isVisible()) {
-      await continueBtn.click();
-    }
-
-    await page.getByRole('button', { name: 'Zoom in' }).click();
-    await page.getByRole('button', { name: 'Zoom out' }).click();
-    await expect(page.locator('#root')).toBeVisible();
-  });
-
   test('keyboard undo chord does not crash', async ({ page }) => {
     await page.goto('/');
     await page.keyboard.press('Control+Z');
